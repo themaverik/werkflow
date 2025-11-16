@@ -1,22 +1,34 @@
 version: '3.8'
 
+# ================================================================
+# WERKFLOW ENTERPRISE PLATFORM - DOCKER COMPOSE
+# ================================================================
+# Complete local development environment for all services
+# ================================================================
+
 services:
+  # ================================================================
+  # INFRASTRUCTURE SERVICES
+  # ================================================================
+
+  # PostgreSQL Database (Single instance, multiple schemas)
   postgres:
     image: postgres:15-alpine
     container_name: werkflow-postgres
     environment:
-      POSTGRES_DB: werkflow_db
-      POSTGRES_USER: werkflow_user
-      POSTGRES_PASSWORD: werkflow_pass
+      POSTGRES_DB: werkflow
+      POSTGRES_USER: werkflow_admin
+      POSTGRES_PASSWORD: werkflow_secure_pass
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"
+      - "5433:5432"  # External 5433 to avoid conflicts
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
     networks:
       - werkflow-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U werkflow_user -d werkflow_db"]
+      test: ["CMD-SHELL", "pg_isready -U werkflow_admin -d werkflow"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -75,7 +87,7 @@ services:
       start_period: 60s
     restart: unless-stopped
 
-  # Optional: pgAdmin for database management
+  # pgAdmin for database management
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: werkflow-pgadmin
@@ -93,6 +105,159 @@ services:
       - postgres
     restart: unless-stopped
 
+  # ================================================================
+  # BACKEND SERVICES
+  # ================================================================
+
+  # Flowable Engine Service (Phase 1 - Week 3-4)
+  # TODO: Uncomment when engine service is implemented
+  # engine-service:
+  #   build:
+  #     context: ../..
+  #     dockerfile: Dockerfile
+  #     target: engine-service
+  #   container_name: werkflow-engine
+  #   env_file:
+  #     - ../../.env.shared
+  #     - ../../.env.engine
+  #   environment:
+  #     SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/werkflow
+  #     SPRING_DATASOURCE_USERNAME: werkflow_admin
+  #     SPRING_DATASOURCE_PASSWORD: werkflow_secure_pass
+  #   ports:
+  #     - "8081:8081"
+  #   volumes:
+  #     - engine_data:/app/process-definitions
+  #     - engine_logs:/app/logs
+  #   networks:
+  #     - werkflow-network
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     keycloak:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+  # HR Service
+  hr-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: hr-service
+    container_name: werkflow-hr
+    env_file:
+      - ../../.env.shared
+      - ../../.env.hr
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/werkflow
+      SPRING_DATASOURCE_USERNAME: werkflow_admin
+      SPRING_DATASOURCE_PASSWORD: werkflow_secure_pass
+      SPRING_DATASOURCE_SCHEMA: hr_service
+      SERVER_PORT: 8082
+    ports:
+      - "8082:8082"
+    volumes:
+      - hr_documents:/app/hr-documents
+      - hr_logs:/app/logs
+    networks:
+      - werkflow-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Admin Service (Phase 1 - Week 7-8)
+  # TODO: Uncomment when admin service is implemented
+  # admin-service:
+  #   build:
+  #     context: ../..
+  #     dockerfile: Dockerfile
+  #     target: admin-service
+  #   container_name: werkflow-admin
+  #   env_file:
+  #     - ../../.env.shared
+  #     - ../../.env.admin
+  #   environment:
+  #     SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/werkflow
+  #     SPRING_DATASOURCE_USERNAME: werkflow_admin
+  #     SPRING_DATASOURCE_PASSWORD: werkflow_secure_pass
+  #     SPRING_DATASOURCE_SCHEMA: admin_service
+  #   ports:
+  #     - "8083:8083"
+  #   volumes:
+  #     - admin_logs:/app/logs
+  #   networks:
+  #     - werkflow-network
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     keycloak:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+  # ================================================================
+  # FRONTEND SERVICES
+  # ================================================================
+
+  # Admin Portal (Workflow Designer)
+  admin-portal:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: admin-portal
+    container_name: werkflow-admin-portal
+    environment:
+      PORT: 4000
+      NODE_ENV: production
+      # Backend API URLs (internal Docker network)
+      NEXT_PUBLIC_ENGINE_API_URL: http://engine-service:8081/api
+      NEXT_PUBLIC_HR_API_URL: http://hr-service:8082/api
+      NEXT_PUBLIC_ADMIN_API_URL: http://admin-service:8083/api
+      # NextAuth
+      NEXTAUTH_URL: http://localhost:4000
+      # Keycloak (external URL for browser)
+      KEYCLOAK_ISSUER: http://localhost:8090/realms/werkflow
+    ports:
+      - "4000:4000"
+    networks:
+      - werkflow-network
+    depends_on:
+      - hr-service
+      # - engine-service  # Uncomment when implemented
+      # - admin-service   # Uncomment when implemented
+    restart: unless-stopped
+
+  # HR Portal (Phase 2 - Week 9-12)
+  # TODO: Uncomment when HR portal is implemented
+  # hr-portal:
+  #   build:
+  #     context: ../..
+  #     dockerfile: Dockerfile
+  #     target: hr-portal
+  #   container_name: werkflow-hr-portal
+  #   environment:
+  #     PORT: 4001
+  #     NODE_ENV: production
+  #     NEXT_PUBLIC_ENGINE_API_URL: http://engine-service:8081/api
+  #     NEXT_PUBLIC_HR_API_URL: http://hr-service:8082/api
+  #     NEXT_PUBLIC_ADMIN_API_URL: http://admin-service:8083/api
+  #     NEXTAUTH_URL: http://localhost:4001
+  #     KEYCLOAK_ISSUER: http://localhost:8090/realms/werkflow
+  #   ports:
+  #     - "4001:4001"
+  #   networks:
+  #     - werkflow-network
+  #   depends_on:
+  #     - hr-service
+  #     - engine-service
+  #     - admin-service
+  #   restart: unless-stopped
+
+# ================================================================
+# VOLUMES
+# ================================================================
 volumes:
   postgres_data:
     driver: local
@@ -100,7 +265,21 @@ volumes:
     driver: local
   pgadmin_data:
     driver: local
+  # engine_data:
+  #   driver: local
+  # engine_logs:
+  #   driver: local
+  hr_documents:
+    driver: local
+  hr_logs:
+    driver: local
+  # admin_logs:
+  #   driver: local
 
+# ================================================================
+# NETWORKS
+# ================================================================
 networks:
   werkflow-network:
     driver: bridge
+    name: werkflow-network

@@ -230,31 +230,36 @@ services:
       - admin-service
     restart: unless-stopped
 
-  # HR Portal (Phase 2 - Week 9-12)
-  # TODO: Uncomment when HR portal is implemented
-  # hr-portal:
-  #   build:
-  #     context: ../..
-  #     dockerfile: Dockerfile
-  #     target: hr-portal
-  #   container_name: werkflow-hr-portal
-  #   environment:
-  #     PORT: 4001
-  #     NODE_ENV: production
-  #     NEXT_PUBLIC_ENGINE_API_URL: http://engine-service:8081/api
-  #     NEXT_PUBLIC_HR_API_URL: http://hr-service:8082/api
-  #     NEXT_PUBLIC_ADMIN_API_URL: http://admin-service:8083/api
-  #     NEXTAUTH_URL: http://localhost:4001
-  #     KEYCLOAK_ISSUER: http://localhost:8090/realms/werkflow
-  #   ports:
-  #     - "4001:4001"
-  #   networks:
-  #     - werkflow-network
-  #   depends_on:
-  #     - hr-service
-  #     - engine-service
-  #     - admin-service
-  #   restart: unless-stopped
+  # HR Portal (Phase 2)
+  hr-portal:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: hr-portal
+    container_name: werkflow-hr-portal
+    environment:
+      PORT: 4001
+      NODE_ENV: production
+      # Backend API URLs (internal Docker network)
+      NEXT_PUBLIC_ENGINE_API_URL: http://engine-service:8081/api
+      NEXT_PUBLIC_HR_API_URL: http://hr-service:8082/api
+      NEXT_PUBLIC_ADMIN_API_URL: http://admin-service:8083/api
+      # NextAuth
+      NEXTAUTH_URL: http://localhost:4001
+      NEXTAUTH_SECRET: change-me-in-production
+      # Keycloak (external URL for browser)
+      KEYCLOAK_CLIENT_ID: werkflow-hr-portal
+      KEYCLOAK_CLIENT_SECRET: change-me-in-production
+      KEYCLOAK_ISSUER: http://localhost:8090/realms/werkflow
+    ports:
+      - "4001:4001"
+    networks:
+      - werkflow-network
+    depends_on:
+      - hr-service
+      - engine-service
+      - admin-service
+    restart: unless-stopped
 
 # ================================================================
 # VOLUMES

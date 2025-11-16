@@ -111,12 +111,23 @@ COPY frontends/admin-portal/ ./
 RUN npm run build
 
 # ================================================================
-# STAGE 8: HR Portal Build (Placeholder - Phase 2)
+# STAGE 8: HR Portal Build
 # ================================================================
 FROM frontend-base AS hr-portal-build
 
-# TODO: Implement in Phase 2 Week 9-12
-# For now, this is a placeholder
+WORKDIR /build/frontends/hr-portal
+
+# Copy package files
+COPY frontends/hr-portal/package.json frontends/hr-portal/package-lock.json* ./
+
+# Install dependencies
+RUN npm ci --only=production && npm cache clean --force
+
+# Copy source code
+COPY frontends/hr-portal/ ./
+
+# Build the application
+RUN npm run build
 
 # ================================================================
 # STAGE 9: HR Service Runtime
@@ -243,15 +254,19 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
 CMD ["node", "server.js"]
 
 # ================================================================
-# STAGE 13: HR Portal Runtime (Placeholder - Phase 2)
+# STAGE 13: HR Portal Runtime
 # ================================================================
 FROM node:20-alpine AS hr-portal
 
-# TODO: Implement in Phase 2 Week 9-12
-
+# Add non-root user
 RUN addgroup -S werkflow && adduser -S werkflow -G werkflow
 
 WORKDIR /app
+
+# Copy built application
+COPY --from=hr-portal-build --chown=werkflow:werkflow /build/frontends/hr-portal/.next/standalone ./
+COPY --from=hr-portal-build --chown=werkflow:werkflow /build/frontends/hr-portal/.next/static ./.next/static
+COPY --from=hr-portal-build --chown=werkflow:werkflow /build/frontends/hr-portal/public ./public
 
 USER werkflow
 
@@ -260,4 +275,8 @@ EXPOSE 4001
 ENV PORT=4001
 ENV NODE_ENV=production
 
-# CMD ["node", "server.js"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:4001/api/health || exit 1
+
+CMD ["node", "server.js"]

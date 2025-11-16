@@ -1,0 +1,390 @@
+{
+  "info": {
+    "name": "whrkflow API Collection",
+    "description": "Complete API collection for whrkflow HR Management Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Departments",
+      "item": [
+        {
+          "name": "Get All Departments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/departments",
+              "host": ["{{baseUrl}}"],
+              "path": ["departments"]
+            }
+          }
+        },
+        {
+          "name": "Get Department by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/departments/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["departments", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Department",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"IT Operations\",\n  \"description\": \"IT Operations and Support\",\n  \"code\": \"IT-OPS\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/departments",
+              "host": ["{{baseUrl}}"],
+              "path": ["departments"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Employees",
+      "item": [
+        {
+          "name": "Get All Employees",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/employees",
+              "host": ["{{baseUrl}}"],
+              "path": ["employees"]
+            }
+          }
+        },
+        {
+          "name": "Get Employee by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/employees/2",
+              "host": ["{{baseUrl}}"],
+              "path": ["employees", "2"]
+            }
+          }
+        },
+        {
+          "name": "Search Employees",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/employees/search?searchTerm=john",
+              "host": ["{{baseUrl}}"],
+              "path": ["employees", "search"],
+              "query": [
+                {
+                  "key": "searchTerm",
+                  "value": "john"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeCode\": \"EMP009\",\n  \"firstName\": \"Alice\",\n  \"lastName\": \"Johnson\",\n  \"email\": \"alice.johnson@whrkflow.com\",\n  \"phoneNumber\": \"+1234567898\",\n  \"dateOfBirth\": \"1995-06-15\",\n  \"joinDate\": \"2024-01-01\",\n  \"jobTitle\": \"Software Engineer\",\n  \"employmentStatus\": \"ACTIVE\",\n  \"salary\": 80000.00,\n  \"address\": \"123 Tech Street, City, State\",\n  \"departmentId\": 1,\n  \"managerId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/employees",
+              "host": ["{{baseUrl}}"],
+              "path": ["employees"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Leaves",
+      "item": [
+        {
+          "name": "Get All Leaves",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/leaves",
+              "host": ["{{baseUrl}}"],
+              "path": ["leaves"]
+            }
+          }
+        },
+        {
+          "name": "Get Leaves by Employee",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/leaves/employee/2",
+              "host": ["{{baseUrl}}"],
+              "path": ["leaves", "employee", "2"]
+            }
+          }
+        },
+        {
+          "name": "Create Leave Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": 2,\n  \"leaveType\": \"ANNUAL\",\n  \"startDate\": \"2024-12-15\",\n  \"endDate\": \"2024-12-20\",\n  \"numberOfDays\": 5,\n  \"reason\": \"Family vacation\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/leaves",
+              "host": ["{{baseUrl}}"],
+              "path": ["leaves"]
+            }
+          }
+        },
+        {
+          "name": "Approve Leave",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/leaves/1/approve?approverId=1&remarks=Approved",
+              "host": ["{{baseUrl}}"],
+              "path": ["leaves", "1", "approve"],
+              "query": [
+                {
+                  "key": "approverId",
+                  "value": "1"
+                },
+                {
+                  "key": "remarks",
+                  "value": "Approved"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Attendance",
+      "item": [
+        {
+          "name": "Get All Attendances",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/attendances",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendances"]
+            }
+          }
+        },
+        {
+          "name": "Get Attendances by Employee",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/attendances/employee/2",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendances", "employee", "2"]
+            }
+          }
+        },
+        {
+          "name": "Create Attendance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": 2,\n  \"attendanceDate\": \"2024-11-11\",\n  \"checkInTime\": \"09:00:00\",\n  \"checkOutTime\": \"18:00:00\",\n  \"status\": \"PRESENT\",\n  \"remarks\": \"Regular working day\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendances",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendances"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Performance Reviews",
+      "item": [
+        {
+          "name": "Get All Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/performance-reviews",
+              "host": ["{{baseUrl}}"],
+              "path": ["performance-reviews"]
+            }
+          }
+        },
+        {
+          "name": "Get Reviews by Employee",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/performance-reviews/employee/2",
+              "host": ["{{baseUrl}}"],
+              "path": ["performance-reviews", "employee", "2"]
+            }
+          }
+        },
+        {
+          "name": "Create Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": 6,\n  \"reviewDate\": \"2024-12-31\",\n  \"reviewPeriodStart\": \"2024-07-01\",\n  \"reviewPeriodEnd\": \"2024-12-31\",\n  \"rating\": \"EXCEEDS_EXPECTATIONS\",\n  \"score\": 85.0,\n  \"strengths\": \"Great team player, excellent coding skills\",\n  \"areasForImprovement\": \"Could improve time management\",\n  \"goals\": \"Lead a project in Q1 2025\",\n  \"comments\": \"Overall excellent performance\",\n  \"reviewerId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/performance-reviews",
+              "host": ["{{baseUrl}}"],
+              "path": ["performance-reviews"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payroll",
+      "item": [
+        {
+          "name": "Get All Payrolls",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payrolls",
+              "host": ["{{baseUrl}}"],
+              "path": ["payrolls"]
+            }
+          }
+        },
+        {
+          "name": "Get Payrolls by Employee",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payrolls/employee/2",
+              "host": ["{{baseUrl}}"],
+              "path": ["payrolls", "employee", "2"]
+            }
+          }
+        },
+        {
+          "name": "Get Payrolls by Period",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payrolls/period?month=11&year=2024",
+              "host": ["{{baseUrl}}"],
+              "path": ["payrolls", "period"],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "11"
+                },
+                {
+                  "key": "year",
+                  "value": "2024"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Payroll",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": 6,\n  \"paymentMonth\": 12,\n  \"paymentYear\": 2024,\n  \"paymentDate\": \"2024-12-31\",\n  \"basicSalary\": 75000.00,\n  \"allowances\": 3500.00,\n  \"bonuses\": 5000.00,\n  \"overtimePay\": 0.00,\n  \"taxDeduction\": 16600.00,\n  \"insuranceDeduction\": 1200.00,\n  \"otherDeductions\": 0.00,\n  \"remarks\": \"Year-end bonus included\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payrolls",
+              "host": ["{{baseUrl}}"],
+              "path": ["payrolls"]
+            }
+          }
+        },
+        {
+          "name": "Mark Payroll as Paid",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payrolls/1/mark-paid",
+              "host": ["{{baseUrl}}"],
+              "path": ["payrolls", "1", "mark-paid"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

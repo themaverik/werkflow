@@ -1,0 +1,141 @@
+spring:
+  application:
+    name: werkflow-engine-service
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5433}/${POSTGRES_DB:werkflow}
+    username: ${POSTGRES_USER:werkflow_admin}
+    password: ${POSTGRES_PASSWORD:werkflow_secure_pass}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${POSTGRES_MAX_POOL_SIZE:10}
+      minimum-idle: ${POSTGRES_MIN_IDLE:2}
+      connection-timeout: ${POSTGRES_CONNECTION_TIMEOUT:30000}
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: none  # Managed by Flyway and Flowable
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: ${SPRING_DATASOURCE_SCHEMA:flowable}
+        jdbc:
+          lob:
+            non_contextual_creation: true
+
+  flyway:
+    enabled: ${FLYWAY_ENABLED:false}  # Flowable manages its own schema
+    baseline-on-migrate: true
+    schemas: ${SPRING_DATASOURCE_SCHEMA:flowable}
+    locations: classpath:db/migration
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER:http://localhost:8090/realms/werkflow}
+          jwk-set-uri: ${KEYCLOAK_ISSUER:http://localhost:8090/realms/werkflow}/protocol/openid-connect/certs
+
+server:
+  port: ${SERVER_PORT:8081}
+  servlet:
+    context-path: /
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# Flowable Configuration
+flowable:
+  # Database schema management
+  database-schema-update: ${FLOWABLE_DATABASE_SCHEMA_UPDATE:true}
+  db-history-used: true
+
+  # Async executor for timers and async jobs
+  async-executor-activate: ${FLOWABLE_ASYNC_EXECUTOR_ACTIVATE:true}
+  async:
+    executor:
+      core-pool-size: ${FLOWABLE_ASYNC_EXECUTOR_CORE_POOL_SIZE:2}
+      max-pool-size: ${FLOWABLE_ASYNC_EXECUTOR_MAX_POOL_SIZE:10}
+      queue-size: 100
+      keep-alive-time: 60000
+
+  # Process definition cache
+  process-definition-cache-limit: ${FLOWABLE_PROCESS_DEFINITION_CACHE_LIMIT:100}
+
+  # History level: none, activity, audit, full
+  history-level: ${FLOWABLE_HISTORY_LEVEL:full}
+
+  # REST API
+  rest-api-enabled: ${FLOWABLE_REST_API_ENABLED:true}
+
+  # Process validation
+  process-validation-enabled: true
+
+  # Mail server configuration (if needed)
+  mail-server-host: ${SMTP_HOST:smtp.example.com}
+  mail-server-port: ${SMTP_PORT:587}
+  mail-server-username: ${SMTP_USERNAME:}
+  mail-server-password: ${SMTP_PASSWORD:}
+  mail-server-use-tls: true
+
+# Management & Monitoring
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:health,info,metrics,flowable}
+  endpoint:
+    health:
+      show-details: ${MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS:always}
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# API Documentation
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_API_DOCS_ENABLED:true}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${SPRINGDOC_SWAGGER_UI_ENABLED:true}
+    path: ${SPRINGDOC_SWAGGER_UI_PATH:/swagger-ui.html}
+    operations-sorter: alpha
+    tags-sorter: alpha
+    display-request-duration: true
+    doc-expansion: none
+
+# Logging
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
+    com.werkflow.engine: ${LOG_LEVEL:INFO}
+    org.flowable: INFO
+    org.springframework.security: INFO
+  file:
+    path: ${LOG_FILE_PATH:./logs}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Application-specific configuration
+app:
+  name: ${APP_NAME:Werkflow Engine Service}
+  version: ${APP_VERSION:1.0.0}
+  environment: ${APP_ENVIRONMENT:development}
+
+  # BPMN process storage
+  bpmn:
+    storage-path: ${BPMN_STORAGE_PATH:./process-definitions}
+    max-file-size: ${BPMN_MAX_FILE_SIZE:5}  # MB
+
+  # Service URLs for delegates
+  services:
+    hr-url: ${HR_SERVICE_URL:http://localhost:8082}
+    admin-url: ${ADMIN_SERVICE_URL:http://localhost:8083}
+    finance-url: ${FINANCE_SERVICE_URL:http://localhost:8084}
+    procurement-url: ${PROCUREMENT_SERVICE_URL:http://localhost:8085}

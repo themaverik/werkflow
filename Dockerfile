@@ -12,11 +12,13 @@ FROM maven:3.9-eclipse-temurin-17 AS backend-base
 
 WORKDIR /build
 
-# Copy parent pom if exists, otherwise individual service poms
+# Copy poms for all services
 COPY services/hr/pom.xml services/hr/pom.xml
+COPY services/engine/pom.xml services/engine/pom.xml
 
 # Download dependencies for all services
 RUN cd services/hr && mvn dependency:go-offline -B
+RUN cd services/engine && mvn dependency:go-offline -B
 
 # ================================================================
 # STAGE 2: HR Service Build
@@ -32,13 +34,17 @@ COPY services/hr/src ./src
 RUN mvn clean package -DskipTests -B
 
 # ================================================================
-# STAGE 3: Engine Service Build (Placeholder - Phase 1)
+# STAGE 3: Engine Service Build
 # ================================================================
 FROM backend-base AS engine-service-build
 
-# TODO: Implement in Phase 1 Week 3-4
-# For now, this is a placeholder that will be populated
-# when the engine service is extracted from HR service
+WORKDIR /build/services/engine
+
+# Copy source code
+COPY services/engine/src ./src
+
+# Build the application
+RUN mvn clean package -DskipTests -B
 
 # ================================================================
 # STAGE 4: Admin Service Build (Placeholder - Phase 1)
@@ -119,19 +125,19 @@ ENTRYPOINT ["java", \
     "app.jar"]
 
 # ================================================================
-# STAGE 9: Engine Service Runtime (Placeholder - Phase 1)
+# STAGE 9: Engine Service Runtime
 # ================================================================
 FROM eclipse-temurin:17-jre-alpine AS engine-service
 
-# TODO: Implement in Phase 1 Week 3-4
-
+# Add non-root user
 RUN addgroup -S werkflow && adduser -S werkflow -G werkflow
 
 WORKDIR /app
 
-# Placeholder - will copy engine JAR when built
-# COPY --from=engine-service-build /build/services/engine/target/*.jar app.jar
+# Copy JAR from build stage
+COPY --from=engine-service-build /build/services/engine/target/*.jar app.jar
 
+# Create directories
 RUN mkdir -p /app/logs /app/process-definitions && \
     chown -R werkflow:werkflow /app
 
@@ -139,15 +145,16 @@ USER werkflow
 
 EXPOSE 8081
 
-# HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-#     CMD wget --no-verbose --tries=1 --spider http://localhost:8081/actuator/health || exit 1
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8081/actuator/health || exit 1
 
-# ENTRYPOINT ["java", \
-#     "-Djava.security.egd=file:/dev/./urandom", \
-#     "-XX:MaxRAMPercentage=75.0", \
-#     "-XX:+UseContainerSupport", \
-#     "-jar", \
-#     "app.jar"]
+ENTRYPOINT ["java", \
+    "-Djava.security.egd=file:/dev/./urandom", \
+    "-XX:MaxRAMPercentage=75.0", \
+    "-XX:+UseContainerSupport", \
+    "-jar", \
+    "app.jar"]
 
 # ================================================================
 # STAGE 10: Admin Service Runtime (Placeholder - Phase 1)

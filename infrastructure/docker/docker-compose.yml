@@ -109,34 +109,35 @@ services:
   # BACKEND SERVICES
   # ================================================================
 
-  # Flowable Engine Service (Phase 1 - Week 3-4)
-  # TODO: Uncomment when engine service is implemented
-  # engine-service:
-  #   build:
-  #     context: ../..
-  #     dockerfile: Dockerfile
-  #     target: engine-service
-  #   container_name: werkflow-engine
-  #   env_file:
-  #     - ../../.env.shared
-  #     - ../../.env.engine
-  #   environment:
-  #     SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/werkflow
-  #     SPRING_DATASOURCE_USERNAME: werkflow_admin
-  #     SPRING_DATASOURCE_PASSWORD: werkflow_secure_pass
-  #   ports:
-  #     - "8081:8081"
-  #   volumes:
-  #     - engine_data:/app/process-definitions
-  #     - engine_logs:/app/logs
-  #   networks:
-  #     - werkflow-network
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     keycloak:
-  #       condition: service_healthy
-  #   restart: unless-stopped
+  # Flowable Engine Service
+  engine-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: engine-service
+    container_name: werkflow-engine
+    env_file:
+      - ../../.env.shared
+      - ../../.env.engine
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/werkflow
+      SPRING_DATASOURCE_USERNAME: werkflow_admin
+      SPRING_DATASOURCE_PASSWORD: werkflow_secure_pass
+      SPRING_DATASOURCE_SCHEMA: flowable
+      SERVER_PORT: 8081
+    ports:
+      - "8081:8081"
+    volumes:
+      - engine_data:/app/process-definitions
+      - engine_logs:/app/logs
+    networks:
+      - werkflow-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    restart: unless-stopped
 
   # HR Service
   hr-service:
@@ -225,7 +226,7 @@ services:
       - werkflow-network
     depends_on:
       - hr-service
-      # - engine-service  # Uncomment when implemented
+      - engine-service
       # - admin-service   # Uncomment when implemented
     restart: unless-stopped
 
@@ -265,10 +266,10 @@ volumes:
     driver: local
   pgadmin_data:
     driver: local
-  # engine_data:
-  #   driver: local
-  # engine_logs:
-  #   driver: local
+  engine_data:
+    driver: local
+  engine_logs:
+    driver: local
   hr_documents:
     driver: local
   hr_logs:

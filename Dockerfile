@@ -12,16 +12,33 @@ FROM maven:3.9-eclipse-temurin-17 AS backend-base
 
 WORKDIR /build
 
-# Copy poms for all services
+# Copy poms for shared libraries and services
+COPY shared/delegates/pom.xml shared/delegates/pom.xml
 COPY services/hr/pom.xml services/hr/pom.xml
 COPY services/engine/pom.xml services/engine/pom.xml
+
+# Download dependencies for shared libraries
+RUN cd shared/delegates && mvn dependency:go-offline -B
 
 # Download dependencies for all services
 RUN cd services/hr && mvn dependency:go-offline -B
 RUN cd services/engine && mvn dependency:go-offline -B
 
 # ================================================================
-# STAGE 2: HR Service Build
+# STAGE 2: Delegates Library Build
+# ================================================================
+FROM backend-base AS delegates-build
+
+WORKDIR /build/shared/delegates
+
+# Copy source code
+COPY shared/delegates/src ./src
+
+# Build and install to local maven repo
+RUN mvn clean install -DskipTests -B
+
+# ================================================================
+# STAGE 3: HR Service Build
 # ================================================================
 FROM backend-base AS hr-service-build
 
@@ -34,9 +51,12 @@ COPY services/hr/src ./src
 RUN mvn clean package -DskipTests -B
 
 # ================================================================
-# STAGE 3: Engine Service Build
+# STAGE 4: Engine Service Build
 # ================================================================
 FROM backend-base AS engine-service-build
+
+# Copy delegates library from delegates-build stage
+COPY --from=delegates-build /root/.m2/repository/com/werkflow/werkflow-delegates /root/.m2/repository/com/werkflow/werkflow-delegates
 
 WORKDIR /build/services/engine
 
@@ -47,7 +67,7 @@ COPY services/engine/src ./src
 RUN mvn clean package -DskipTests -B
 
 # ================================================================
-# STAGE 4: Admin Service Build (Placeholder - Phase 1)
+# STAGE 5: Admin Service Build (Placeholder - Phase 1)
 # ================================================================
 FROM backend-base AS admin-service-build
 
@@ -56,7 +76,7 @@ FROM backend-base AS admin-service-build
 # when the admin service is created
 
 # ================================================================
-# STAGE 5: Frontend Base - Node.js dependencies
+# STAGE 6: Frontend Base - Node.js dependencies
 # ================================================================
 FROM node:20-alpine AS frontend-base
 
@@ -66,7 +86,7 @@ WORKDIR /build
 RUN npm install -g pnpm
 
 # ================================================================
-# STAGE 6: Admin Portal Build
+# STAGE 7: Admin Portal Build
 # ================================================================
 FROM frontend-base AS admin-portal-build
 
@@ -85,7 +105,7 @@ COPY frontends/admin-portal/ ./
 RUN npm run build
 
 # ================================================================
-# STAGE 7: HR Portal Build (Placeholder - Phase 2)
+# STAGE 8: HR Portal Build (Placeholder - Phase 2)
 # ================================================================
 FROM frontend-base AS hr-portal-build
 
@@ -93,7 +113,7 @@ FROM frontend-base AS hr-portal-build
 # For now, this is a placeholder
 
 # ================================================================
-# STAGE 8: HR Service Runtime
+# STAGE 9: HR Service Runtime
 # ================================================================
 FROM eclipse-temurin:17-jre-alpine AS hr-service
 
@@ -125,7 +145,7 @@ ENTRYPOINT ["java", \
     "app.jar"]
 
 # ================================================================
-# STAGE 9: Engine Service Runtime
+# STAGE 10: Engine Service Runtime
 # ================================================================
 FROM eclipse-temurin:17-jre-alpine AS engine-service
 
@@ -157,7 +177,7 @@ ENTRYPOINT ["java", \
     "app.jar"]
 
 # ================================================================
-# STAGE 10: Admin Service Runtime (Placeholder - Phase 1)
+# STAGE 11: Admin Service Runtime (Placeholder - Phase 1)
 # ================================================================
 FROM eclipse-temurin:17-jre-alpine AS admin-service
 
@@ -188,7 +208,7 @@ EXPOSE 8083
 #     "app.jar"]
 
 # ================================================================
-# STAGE 11: Admin Portal Runtime
+# STAGE 12: Admin Portal Runtime
 # ================================================================
 FROM node:20-alpine AS admin-portal
 
@@ -216,7 +236,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
 CMD ["node", "server.js"]
 
 # ================================================================
-# STAGE 12: HR Portal Runtime (Placeholder - Phase 2)
+# STAGE 13: HR Portal Runtime (Placeholder - Phase 2)
 # ================================================================
 FROM node:20-alpine AS hr-portal
 

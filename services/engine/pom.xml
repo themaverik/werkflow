@@ -105,6 +105,13 @@
             <version>${flowable.version}</version>
         </dependency>
 
+        <!-- Werkflow Generic Delegates -->
+        <dependency>
+            <groupId>com.werkflow</groupId>
+            <artifactId>werkflow-delegates</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- Database -->
         <dependency>
             <groupId>org.postgresql</groupId>

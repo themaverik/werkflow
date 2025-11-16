@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "whrkflow API Collection",
-    "description": "Complete API collection for whrkflow HR Management Platform",
+    "name": "werkflow API Collection",
+    "description": "Complete API collection for werkflow HR Management Platform",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -119,7 +119,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"employeeCode\": \"EMP009\",\n  \"firstName\": \"Alice\",\n  \"lastName\": \"Johnson\",\n  \"email\": \"alice.johnson@whrkflow.com\",\n  \"phoneNumber\": \"+1234567898\",\n  \"dateOfBirth\": \"1995-06-15\",\n  \"joinDate\": \"2024-01-01\",\n  \"jobTitle\": \"Software Engineer\",\n  \"employmentStatus\": \"ACTIVE\",\n  \"salary\": 80000.00,\n  \"address\": \"123 Tech Street, City, State\",\n  \"departmentId\": 1,\n  \"managerId\": 2\n}"
+              "raw": "{\n  \"employeeCode\": \"EMP009\",\n  \"firstName\": \"Alice\",\n  \"lastName\": \"Johnson\",\n  \"email\": \"alice.johnson@werkflow.com\",\n  \"phoneNumber\": \"+1234567898\",\n  \"dateOfBirth\": \"1995-06-15\",\n  \"joinDate\": \"2024-01-01\",\n  \"jobTitle\": \"Software Engineer\",\n  \"employmentStatus\": \"ACTIVE\",\n  \"salary\": 80000.00,\n  \"address\": \"123 Tech Street, City, State\",\n  \"departmentId\": 1,\n  \"managerId\": 2\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/employees",

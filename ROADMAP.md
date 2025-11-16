@@ -215,7 +215,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center">
       <Card className="w-[400px]">
         <CardHeader>
-          <CardTitle>Login to Whrkflow</CardTitle>
+          <CardTitle>Login to Werkflow</CardTitle>
         </CardHeader>
         <CardContent>
           <form action={signIn}>
@@ -240,9 +240,9 @@ NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your-secret-here-generate-with-openssl-rand-base64-32
 
 # Keycloak
-KEYCLOAK_CLIENT_ID=whrkflow-frontend
+KEYCLOAK_CLIENT_ID=werkflow-frontend
 KEYCLOAK_CLIENT_SECRET=your-client-secret
-KEYCLOAK_ISSUER=http://localhost:8090/realms/whrkflow
+KEYCLOAK_ISSUER=http://localhost:8090/realms/werkflow
 ```
 
 **Success Criteria:**
@@ -866,12 +866,12 @@ Already production-ready in `backend/` folder.
 
 **Production (.env.production):**
 ```env
-NEXT_PUBLIC_API_URL=https://api.whrkflow.com
-NEXTAUTH_URL=https://whrkflow.com
+NEXT_PUBLIC_API_URL=https://api.werkflow.com
+NEXTAUTH_URL=https://werkflow.com
 NEXTAUTH_SECRET=your-production-secret
-KEYCLOAK_CLIENT_ID=whrkflow-frontend
+KEYCLOAK_CLIENT_ID=werkflow-frontend
 KEYCLOAK_CLIENT_SECRET=your-production-secret
-KEYCLOAK_ISSUER=https://keycloak.whrkflow.com/realms/whrkflow
+KEYCLOAK_ISSUER=https://keycloak.werkflow.com/realms/werkflow
 ```
 
 ---

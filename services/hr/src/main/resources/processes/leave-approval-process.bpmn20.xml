@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:flowable="http://flowable.org/bpmn"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://www.werkflow.com/bpmn">
+
+  <process id="leaveApprovalProcess" name="Leave Approval Process" isExecutable="true">
+
+    <documentation>
+      Workflow for managing employee leave requests from submission to approval/rejection.
+    </documentation>
+
+    <!-- Start Event -->
+    <startEvent id="startEvent" name="Leave Request Submitted">
+      <extensionElements>
+        <flowable:formProperty id="leaveId" name="Leave Request ID" type="long" required="true"/>
+        <flowable:formProperty id="employeeId" name="Employee ID" type="long" required="true"/>
+        <flowable:formProperty id="employeeName" name="Employee Name" type="string" required="true"/>
+        <flowable:formProperty id="leaveType" name="Leave Type" type="enum" required="true">
+          <flowable:value id="VACATION" name="Vacation"/>
+          <flowable:value id="SICK" name="Sick Leave"/>
+          <flowable:value id="PERSONAL" name="Personal Leave"/>
+          <flowable:value id="UNPAID" name="Unpaid Leave"/>
+        </flowable:formProperty>
+        <flowable:formProperty id="startDate" name="Start Date" type="date" required="true"/>
+        <flowable:formProperty id="endDate" name="End Date" type="date" required="true"/>
+        <flowable:formProperty id="reason" name="Reason" type="string" required="true"/>
+        <flowable:formProperty id="managerId" name="Manager ID" type="long" required="true"/>
+      </extensionElements>
+    </startEvent>
+
+    <!-- User Task: Manager Review -->
+    <userTask id="managerReviewTask" name="Manager Review" flowable:candidateGroups="MANAGER">
+      <documentation>
+        Manager reviews the leave request and decides to approve or reject.
+      </documentation>
+      <extensionElements>
+        <flowable:formProperty id="leaveId" name="Leave Request ID" type="long" writable="false"/>
+        <flowable:formProperty id="employeeName" name="Employee Name" type="string" writable="false"/>
+        <flowable:formProperty id="leaveType" name="Leave Type" type="string" writable="false"/>
+        <flowable:formProperty id="startDate" name="Start Date" type="date" writable="false"/>
+        <flowable:formProperty id="endDate" name="End Date" type="date" writable="false"/>
+        <flowable:formProperty id="reason" name="Reason" type="string" writable="false"/>
+        <flowable:formProperty id="approved" name="Approved" type="boolean" required="true"/>
+        <flowable:formProperty id="managerComments" name="Manager Comments" type="string"/>
+      </extensionElements>
+    </userTask>
+
+    <!-- Exclusive Gateway: Decision Point -->
+    <exclusiveGateway id="approvalDecisionGateway" name="Approved?"/>
+
+    <!-- Service Task: Update Leave Status to Approved -->
+    <serviceTask id="approveLeaveTask" name="Approve Leave"
+                 flowable:delegateExpression="${leaveApprovalDelegate}">
+      <documentation>
+        Updates the leave status to APPROVED in the database.
+      </documentation>
+    </serviceTask>
+
+    <!-- Service Task: Update Leave Status to Rejected -->
+    <serviceTask id="rejectLeaveTask" name="Reject Leave"
+                 flowable:delegateExpression="${leaveRejectionDelegate}">
+      <documentation>
+        Updates the leave status to REJECTED in the database.
+      </documentation>
+    </serviceTask>
+
+    <!-- Service Task: Notify HR -->
+    <serviceTask id="notifyHRTask" name="Notify HR"
+                 flowable:delegateExpression="${notifyHRDelegate}">
+      <documentation>
+        Sends notification to HR department about approved leave.
+      </documentation>
+    </serviceTask>
+
+    <!-- Service Task: Notify Employee of Approval -->
+    <serviceTask id="notifyEmployeeApprovalTask" name="Notify Employee (Approved)"
+                 flowable:delegateExpression="${notifyEmployeeDelegate}">
+      <documentation>
+        Sends approval notification to the employee.
+      </documentation>
+    </serviceTask>
+
+    <!-- Service Task: Notify Employee of Rejection -->
+    <serviceTask id="notifyEmployeeRejectionTask" name="Notify Employee (Rejected)"
+                 flowable:delegateExpression="${notifyEmployeeDelegate}">
+      <documentation>
+        Sends rejection notification to the employee.
+      </documentation>
+    </serviceTask>
+
+    <!-- End Events -->
+    <endEvent id="leaveApprovedEndEvent" name="Leave Approved"/>
+    <endEvent id="leaveRejectedEndEvent" name="Leave Rejected"/>
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="managerReviewTask"/>
+    <sequenceFlow id="flow2" sourceRef="managerReviewTask" targetRef="approvalDecisionGateway"/>
+
+    <sequenceFlow id="approvedFlow" sourceRef="approvalDecisionGateway" targetRef="approveLeaveTask">
+      <conditionExpression xsi:type="tFormalExpression">${approved == true}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="rejectedFlow" sourceRef="approvalDecisionGateway" targetRef="rejectLeaveTask">
+      <conditionExpression xsi:type="tFormalExpression">${approved == false}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="flow3" sourceRef="approveLeaveTask" targetRef="notifyHRTask"/>
+    <sequenceFlow id="flow4" sourceRef="notifyHRTask" targetRef="notifyEmployeeApprovalTask"/>
+    <sequenceFlow id="flow5" sourceRef="notifyEmployeeApprovalTask" targetRef="leaveApprovedEndEvent"/>
+
+    <sequenceFlow id="flow6" sourceRef="rejectLeaveTask" targetRef="notifyEmployeeRejectionTask"/>
+    <sequenceFlow id="flow7" sourceRef="notifyEmployeeRejectionTask" targetRef="leaveRejectedEndEvent"/>
+
+  </process>
+
+</definitions>

@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:flowable="http://flowable.org/bpmn"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://www.werkflow.com/bpmn">
+
+  <process id="performanceReviewProcess" name="Performance Review Process" isExecutable="true">
+
+    <documentation>
+      Comprehensive workflow for conducting employee performance reviews including self-assessment,
+      manager evaluation, review meeting, and HR approval.
+    </documentation>
+
+    <!-- Start Event -->
+    <startEvent id="startEvent" name="Review Cycle Started">
+      <extensionElements>
+        <flowable:formProperty id="reviewId" name="Review ID" type="long" required="true"/>
+        <flowable:formProperty id="employeeId" name="Employee ID" type="long" required="true"/>
+        <flowable:formProperty id="employeeName" name="Employee Name" type="string" required="true"/>
+        <flowable:formProperty id="managerId" name="Manager ID" type="long" required="true"/>
+        <flowable:formProperty id="reviewPeriodStart" name="Review Period Start" type="date" required="true"/>
+        <flowable:formProperty id="reviewPeriodEnd" name="Review Period End" type="date" required="true"/>
+        <flowable:formProperty id="reviewType" name="Review Type" type="enum" required="true">
+          <flowable:value id="ANNUAL" name="Annual Review"/>
+          <flowable:value id="QUARTERLY" name="Quarterly Review"/>
+          <flowable:value id="PROBATION" name="Probation Review"/>
+        </flowable:formProperty>
+      </extensionElements>
+    </startEvent>
+
+    <!-- User Task: Employee Self-Assessment -->
+    <userTask id="employeeSelfAssessmentTask" name="Employee Self-Assessment"
+              flowable:assignee="${employeeId}">
+      <documentation>
+        Employee completes self-assessment questionnaire reflecting on their performance.
+      </documentation>
+      <extensionElements>
+        <flowable:formProperty id="reviewId" name="Review ID" type="long" writable="false"/>
+        <flowable:formProperty id="employeeName" name="Employee Name" type="string" writable="false"/>
+        <flowable:formProperty id="reviewPeriodStart" name="Review Period Start" type="date" writable="false"/>
+        <flowable:formProperty id="reviewPeriodEnd" name="Review Period End" type="date" writable="false"/>
+        <flowable:formProperty id="accomplishments" name="Key Accomplishments" type="string" required="true"/>
+        <flowable:formProperty id="challenges" name="Challenges Faced" type="string"/>
+        <flowable:formProperty id="skillsDeveloped" name="Skills Developed" type="string"/>
+        <flowable:formProperty id="goalsNextPeriod" name="Goals for Next Period" type="string"/>
+        <flowable:formProperty id="selfRating" name="Self Rating (1-5)" type="long" required="true"/>
+        <flowable:formProperty id="additionalComments" name="Additional Comments" type="string"/>
+      </extensionElements>
+    </userTask>
+
+    <!-- User Task: Manager Assessment -->
+    <userTask id="managerAssessmentTask" name="Manager Assessment"
+              flowable:candidateGroups="MANAGER">
+      <documentation>
+        Manager evaluates employee performance and provides detailed feedback.
+      </documentation>
+      <extensionElements>
+        <flowable:formProperty id="reviewId" name="Review ID" type="long" writable="false"/>
+        <flowable:formProperty id="employeeName" name="Employee Name" type="string" writable="false"/>
+        <flowable:formProperty id="selfRating" name="Employee Self Rating" type="long" writable="false"/>
+        <flowable:formProperty id="accomplishments" name="Employee Accomplishments" type="string" writable="false"/>
+        <flowable:formProperty id="performanceStrengths" name="Performance Strengths" type="string" required="true"/>
+        <flowable:formProperty id="areasForImprovement" name="Areas for Improvement" type="string" required="true"/>
+        <flowable:formProperty id="technicalSkills" name="Technical Skills Rating (1-5)" type="long" required="true"/>
+        <flowable:formProperty id="communicationSkills" name="Communication Skills Rating (1-5)" type="long" required="true"/>
+        <flowable:formProperty id="teamwork" name="Teamwork Rating (1-5)" type="long" required="true"/>
+        <flowable:formProperty id="initiative" name="Initiative Rating (1-5)" type="long" required="true"/>
+        <flowable:formProperty id="overallRating" name="Overall Rating" type="enum" required="true">
+          <flowable:value id="OUTSTANDING" name="Outstanding"/>
+          <flowable:value id="EXCEEDS_EXPECTATIONS" name="Exceeds Expectations"/>
+          <flowable:value id="MEETS_EXPECTATIONS" name="Meets Expectations"/>
+          <flowable:value id="NEEDS_IMPROVEMENT" name="Needs Improvement"/>
+          <flowable:value id="UNSATISFACTORY" name="Unsatisfactory"/>
+        </flowable:formProperty>
+        <flowable:formProperty id="managerComments" name="Manager Comments" type="string" required="true"/>
+        <flowable:formProperty id="developmentPlan" name="Development Plan" type="string"/>
+      </extensionElements>
+    </userTask>
+
+    <!-- User Task: Schedule Review Meeting -->
+    <userTask id="scheduleReviewMeetingTask" name="Schedule Review Meeting"
+              flowable:candidateGroups="MANAGER">
+      <documentation>
+        Manager schedules one-on-one review meeting with employee.
+      </documentation>
+      <extensionElements>
+        <flowable:formProperty id="reviewId" name="Review ID" type="long" writable="false"/>
+        <flowable:formProperty id="employeeName" name="Employee Name" type="string" writable="false"/>
+        <flowable:formProperty id="meetingScheduled" name="Meeting Scheduled" type="boolean" required="true"/>
+        <flowable:formProperty id="meetingDate" name="Meeting Date" type="date" required="true"/>
+        <flowable:formProperty id="meetingTime" name="Meeting Time" type="string" required="true"/>
+        <flowable:formProperty id="meetingLocation" name="Meeting Location/Link" type="string" required="true"/>
+      </extensionElements>
+    </userTask>
+
+    <!-- User Task: Conduct Review Meeting -->
+    <userTask id="conductReviewMeetingTask" name="Conduct Review Meeting"
+              flowable:candidateGroups="MANAGER">
+      <documentation>
+        Manager and employee discuss performance review in one-on-one meeting.
+      </documentation>
+      <extensionElements>
+        <flowable:formProperty id="reviewId" name="Review ID" type="long" writable="false"/>
+        <flowable:formProperty id="employeeName" name="Employee Name" type="string" writable="false"/>
+        <flowable:formProperty id="overallRating" name="Overall Rating" type="string" writable="false"/>
+        <flowable:formProperty id="meetingCompleted" name="Meeting Completed" type="boolean" required="true"/>
+        <flowable:formProperty id="employeeAcknowledged" name="Employee Acknowledged Review" type="boolean" required="true"/>
+        <flowable:formProperty id="employeeFeedback" name="Employee Feedback on Review" type="string"/>
+        <flowable:formProperty id="actionItems" name="Action Items" type="string"/>
+        <flowable:formProperty id="followUpDate" name="Follow-up Date" type="date"/>
+        <flowable:formProperty id="meetingNotes" name="Meeting Notes" type="string"/>
+      </extensionElements>
+    </userTask>
+
+    <!-- Exclusive Gateway: Employee Agrees with Review? -->
+    <exclusiveGateway id="employeeAgreementGateway" name="Employee Agrees?"/>
+
+    <!-- User Task: HR Review and Approval -->
+    <userTask id="hrReviewApprovalTask" name="HR Review and Approval"
+              flowable:candidateGroups="HR_ADMIN">
+      <documentation>
+        HR reviews the completed performance review and gives final approval.
+      </documentation>
+      <extensionElements>
+        <flowable:formProperty id="reviewId" name="Review ID" type="long" writable="false"/>
+        <flowable:formProperty id="employeeName" name="Employee Name" type="string" writable="false"/>
+        <flowable:formProperty id="overallRating" name="Overall Rating" type="string" writable="false"/>
+        <flowable:formProperty id="managerComments" name="Manager Comments" type="string" writable="false"/>
+        <flowable:formProperty id="hrApproved" name="HR Approved" type="boolean" required="true"/>
+        <flowable:formProperty id="compensationAdjustment" name="Compensation Adjustment Recommended" type="boolean"/>
+        <flowable:formProperty id="promotionRecommended" name="Promotion Recommended" type="boolean"/>
+        <flowable:formProperty id="hrNotes" name="HR Notes" type="string"/>
+      </extensionElements>
+    </userTask>
+
+    <!-- User Task: Address Employee Concerns -->
+    <userTask id="addressConcernsTask" name="Address Employee Concerns"
+              flowable:candidateGroups="HR_MANAGER">
+      <documentation>
+        HR manager addresses employee concerns about the performance review.
+      </documentation>
+      <extensionElements>
+        <flowable:formProperty id="reviewId" name="Review ID" type="long" writable="false"/>
+        <flowable:formProperty id="employeeName" name="Employee Name" type="string" writable="false"/>
+        <flowable:formProperty id="employeeFeedback" name="Employee Concerns" type="string" writable="false"/>
+        <flowable:formProperty id="concernsResolved" name="Concerns Resolved" type="boolean" required="true"/>
+        <flowable:formProperty id="resolutionNotes" name="Resolution Notes" type="string" required="true"/>
+        <flowable:formProperty id="revisedRating" name="Revised Rating (if applicable)" type="string"/>
+      </extensionElements>
+    </userTask>
+
+    <!-- Service Task: Update Review Record -->
+    <serviceTask id="updateReviewRecordTask" name="Update Review Record"
+                 flowable:delegateExpression="${updateReviewRecordDelegate}">
+      <documentation>
+        Updates the performance review record in the database with final status.
+      </documentation>
+    </serviceTask>
+
+    <!-- Service Task: Notify Stakeholders -->
+    <serviceTask id="notifyStakeholdersTask" name="Notify Stakeholders"
+                 flowable:delegateExpression="${notifyReviewStakeholdersDelegate}">
+      <documentation>
+        Sends notifications to employee, manager, and HR about review completion.
+      </documentation>
+    </serviceTask>
+
+    <!-- End Event -->
+    <endEvent id="reviewCompleteEndEvent" name="Review Complete"/>
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="employeeSelfAssessmentTask"/>
+    <sequenceFlow id="flow2" sourceRef="employeeSelfAssessmentTask" targetRef="managerAssessmentTask"/>
+    <sequenceFlow id="flow3" sourceRef="managerAssessmentTask" targetRef="scheduleReviewMeetingTask"/>
+    <sequenceFlow id="flow4" sourceRef="scheduleReviewMeetingTask" targetRef="conductReviewMeetingTask"/>
+    <sequenceFlow id="flow5" sourceRef="conductReviewMeetingTask" targetRef="employeeAgreementGateway"/>
+
+    <!-- Employee agrees -->
+    <sequenceFlow id="agreesFlow" sourceRef="employeeAgreementGateway" targetRef="hrReviewApprovalTask">
+      <conditionExpression xsi:type="tFormalExpression">${employeeAcknowledged == true}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Employee has concerns -->
+    <sequenceFlow id="concernsFlow" sourceRef="employeeAgreementGateway" targetRef="addressConcernsTask">
+      <conditionExpression xsi:type="tFormalExpression">${employeeAcknowledged == false}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- After addressing concerns -->
+    <sequenceFlow id="flow6" sourceRef="addressConcernsTask" targetRef="hrReviewApprovalTask"/>
+
+    <!-- HR approval -->
+    <sequenceFlow id="flow7" sourceRef="hrReviewApprovalTask" targetRef="updateReviewRecordTask"/>
+    <sequenceFlow id="flow8" sourceRef="updateReviewRecordTask" targetRef="notifyStakeholdersTask"/>
+    <sequenceFlow id="flow9" sourceRef="notifyStakeholdersTask" targetRef="reviewCompleteEndEvent"/>
+
+  </process>
+
+</definitions>

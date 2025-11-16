@@ -9,7 +9,7 @@ Status: Phase 0 - Foundation
 
 ## Executive Summary
 
-Transform whrkflow (HR-only) into werkflow - a comprehensive enterprise workflow platform enabling:
+Transform werkflow (HR-only) into werkflow - a comprehensive enterprise workflow platform enabling:
 
 - Self-service workflow creation for intra-department processes
 - Governed workflow management for inter-department orchestration
@@ -420,7 +420,7 @@ networks:
 **Week 1: Repository Setup**
 
 Deliverables:
-- Rename whrkflow to werkflow (all references)
+- Rename werkflow to werkflow (all references)
 - Squash git history to single initial commit
 - Update git remote to werkflow repository
 - Create new branch: feature/enterprise-platform-foundation
@@ -637,7 +637,7 @@ Deliverables:
 - Updated authentication
 
 HR Service Tasks:
-- [ ] Move whrkflow code to services/hr/
+- [ ] Move werkflow code to services/hr/
 - [ ] Update database schema to hr_service
 - [ ] Integrate with Flowable engine via REST
 - [ ] Update authentication to new system
@@ -830,12 +830,12 @@ Enterprise Platform
 
 ---
 
-## Migration from whrkflow
+## Migration from werkflow
 
 ### Approach: Parallel Run + Gradual Cutover
 
 **Week 7 (Phase 1): Parallel Setup**
-- Deploy werkflow alongside whrkflow
+- Deploy werkflow alongside werkflow
 - Migrate 2-3 simple workflows
 - Test with pilot group (10-20 users)
 - Collect feedback and fix issues
@@ -848,15 +848,15 @@ Enterprise Platform
 
 **Week 12 (Phase 2): Full Cutover**
 - Switch all users to werkflow
-- Set whrkflow to read-only mode
+- Set werkflow to read-only mode
 - Monitor for 2 weeks
-- Archive whrkflow data
-- Decommission whrkflow
+- Archive werkflow data
+- Decommission werkflow
 
 ### Data Migration
 
 **One-time Migration Script**
-- Export data from whrkflow database
+- Export data from werkflow database
 - Transform to new schema structure
 - Import to werkflow (hr_service schema)
 - Verify data integrity

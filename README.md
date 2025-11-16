@@ -1,259 +1,375 @@
-# whrkflow - HR Management Platform
+# Werkflow Enterprise Platform
 
-A comprehensive HR management platform with visual BPMN workflow designer and dynamic form builder.
+A comprehensive enterprise workflow platform with self-service workflow creation, visual BPMN designer, dynamic form builder, and multi-department orchestration.
+
+## 🎯 Overview
+
+Werkflow is an enterprise workflow platform that enables departments to create and manage their own workflows without code, while maintaining centralized governance and orchestration through Flowable BPM.
+
+**Key Capabilities:**
+- 90%+ no-code workflow creation
+- Visual BPMN designer
+- Dynamic form builder (Form.io)
+- Generic reusable delegates
+- Multi-department support (HR, Finance, Procurement, Legal, etc.)
+- Centralized BPM orchestration
+- OAuth2/JWT authentication with Keycloak
 
 ## 🏗️ Monorepo Structure
 
 ```
-whrkflow/
-├── backend/              # Spring Boot REST API + Flowable BPM
-├── frontend/             # Next.js React UI (Coming Soon)
-├── docker-compose.yml    # Infrastructure services
-├── README.md            # This file
-└── docs/                # Documentation
+werkflow/
+├── services/                    # Backend microservices
+│   ├── engine/                  # Flowable BPM orchestration (8081) [Phase 1]
+│   ├── hr/                      # HR domain service (8082) ✅
+│   ├── admin/                   # User/org/dept management (8083) [Phase 1]
+│   ├── finance/                 # Finance service (8084) [Phase 3]
+│   ├── procurement/             # Procurement service (8085) [Phase 3]
+│   └── ...                      # Additional services
+├── frontends/                   # Frontend applications
+│   ├── admin-portal/            # Workflow designer (4000) ✅
+│   ├── hr-portal/               # HR portal (4001) [Phase 2]
+│   └── shared/                  # Shared UI components
+├── shared/                      # Shared libraries
+│   ├── common/                  # Common utilities [Phase 1]
+│   └── delegates/               # Generic Flowable delegates [Phase 1]
+├── infrastructure/
+│   └── docker/                  # Docker configs
+│       ├── Dockerfile           # Multi-stage build [Phase 0]
+│       └── docker-compose.yml   # Local development ✅
+├── docs/                        # Documentation
+│   ├── Enterprise_Workflow_Roadmap.md
+│   ├── KEYCLOAK_SETUP.md
+│   ├── QUICK_START.md
+│   ├── TESTING.md
+│   └── WORKFLOW_GUIDE.md
+├── ROADMAP-DRAFT.md             # Enterprise platform roadmap
+├── ROADMAP.md                   # Development tracking
+├── CLAUDE.md                    # Development guidelines
+└── README.md                    # This file
 ```
 
-## 🚀 Features
+## 🚀 Current Features
 
-### Core HR Management
-- **Department Management**: Hierarchical department structure
-- **Employee Management**: Complete employee lifecycle with relationships
-- **Leave Management**: Leave requests with approval workflows
-- **Attendance Tracking**: Daily attendance with worked hours calculation
-- **Performance Reviews**: Employee evaluations and feedback
-- **Payroll Management**: Salary calculations with deductions and bonuses
+### ✅ Implemented
+- **HR Management**: Complete employee lifecycle, leave, attendance, performance reviews, payroll
+- **BPMN Workflows**: Leave approval, employee onboarding, performance review processes
+- **Visual Designer**: BPMN process designer with bpmn-js
+- **Form Builder**: Dynamic form creation with Form.io
+- **Authentication**: Keycloak OAuth2/JWT with role-based access control
+- **Process Management**: Deploy, version, and manage workflows via UI
 
-### Workflow Automation (Flowable BPM) ✅
-- **Leave Approval Process**: Manager review and approval workflow
-- **Employee Onboarding**: Parallel task execution (IT, HR, Manager)
-- **Performance Review Cycle**: Self-assessment, manager evaluation, HR approval
-- **Custom BPMN Workflows**: Extensible workflow engine
+### 🚧 In Progress (Phase 0-1)
+- Monorepo restructuring ✅
+- Environment configuration ✅
+- Flowable Engine Service (Week 3-4)
+- Generic Delegates Library (Week 5-6)
+- Admin Service (Week 7-8)
 
-### Visual Workflow Designer (In Progress)
-- **BPMN Designer**: Visual process modeling with bpmn-js
-- **Form Builder**: Drag-drop dynamic form creation
-- **Task Portal**: User-friendly task management interface
-- **Process Deployment**: One-click deployment from UI
+### 📋 Planned (Phase 2-3)
+- HR Portal (employee-facing)
+- Additional department services (Finance, Procurement, Legal)
+- Event-driven architecture (Kafka)
+- CQRS pattern
+- Real-time notifications
+- Advanced analytics
 
 ## 🛠️ Technology Stack
 
-### Backend
-- **Java 21**
-- **Spring Boot 3.3.2**
-- **PostgreSQL 15**
-- **Flowable BPM 7.0.1**
-- **Keycloak OAuth2/JWT**
+### Backend Services
+- **Java 17**
+- **Spring Boot 3.3.x**
+- **Flowable BPM 7.0.x**
+- **PostgreSQL 15** (schema separation per service)
+- **Keycloak** (OAuth2/JWT)
 - **Flyway** (Database migrations)
 - **Maven** (Build tool)
 
-### Frontend (Coming Soon)
+### Frontend Applications
 - **Next.js 14** (App Router)
 - **React 18**
 - **TypeScript 5**
 - **Tailwind CSS**
 - **shadcn/ui** components
-- **bpmn-js** (BPMN designer)
-- **Form.io** (Form builder)
-- **NextAuth** (Authentication)
+- **bpmn-js 17** (BPMN designer)
+- **Form.io 5** (Form builder)
+- **NextAuth v5** (Authentication)
 
 ### Infrastructure
 - **Docker & Docker Compose**
-- **PostgreSQL 15**
-- **Keycloak 23**
-- **pgAdmin 4**
+- **PostgreSQL 15** (port 5433)
+- **Keycloak 23** (port 8090)
+- Future: **Apache Kafka**, **Redis**, **Elasticsearch**
 
 ## 📋 Prerequisites
 
-- **Java 21** or higher
+- **Java 17** or higher
 - **Maven 3.9+**
-- **Node.js 20+** (for frontend)
+- **Node.js 20+**
 - **Docker & Docker Compose**
-- **PostgreSQL 15+** (via Docker)
+- **Git**
 
 ## 🏃 Quick Start
 
-### 1. Start Infrastructure Services
+### 1. Clone Repository
 
 ```bash
-# Start PostgreSQL, Keycloak, and pgAdmin
+git clone https://github.com/themaverik/werkflow.git
+cd werkflow
+```
+
+### 2. Start Infrastructure Services
+
+```bash
+cd infrastructure/docker
 docker-compose up -d
 
-# Verify services are running
+# Verify services
 docker-compose ps
 ```
 
-### 2. Run Backend
+### 3. Configure Environment
 
 ```bash
-cd backend
+# Copy example files
+cp .env.shared.example .env.shared
+cp .env.hr.example .env.hr
+
+# Update with your values
+vi .env.shared
+vi .env.hr
+```
+
+### 4. Run HR Service
+
+```bash
+cd services/hr
 
 # Build and run
 mvn clean spring-boot:run
 ```
 
-### 3. Run Frontend (Coming Soon)
+### 5. Run Admin Portal
 
 ```bash
-cd frontend
+cd frontends/admin-portal
 
 # Install dependencies
 npm install
 
-# Run development server
+# Copy environment file
+cp .env.local.example .env.local
+
+# Update environment variables
+vi .env.local
+
+# Run development server (port 4000)
 npm run dev
 ```
 
-### 4. Access the Applications
+### 6. Access Applications
 
-**Backend:**
-- API Base URL: http://localhost:8080/api
-- Swagger UI: http://localhost:8080/api/swagger-ui.html
-- API Docs: http://localhost:8080/api/v3/api-docs
+**Services:**
+- HR Service API: http://localhost:8082/api
+- HR Swagger UI: http://localhost:8082/api/swagger-ui.html
 
-**Frontend:**
-- Application: http://localhost:3000
-- Process Designer: http://localhost:3000/studio/processes
-- Form Builder: http://localhost:3000/studio/forms
-- Task Portal: http://localhost:3000/portal/tasks
+**Frontends:**
+- Admin Portal: http://localhost:4000
+- Process Designer: http://localhost:4000/processes
+- Form Builder: http://localhost:4000/forms
+- Task Portal: http://localhost:4000/tasks
 
 **Infrastructure:**
 - Keycloak: http://localhost:8090 (admin/admin123)
-- pgAdmin: http://localhost:5050 (admin@whrkflow.com/admin123)
+- PostgreSQL: localhost:5433 (werkflow_admin/secure_password)
+
+## 🔐 Authentication & Roles
+
+Keycloak-based OAuth2/JWT with role-based access control:
+
+**Roles:**
+- `SUPER_ADMIN` - Platform administration
+- `ORG_ADMIN` - Organization management
+- `DEPT_MANAGER` - Department management, workflow design
+- `HR_ADMIN` - HR operations
+- `HR_MANAGER` - HR workflow management
+- `MANAGER` - Team management, approvals
+- `EMPLOYEE` - Self-service access
+
+See [docs/KEYCLOAK_SETUP.md](./docs/KEYCLOAK_SETUP.md) for configuration.
+
+## 🏢 Multi-Department Support
+
+Werkflow supports multiple departments out of the box:
+
+### Current: HR (✅ Implemented)
+- Employee management
+- Leave management
+- Performance reviews
+- Onboarding workflows
+
+### Planned: Finance (Phase 3)
+- Invoice approval
+- Budget requests
+- Expense management
+
+### Planned: Procurement (Phase 3)
+- Purchase requests
+- Vendor management
+- Contract workflows
+
+### Planned: Legal (Phase 3)
+- Contract review
+- Compliance workflows
+- Document approvals
+
+Each department maintains autonomy while using shared infrastructure and generic delegates.
+
+## 🔄 Generic Delegates (Phase 1)
+
+Reusable workflow components enable no-code workflow creation:
+
+- **RestServiceDelegate** - HTTP API calls
+- **EmailDelegate** - Email notifications
+- **NotificationDelegate** - Multi-channel notifications
+- **ValidationDelegate** - Form/data validation
+- **ApprovalDelegate** - Standard approvals with escalation
+- **FormRequestDelegate** - Cross-department form requests
 
 ## 📚 Documentation
 
-- [Backend README](./backend/README.md) - Backend service documentation
-- [Frontend README](./frontend/README.md) - Frontend application documentation (Coming Soon)
-- [Workflow Guide](./WORKFLOW_GUIDE.md) - Workflow usage and API reference
-- [Testing Guide](./TESTING.md) - API testing instructions
-- [Keycloak Setup](./KEYCLOAK_SETUP.md) - Authentication configuration
-- [Quick Start](./QUICK_START.md) - Getting started guide
-- [Development Roadmap](./ROADMAP.md) - Frontend implementation plan (Coming Soon)
-
-## 🏗️ Project Structure
-
-```
-whrkflow/
-├── backend/
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/com/whrkflow/
-│   │   │   │   ├── config/          # Configuration classes
-│   │   │   │   ├── controller/      # REST controllers
-│   │   │   │   ├── dto/             # Data Transfer Objects
-│   │   │   │   ├── entity/          # JPA entities
-│   │   │   │   ├── repository/      # Spring Data repositories
-│   │   │   │   ├── service/         # Business logic
-│   │   │   │   └── workflow/        # Flowable BPM
-│   │   │   └── resources/
-│   │   │       ├── application.yml  # Configuration
-│   │   │       ├── db/migration/    # Flyway migrations
-│   │   │       └── processes/       # BPMN files
-│   │   └── test/                    # Tests
-│   ├── pom.xml                      # Maven config
-│   └── README.md                    # Backend docs
-│
-├── frontend/                        # (Coming Soon)
-│   ├── app/                         # Next.js App Router
-│   │   ├── (auth)/                  # Authentication pages
-│   │   ├── (studio)/                # Process & Form Designer
-│   │   └── (portal)/                # Task Management
-│   ├── components/                  # React components
-│   ├── lib/                         # Utilities & API
-│   ├── package.json
-│   └── README.md
-│
-├── docker-compose.yml               # Infrastructure services
-├── .gitignore
-└── README.md                        # This file
-```
-
-## 🔐 Authentication
-
-The platform uses Keycloak for OAuth2/JWT authentication with role-based access control:
-
-- **HR_ADMIN**: Full platform access, workflow design
-- **HR_MANAGER**: HR operations, workflow management
-- **MANAGER**: Team management, task approval
-- **EMPLOYEE**: Self-service access, task completion
-
-See [KEYCLOAK_SETUP.md](./KEYCLOAK_SETUP.md) for configuration details.
-
-## 🔄 Workflow Processes
-
-Three production-ready BPMN workflows are included:
-
-1. **Leave Approval** - Automated leave request processing
-2. **Employee Onboarding** - Multi-team onboarding coordination
-3. **Performance Review** - Comprehensive review cycle management
-
-See [WORKFLOW_GUIDE.md](./WORKFLOW_GUIDE.md) for usage details.
+- [Services](#services-documentation)
+  - [HR Service](./services/hr/README.md)
+  - [Engine Service](./services/engine/README.md) (Phase 1)
+  - [Admin Service](./services/admin/README.md) (Phase 1)
+- [Frontends](#frontend-documentation)
+  - [Admin Portal](./frontends/admin-portal/README.md)
+  - [HR Portal](./frontends/hr-portal/README.md) (Phase 2)
+- [Guides](#guides)
+  - [Workflow Guide](./docs/WORKFLOW_GUIDE.md)
+  - [Testing Guide](./docs/TESTING.md)
+  - [Keycloak Setup](./docs/KEYCLOAK_SETUP.md)
+  - [Quick Start](./docs/QUICK_START.md)
+- [Roadmaps](#roadmaps)
+  - [Enterprise Roadmap](./docs/Enterprise_Workflow_Roadmap.md)
+  - [Implementation Roadmap](./ROADMAP-DRAFT.md)
+  - [Development Tracking](./ROADMAP.md)
+- [Development](#development)
+  - [Guidelines](./CLAUDE.md)
 
 ## 🧪 Testing
 
+### Backend Services
+
 ```bash
-# Backend tests
-cd backend
+# HR Service
+cd services/hr
 mvn test
 
-# Frontend tests (Coming Soon)
-cd frontend
-npm test
+# Integration tests
+mvn verify
 ```
 
-See [TESTING.md](./TESTING.md) for API testing with Postman.
+### Frontend Applications
+
+```bash
+# Admin Portal
+cd frontends/admin-portal
+npm test
+
+# Type checking
+npm run type-check
+
+# Linting
+npm run lint
+```
+
+See [docs/TESTING.md](./docs/TESTING.md) for API testing with Postman.
 
 ## 🚀 Deployment
 
-### Backend (Spring Boot)
+### Local Development (Docker Compose)
 
 ```bash
-cd backend
-mvn clean package
-java -jar target/whrkflow-1.0.0.jar
+cd infrastructure/docker
+docker-compose up -d
 ```
 
-### Frontend (Next.js)
+### Production Deployment
 
-```bash
-cd frontend
-npm run build
-npm start
-```
+See ROADMAP-DRAFT.md for production deployment strategy (Phase 3):
+- Kubernetes orchestration
+- Helm charts
+- CI/CD pipelines
+- Terraform infrastructure
 
-### Docker (Full Stack)
+## 🛣️ Development Roadmap
 
-```bash
-docker-compose -f docker-compose.prod.yml up -d
-```
+### ✅ Phase 0: Foundation (Week 1-2)
+- [x] Rename whrkflow → werkflow
+- [x] Restructure to monorepo
+- [x] Environment configuration
+- [x] Git repository setup
+- [ ] Docker multi-stage build
+- [ ] Updated docker-compose
 
-## 🛣️ Roadmap
+### 🚧 Phase 1: Core Platform (Week 3-8)
+- [ ] Flowable Engine Service (Week 3-4)
+- [ ] Generic Delegates Library (Week 5-6)
+- [ ] Admin Service (Week 7-8)
+- [ ] HR Service migration
 
-### ✅ Completed
-- [x] Core HR CRUD APIs
-- [x] Flowable BPM integration
-- [x] Three production workflows
-- [x] Keycloak authentication
-- [x] Comprehensive API documentation
-- [x] Monorepo structure
+### 📋 Phase 2: Department Portals (Week 9-12)
+- [ ] HR Portal (employee-facing)
+- [ ] Department-specific workflows
+- [ ] Enhanced monitoring
 
-### 🚧 In Progress
-- [ ] Next.js frontend with BPMN designer
-- [ ] Dynamic form builder
-- [ ] Task management portal
+### 📋 Phase 3: Future Enhancements
+- [ ] Finance, Procurement, Legal services
+- [ ] Event-driven architecture (Kafka)
+- [ ] CQRS implementation
+- [ ] Kubernetes deployment
+- [ ] CI/CD automation
+- [ ] Advanced analytics
 
-### 📋 Planned
-- [ ] Real-time notifications
-- [ ] Mobile app (React Native)
-- [ ] Analytics dashboard
-- [ ] Multi-tenancy support
-- [ ] API rate limiting
+See [ROADMAP-DRAFT.md](./ROADMAP-DRAFT.md) for detailed implementation plan.
 
-See [ROADMAP.md](./ROADMAP.md) for detailed frontend implementation plan.
+## 🔧 Configuration
+
+### Port Allocation
+
+**Backend Services:**
+- Engine Service: 8081
+- HR Service: 8082
+- Admin Service: 8083
+- Finance Service: 8084 (future)
+- Procurement Service: 8085 (future)
+
+**Frontend Applications:**
+- Admin Portal: 4000
+- HR Portal: 4001 (future)
+- Finance Portal: 4002 (future)
+
+**Infrastructure:**
+- PostgreSQL: 5433
+- Keycloak: 8090
+- Kafka: 9092 (future)
+- Redis: 6379 (future)
+
+### Environment Configuration
+
+Hybrid approach:
+- `.env.shared` - Common infrastructure (Postgres, Keycloak, JWT)
+- `.env.{service}` - Service-specific config
+- Override hierarchy: Central → Service → Runtime
 
 ## 🤝 Contributing
 
-This is a proprietary project. For questions or issues, contact the development team.
+See [CLAUDE.md](./CLAUDE.md) for development guidelines including:
+- Branch naming conventions
+- Commit message format
+- Code style standards
+- Testing requirements
 
 ## 📄 License
 
@@ -261,4 +377,8 @@ Proprietary - All rights reserved
 
 ---
 
-**Note**: This is a monorepo structure. Backend is production-ready. Frontend development is in progress.
+**Status**: Phase 0 in progress - Transforming from HR-only platform to enterprise workflow platform
+
+**Architecture**: Microservices with centralized BPM orchestration
+
+**Approach**: 90%+ no-code through generic delegates and visual designers

@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/werkflow_test
+    username: werkflow_test
+    password: werkflow_test
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+  flyway:
+    enabled: false
+
+flowable:
+  async-executor-activate: false
+  database-schema-update: true
+
+logging:
+  level:
+    root: WARN
+    com.werkflow: DEBUG

@@ -16,6 +16,7 @@ WORKDIR /build
 COPY shared/delegates/pom.xml shared/delegates/pom.xml
 COPY services/hr/pom.xml services/hr/pom.xml
 COPY services/engine/pom.xml services/engine/pom.xml
+COPY services/admin/pom.xml services/admin/pom.xml
 
 # Download dependencies for shared libraries
 RUN cd shared/delegates && mvn dependency:go-offline -B
@@ -23,6 +24,7 @@ RUN cd shared/delegates && mvn dependency:go-offline -B
 # Download dependencies for all services
 RUN cd services/hr && mvn dependency:go-offline -B
 RUN cd services/engine && mvn dependency:go-offline -B
+RUN cd services/admin && mvn dependency:go-offline -B
 
 # ================================================================
 # STAGE 2: Delegates Library Build
@@ -67,13 +69,17 @@ COPY services/engine/src ./src
 RUN mvn clean package -DskipTests -B
 
 # ================================================================
-# STAGE 5: Admin Service Build (Placeholder - Phase 1)
+# STAGE 5: Admin Service Build
 # ================================================================
 FROM backend-base AS admin-service-build
 
-# TODO: Implement in Phase 1 Week 7-8
-# For now, this is a placeholder that will be populated
-# when the admin service is created
+WORKDIR /build/services/admin
+
+# Copy source code
+COPY services/admin/src ./src
+
+# Build the application
+RUN mvn clean package -DskipTests -B
 
 # ================================================================
 # STAGE 6: Frontend Base - Node.js dependencies
@@ -177,19 +183,19 @@ ENTRYPOINT ["java", \
     "app.jar"]
 
 # ================================================================
-# STAGE 11: Admin Service Runtime (Placeholder - Phase 1)
+# STAGE 11: Admin Service Runtime
 # ================================================================
 FROM eclipse-temurin:17-jre-alpine AS admin-service
 
-# TODO: Implement in Phase 1 Week 7-8
-
+# Add non-root user
 RUN addgroup -S werkflow && adduser -S werkflow -G werkflow
 
 WORKDIR /app
 
-# Placeholder - will copy admin JAR when built
-# COPY --from=admin-service-build /build/services/admin/target/*.jar app.jar
+# Copy JAR from build stage
+COPY --from=admin-service-build /build/services/admin/target/*.jar app.jar
 
+# Create directories
 RUN mkdir -p /app/logs && \
     chown -R werkflow:werkflow /app
 
@@ -197,15 +203,16 @@ USER werkflow
 
 EXPOSE 8083
 
-# HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-#     CMD wget --no-verbose --tries=1 --spider http://localhost:8083/actuator/health || exit 1
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8083/actuator/health || exit 1
 
-# ENTRYPOINT ["java", \
-#     "-Djava.security.egd=file:/dev/./urandom", \
-#     "-XX:MaxRAMPercentage=75.0", \
-#     "-XX:+UseContainerSupport", \
-#     "-jar", \
-#     "app.jar"]
+ENTRYPOINT ["java", \
+    "-Djava.security.egd=file:/dev/./urandom", \
+    "-XX:MaxRAMPercentage=75.0", \
+    "-XX:+UseContainerSupport", \
+    "-jar", \
+    "app.jar"]
 
 # ================================================================
 # STAGE 12: Admin Portal Runtime

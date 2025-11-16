@@ -170,33 +170,33 @@ services:
     restart: unless-stopped
 
   # Admin Service (Phase 1 - Week 7-8)
-  # TODO: Uncomment when admin service is implemented
-  # admin-service:
-  #   build:
-  #     context: ../..
-  #     dockerfile: Dockerfile
-  #     target: admin-service
-  #   container_name: werkflow-admin
-  #   env_file:
-  #     - ../../.env.shared
-  #     - ../../.env.admin
-  #   environment:
-  #     SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/werkflow
-  #     SPRING_DATASOURCE_USERNAME: werkflow_admin
-  #     SPRING_DATASOURCE_PASSWORD: werkflow_secure_pass
-  #     SPRING_DATASOURCE_SCHEMA: admin_service
-  #   ports:
-  #     - "8083:8083"
-  #   volumes:
-  #     - admin_logs:/app/logs
-  #   networks:
-  #     - werkflow-network
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     keycloak:
-  #       condition: service_healthy
-  #   restart: unless-stopped
+  admin-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: admin-service
+    container_name: werkflow-admin
+    env_file:
+      - ../../.env.shared
+      - ../../.env.admin
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/werkflow
+      SPRING_DATASOURCE_USERNAME: werkflow_admin
+      SPRING_DATASOURCE_PASSWORD: werkflow_secure_pass
+      SPRING_DATASOURCE_SCHEMA: admin_service
+      SERVER_PORT: 8083
+    ports:
+      - "8083:8083"
+    volumes:
+      - admin_logs:/app/logs
+    networks:
+      - werkflow-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    restart: unless-stopped
 
   # ================================================================
   # FRONTEND SERVICES
@@ -227,7 +227,7 @@ services:
     depends_on:
       - hr-service
       - engine-service
-      # - admin-service   # Uncomment when implemented
+      - admin-service
     restart: unless-stopped
 
   # HR Portal (Phase 2 - Week 9-12)
@@ -274,8 +274,8 @@ volumes:
     driver: local
   hr_logs:
     driver: local
-  # admin_logs:
-  #   driver: local
+  admin_logs:
+    driver: local
 
 # ================================================================
 # NETWORKS

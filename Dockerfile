@@ -18,6 +18,8 @@ COPY services/hr/pom.xml services/hr/pom.xml
 COPY services/engine/pom.xml services/engine/pom.xml
 COPY services/admin/pom.xml services/admin/pom.xml
 COPY services/inventory/pom.xml services/inventory/pom.xml
+COPY services/finance/pom.xml services/finance/pom.xml
+COPY services/procurement/pom.xml services/procurement/pom.xml
 
 # Download dependencies for shared libraries
 RUN cd shared/delegates && mvn dependency:go-offline -B
@@ -27,6 +29,8 @@ RUN cd services/hr && mvn dependency:go-offline -B
 RUN cd services/engine && mvn dependency:go-offline -B
 RUN cd services/admin && mvn dependency:go-offline -B
 RUN cd services/inventory && mvn dependency:go-offline -B
+RUN cd services/finance && mvn dependency:go-offline -B
+RUN cd services/procurement && mvn dependency:go-offline -B
 
 # ================================================================
 # STAGE 2: Delegates Library Build
@@ -273,7 +277,97 @@ ENTRYPOINT ["java", \
     "app.jar"]
 
 # ================================================================
-# STAGE 14: Admin Portal Runtime
+# STAGE 14: Finance Service Build
+# ================================================================
+FROM backend-base AS finance-service-build
+
+WORKDIR /build/services/finance
+
+# Copy source code
+COPY services/finance/src ./src
+
+# Build the application
+RUN mvn clean package -DskipTests -B
+
+# ================================================================
+# STAGE 15: Finance Service Runtime
+# ================================================================
+FROM eclipse-temurin:17-jre-alpine AS finance-service
+
+# Add non-root user
+RUN addgroup -S werkflow && adduser -S werkflow -G werkflow
+
+WORKDIR /app
+
+# Copy JAR from build stage
+COPY --from=finance-service-build /build/services/finance/target/*.jar app.jar
+
+# Create directories
+RUN mkdir -p /app/logs && \
+    chown -R werkflow:werkflow /app
+
+USER werkflow
+
+EXPOSE 8085
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8085/actuator/health || exit 1
+
+ENTRYPOINT ["java", \
+    "-Djava.security.egd=file:/dev/./urandom", \
+    "-XX:MaxRAMPercentage=75.0", \
+    "-XX:+UseContainerSupport", \
+    "-jar", \
+    "app.jar"]
+
+# ================================================================
+# STAGE 16: Procurement Service Build
+# ================================================================
+FROM backend-base AS procurement-service-build
+
+WORKDIR /build/services/procurement
+
+# Copy source code
+COPY services/procurement/src ./src
+
+# Build the application
+RUN mvn clean package -DskipTests -B
+
+# ================================================================
+# STAGE 17: Procurement Service Runtime
+# ================================================================
+FROM eclipse-temurin:17-jre-alpine AS procurement-service
+
+# Add non-root user
+RUN addgroup -S werkflow && adduser -S werkflow -G werkflow
+
+WORKDIR /app
+
+# Copy JAR from build stage
+COPY --from=procurement-service-build /build/services/procurement/target/*.jar app.jar
+
+# Create directories
+RUN mkdir -p /app/logs && \
+    chown -R werkflow:werkflow /app
+
+USER werkflow
+
+EXPOSE 8086
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8086/actuator/health || exit 1
+
+ENTRYPOINT ["java", \
+    "-Djava.security.egd=file:/dev/./urandom", \
+    "-XX:MaxRAMPercentage=75.0", \
+    "-XX:+UseContainerSupport", \
+    "-jar", \
+    "app.jar"]
+
+# ================================================================
+# STAGE 18: Admin Portal Runtime
 # ================================================================
 FROM node:20-alpine AS admin-portal
 
@@ -301,7 +395,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
 CMD ["node", "server.js"]
 
 # ================================================================
-# STAGE 15: HR Portal Runtime
+# STAGE 19: HR Portal Runtime
 # ================================================================
 FROM node:20-alpine AS hr-portal
 

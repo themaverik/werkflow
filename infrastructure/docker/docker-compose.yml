@@ -233,6 +233,81 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  # Finance Service (Phase 3)
+  finance-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: finance-service
+    container_name: werkflow-finance
+    env_file:
+      - ../../.env.shared
+      - ../../.env.finance
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/werkflow
+      SPRING_DATASOURCE_USERNAME: werkflow_admin
+      SPRING_DATASOURCE_PASSWORD: werkflow_secure_pass
+      SPRING_DATASOURCE_SCHEMA: finance_service
+      SERVER_PORT: 8085
+      ADMIN_SERVICE_URL: http://admin-service:8083
+      ENGINE_SERVICE_URL: http://engine-service:8081
+      INVENTORY_SERVICE_URL: http://inventory-service:8084
+    ports:
+      - "8085:8085"
+    volumes:
+      - finance_logs:/app/logs
+    networks:
+      - werkflow-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      admin-service:
+        condition: service_started
+      engine-service:
+        condition: service_started
+    restart: unless-stopped
+
+  # Procurement Service (Phase 3)
+  procurement-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: procurement-service
+    container_name: werkflow-procurement
+    env_file:
+      - ../../.env.shared
+      - ../../.env.procurement
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/werkflow
+      SPRING_DATASOURCE_USERNAME: werkflow_admin
+      SPRING_DATASOURCE_PASSWORD: werkflow_secure_pass
+      SPRING_DATASOURCE_SCHEMA: procurement_service
+      SERVER_PORT: 8086
+      ADMIN_SERVICE_URL: http://admin-service:8083
+      ENGINE_SERVICE_URL: http://engine-service:8081
+      INVENTORY_SERVICE_URL: http://inventory-service:8084
+      FINANCE_SERVICE_URL: http://finance-service:8085
+    ports:
+      - "8086:8086"
+    volumes:
+      - procurement_logs:/app/logs
+    networks:
+      - werkflow-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      admin-service:
+        condition: service_started
+      engine-service:
+        condition: service_started
+      finance-service:
+        condition: service_started
+    restart: unless-stopped
+
   # ================================================================
   # FRONTEND SERVICES
   # ================================================================
@@ -252,6 +327,8 @@ services:
       NEXT_PUBLIC_HR_API_URL: http://hr-service:8082/api
       NEXT_PUBLIC_ADMIN_API_URL: http://admin-service:8083/api
       NEXT_PUBLIC_INVENTORY_API_URL: http://inventory-service:8084/api
+      NEXT_PUBLIC_FINANCE_API_URL: http://finance-service:8085/api
+      NEXT_PUBLIC_PROCUREMENT_API_URL: http://procurement-service:8086/api
       # NextAuth
       NEXTAUTH_URL: http://localhost:4000
       # Keycloak (external URL for browser)
@@ -265,6 +342,8 @@ services:
       - engine-service
       - admin-service
       - inventory-service
+      - finance-service
+      - procurement-service
     restart: unless-stopped
 
   # HR Portal (Phase 2)
@@ -282,6 +361,8 @@ services:
       NEXT_PUBLIC_HR_API_URL: http://hr-service:8082/api
       NEXT_PUBLIC_ADMIN_API_URL: http://admin-service:8083/api
       NEXT_PUBLIC_INVENTORY_API_URL: http://inventory-service:8084/api
+      NEXT_PUBLIC_FINANCE_API_URL: http://finance-service:8085/api
+      NEXT_PUBLIC_PROCUREMENT_API_URL: http://procurement-service:8086/api
       # NextAuth
       NEXTAUTH_URL: http://localhost:4001
       NEXTAUTH_SECRET: change-me-in-production
@@ -320,6 +401,10 @@ volumes:
   admin_logs:
     driver: local
   inventory_logs:
+    driver: local
+  finance_logs:
+    driver: local
+  procurement_logs:
     driver: local
 
 # ================================================================

@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://werkflow.com/procurement">
+
+  <process id="rfqProcess" name="Request for Quotation Process" isExecutable="true">
+
+    <!-- Start Event -->
+    <startEvent id="startEvent" name="RFQ Created" />
+
+    <!-- Select Vendors for Invitation -->
+    <userTask id="selectVendors" name="Select Vendors for Invitation"
+              flowable:candidateGroups="PROCUREMENT_SPECIALIST"
+              flowable:formKey="rfq-vendor-selection">
+      <documentation>Procurement specialist selects qualified vendors to invite for quotation</documentation>
+    </userTask>
+
+    <!-- Validate Vendor Selection -->
+    <serviceTask id="validateVendors" name="Validate Vendor Selection"
+                 flowable:delegateExpression="${vendorValidationDelegate}">
+      <documentation>Ensure selected vendors are active and qualified</documentation>
+    </serviceTask>
+
+    <!-- Decision: Sufficient Vendors? -->
+    <exclusiveGateway id="vendorCountDecision" name="Sufficient Vendors?" />
+
+    <!-- Insufficient Vendors -->
+    <userTask id="addMoreVendors" name="Add More Vendors"
+              flowable:candidateGroups="PROCUREMENT_SPECIALIST"
+              flowable:formKey="rfq-add-vendors">
+      <documentation>Minimum 3 vendors required for competitive bidding</documentation>
+    </userTask>
+
+    <!-- Merge after adding vendors -->
+    <exclusiveGateway id="vendorMerge" name="Merge Vendors" />
+
+    <!-- Send RFQ to Selected Vendors -->
+    <serviceTask id="sendRFQ" name="Send RFQ to Selected Vendors"
+                 flowable:delegateExpression="${rfqDistributionDelegate}">
+      <documentation>Send RFQ documents to all selected vendors via email/portal</documentation>
+    </serviceTask>
+
+    <!-- Multi-Instance: Vendor Quote Submission -->
+    <subProcess id="vendorQuoteSubmission" name="Vendor Quote Submission">
+
+      <startEvent id="quoteStart" name="Vendor Receives RFQ" />
+
+      <!-- Wait for Vendor to Submit Quote -->
+      <receiveTask id="waitForQuote" name="Wait for Vendor Quote">
+        <documentation>Vendor submits quote via vendor portal or email</documentation>
+      </receiveTask>
+
+      <!-- Validate Quote Submission -->
+      <serviceTask id="validateQuote" name="Validate Quote"
+                   flowable:delegateExpression="${quoteValidationDelegate}">
+        <documentation>Validate quote format, completeness, and compliance</documentation>
+      </serviceTask>
+
+      <endEvent id="quoteEnd" name="Quote Received" />
+
+      <sequenceFlow id="qflow1" sourceRef="quoteStart" targetRef="waitForQuote" />
+      <sequenceFlow id="qflow2" sourceRef="waitForQuote" targetRef="validateQuote" />
+      <sequenceFlow id="qflow3" sourceRef="validateQuote" targetRef="quoteEnd" />
+
+    </subProcess>
+
+    <!-- Timer: Submission Deadline -->
+    <boundaryEvent id="submissionDeadline" name="Submission Deadline"
+                   attachedToRef="vendorQuoteSubmission" cancelActivity="false">
+      <timerEventDefinition>
+        <timeDuration>${rfqDeadlineDuration}</timeDuration>
+      </timerEventDefinition>
+    </boundaryEvent>
+
+    <!-- Close RFQ Submission -->
+    <serviceTask id="closeSubmission" name="Close RFQ Submission"
+                 flowable:delegateExpression="${rfqClosureDelegate}">
+      <documentation>Close RFQ submission and lock received quotes</documentation>
+    </serviceTask>
+
+    <!-- Decision: Quotes Received? -->
+    <exclusiveGateway id="quotesReceivedDecision" name="Quotes Received?" />
+
+    <!-- No Quotes Received -->
+    <userTask id="handleNoQuotes" name="Handle No Quotes Received"
+              flowable:candidateGroups="PROCUREMENT_MANAGER"
+              flowable:formKey="rfq-no-quotes">
+      <documentation>Decide whether to extend deadline or cancel RFQ</documentation>
+    </userTask>
+
+    <!-- Decision: Extend or Cancel? -->
+    <exclusiveGateway id="extendOrCancelDecision" name="Extend or Cancel?" />
+
+    <!-- Extend Deadline -->
+    <serviceTask id="extendDeadline" name="Extend RFQ Deadline"
+                 flowable:delegateExpression="${rfqExtensionDelegate}">
+      <documentation>Extend submission deadline and notify vendors</documentation>
+    </serviceTask>
+
+    <!-- End Event: RFQ Cancelled -->
+    <endEvent id="endCancelled" name="RFQ Cancelled" />
+
+    <!-- Collect and Compile Vendor Quotes -->
+    <serviceTask id="compileQuotes" name="Collect Vendor Quotes"
+                 flowable:delegateExpression="${quoteCompilationDelegate}">
+      <documentation>Compile all received quotes for evaluation</documentation>
+    </serviceTask>
+
+    <!-- Evaluation Committee Review -->
+    <userTask id="evaluationReview" name="Evaluation Committee Review"
+              flowable:candidateGroups="PROCUREMENT_MANAGER,TECHNICAL_REVIEWER,FINANCE_REVIEWER"
+              flowable:formKey="rfq-evaluation-review">
+      <documentation>Evaluation committee reviews all quotes based on evaluation criteria</documentation>
+      <multiInstanceLoopCharacteristics isSequential="false"
+                                        flowable:collection="evaluationCommittee"
+                                        flowable:elementVariable="reviewer">
+      </multiInstanceLoopCharacteristics>
+    </userTask>
+
+    <!-- Score and Rank Quotes -->
+    <serviceTask id="scoreQuotes" name="Score and Rank Quotes"
+                 flowable:delegateExpression="${quoteScoringDelegate}">
+      <documentation>Calculate weighted scores and rank vendors</documentation>
+    </serviceTask>
+
+    <!-- Generate Evaluation Report -->
+    <serviceTask id="generateReport" name="Generate Evaluation Report"
+                 flowable:delegateExpression="${reportGenerationDelegate}">
+      <documentation>Generate comprehensive evaluation report with recommendations</documentation>
+    </serviceTask>
+
+    <!-- Final Vendor Selection -->
+    <userTask id="finalVendorSelection" name="Final Vendor Selection"
+              flowable:candidateGroups="PROCUREMENT_MANAGER"
+              flowable:formKey="rfq-final-selection">
+      <documentation>Procurement manager makes final vendor selection based on evaluation</documentation>
+    </userTask>
+
+    <!-- Decision: Vendor Selected? -->
+    <exclusiveGateway id="vendorSelectedDecision" name="Vendor Selected?" />
+
+    <!-- No Vendor Selected -->
+    <serviceTask id="notifyNoSelection" name="Notify No Vendor Selected"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[RFQ_NO_VENDOR_SELECTED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: No Selection -->
+    <endEvent id="endNoSelection" name="No Vendor Selected" />
+
+    <!-- Decision: Contract Negotiation Needed? -->
+    <exclusiveGateway id="negotiationDecision" name="Negotiation Needed?" />
+
+    <!-- Legal Contract Negotiation -->
+    <userTask id="contractNegotiation" name="Contract Negotiation"
+              flowable:candidateGroups="LEGAL_COUNSEL"
+              flowable:formKey="rfq-contract-negotiation">
+      <documentation>Legal counsel negotiates final contract terms with selected vendor</documentation>
+    </userTask>
+
+    <!-- Merge after negotiation -->
+    <exclusiveGateway id="negotiationMerge" name="Merge Negotiation" />
+
+    <!-- Award RFQ to Vendor -->
+    <serviceTask id="awardRFQ" name="Award RFQ to Vendor"
+                 flowable:delegateExpression="${rfqAwardDelegate}">
+      <documentation>Award RFQ to selected vendor and update vendor record</documentation>
+    </serviceTask>
+
+    <!-- Notify All Vendors -->
+    <serviceTask id="notifyVendors" name="Notify All Vendors of Result"
+                 flowable:delegateExpression="${vendorNotificationDelegate}">
+      <documentation>Notify winning vendor and send regret letters to others</documentation>
+    </serviceTask>
+
+    <!-- Create Purchase Order -->
+    <serviceTask id="createPO" name="Create Purchase Order"
+                 flowable:delegateExpression="${purchaseOrderCreationDelegate}">
+      <documentation>Create PO from RFQ award details</documentation>
+    </serviceTask>
+
+    <!-- End Event: Success -->
+    <endEvent id="endSuccess" name="RFQ Awarded and PO Created" />
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="selectVendors" />
+    <sequenceFlow id="flow2" sourceRef="selectVendors" targetRef="validateVendors" />
+    <sequenceFlow id="flow3" sourceRef="validateVendors" targetRef="vendorCountDecision" />
+
+    <!-- Vendor Count Decision -->
+    <sequenceFlow id="sufficientVendors" name="Yes (>= 3)" sourceRef="vendorCountDecision" targetRef="vendorMerge">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${selectedVendorCount >= 3}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="insufficientVendors" name="No (< 3)" sourceRef="vendorCountDecision" targetRef="addMoreVendors">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${selectedVendorCount < 3}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow4" sourceRef="addMoreVendors" targetRef="vendorMerge" />
+
+    <!-- Send RFQ -->
+    <sequenceFlow id="flow5" sourceRef="vendorMerge" targetRef="sendRFQ" />
+    <sequenceFlow id="flow6" sourceRef="sendRFQ" targetRef="vendorQuoteSubmission" />
+
+    <!-- Deadline Handling -->
+    <sequenceFlow id="flow7" sourceRef="submissionDeadline" targetRef="closeSubmission" />
+    <sequenceFlow id="flow8" sourceRef="vendorQuoteSubmission" targetRef="closeSubmission" />
+    <sequenceFlow id="flow9" sourceRef="closeSubmission" targetRef="quotesReceivedDecision" />
+
+    <!-- Quotes Received Decision -->
+    <sequenceFlow id="quotesReceived" name="Yes" sourceRef="quotesReceivedDecision" targetRef="compileQuotes">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${receivedQuoteCount > 0}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="noQuotes" name="No" sourceRef="quotesReceivedDecision" targetRef="handleNoQuotes">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${receivedQuoteCount == 0}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <!-- Handle No Quotes -->
+    <sequenceFlow id="flow10" sourceRef="handleNoQuotes" targetRef="extendOrCancelDecision" />
+
+    <sequenceFlow id="extendRFQ" name="Extend" sourceRef="extendOrCancelDecision" targetRef="extendDeadline">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${extendRFQ == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="cancelRFQ" name="Cancel" sourceRef="extendOrCancelDecision" targetRef="endCancelled">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${extendRFQ == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="flow11" sourceRef="extendDeadline" targetRef="vendorQuoteSubmission" />
+
+    <!-- Evaluation Flow -->
+    <sequenceFlow id="flow12" sourceRef="compileQuotes" targetRef="evaluationReview" />
+    <sequenceFlow id="flow13" sourceRef="evaluationReview" targetRef="scoreQuotes" />
+    <sequenceFlow id="flow14" sourceRef="scoreQuotes" targetRef="generateReport" />
+    <sequenceFlow id="flow15" sourceRef="generateReport" targetRef="finalVendorSelection" />
+
+    <!-- Vendor Selection Decision -->
+    <sequenceFlow id="flow16" sourceRef="finalVendorSelection" targetRef="vendorSelectedDecision" />
+
+    <sequenceFlow id="vendorSelected" name="Selected" sourceRef="vendorSelectedDecision" targetRef="negotiationDecision">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${vendorSelected == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="noVendorSelected" name="Not Selected" sourceRef="vendorSelectedDecision" targetRef="notifyNoSelection">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${vendorSelected == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow17" sourceRef="notifyNoSelection" targetRef="endNoSelection" />
+
+    <!-- Negotiation Decision -->
+    <sequenceFlow id="needsNegotiation" name="Yes" sourceRef="negotiationDecision" targetRef="contractNegotiation">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${negotiationNeeded == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="noNegotiation" name="No" sourceRef="negotiationDecision" targetRef="negotiationMerge">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${negotiationNeeded == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="flow18" sourceRef="contractNegotiation" targetRef="negotiationMerge" />
+
+    <!-- Award and Completion -->
+    <sequenceFlow id="flow19" sourceRef="negotiationMerge" targetRef="awardRFQ" />
+    <sequenceFlow id="flow20" sourceRef="awardRFQ" targetRef="notifyVendors" />
+    <sequenceFlow id="flow21" sourceRef="notifyVendors" targetRef="createPO" />
+    <sequenceFlow id="flow22" sourceRef="createPO" targetRef="endSuccess" />
+
+  </process>
+
+</definitions>

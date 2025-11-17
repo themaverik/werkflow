@@ -1,0 +1,197 @@
+{
+  "id": "capex-request-v1",
+  "name": "Capital Expenditure Request",
+  "version": "1.0.0",
+  "description": "Form for submitting capital expenditure requests with multi-level approval routing",
+  "fields": [
+    {
+      "id": "requesterId",
+      "type": "employee-selector",
+      "label": "Requester",
+      "required": true,
+      "defaultValue": "${currentUser.id}",
+      "readonly": true,
+      "description": "Employee submitting the CapEx request"
+    },
+    {
+      "id": "department",
+      "type": "department-selector",
+      "label": "Department",
+      "required": true,
+      "description": "Department requesting the capital expenditure"
+    },
+    {
+      "id": "costCenter",
+      "type": "select",
+      "label": "Cost Center",
+      "required": true,
+      "dynamic": true,
+      "dataSource": "/api/finance/cost-centers?department=${department}",
+      "description": "Cost center to be charged for this expenditure"
+    },
+    {
+      "id": "itemDescription",
+      "type": "text",
+      "label": "Item Description",
+      "required": true,
+      "maxLength": 200,
+      "placeholder": "Brief description of the asset or equipment",
+      "description": "What is being purchased?"
+    },
+    {
+      "id": "justification",
+      "type": "rich-text",
+      "label": "Business Justification",
+      "required": true,
+      "maxLength": 1000,
+      "placeholder": "Explain the business need, expected ROI, and strategic alignment",
+      "description": "Detailed explanation of why this expenditure is necessary"
+    },
+    {
+      "id": "amount",
+      "type": "currency",
+      "label": "Estimated Amount",
+      "required": true,
+      "currency": "USD",
+      "min": 0.01,
+      "description": "Total estimated cost including taxes and delivery"
+    },
+    {
+      "id": "budgetType",
+      "type": "select",
+      "label": "Budget Type",
+      "required": true,
+      "options": [
+        { "value": "capex", "label": "Capital Expenditure" },
+        { "value": "opex", "label": "Operating Expenditure" }
+      ],
+      "defaultValue": "capex",
+      "description": "Classification of expenditure type"
+    },
+    {
+      "id": "assetCategory",
+      "type": "select",
+      "label": "Asset Category",
+      "required": true,
+      "options": [
+        { "value": "IT_HARDWARE", "label": "IT Hardware" },
+        { "value": "IT_SOFTWARE", "label": "IT Software & Licenses" },
+        { "value": "MACHINERY", "label": "Machinery & Equipment" },
+        { "value": "VEHICLES", "label": "Vehicles" },
+        { "value": "FURNITURE", "label": "Furniture & Fixtures" },
+        { "value": "BUILDING", "label": "Building & Infrastructure" },
+        { "value": "OTHER", "label": "Other" }
+      ],
+      "description": "Category of the capital asset"
+    },
+    {
+      "id": "expectedDeliveryDate",
+      "type": "date",
+      "label": "Expected Delivery Date",
+      "required": true,
+      "min": "${today}",
+      "description": "When is the asset needed?"
+    },
+    {
+      "id": "vendor",
+      "type": "vendor-selector",
+      "label": "Preferred Vendor (if any)",
+      "required": false,
+      "description": "Select vendor if already identified"
+    },
+    {
+      "id": "alternateVendors",
+      "type": "vendor-selector",
+      "label": "Alternate Vendors",
+      "required": false,
+      "multiple": true,
+      "description": "Other vendors to consider for RFQ process"
+    },
+    {
+      "id": "attachments",
+      "type": "file",
+      "label": "Supporting Documents",
+      "required": false,
+      "multiple": true,
+      "accept": ".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg",
+      "maxFiles": 10,
+      "maxFileSize": 10485760,
+      "description": "Upload quotes, specifications, or other supporting documentation"
+    },
+    {
+      "id": "urgency",
+      "type": "select",
+      "label": "Urgency Level",
+      "required": true,
+      "options": [
+        { "value": "LOW", "label": "Low - Standard procurement timeline" },
+        { "value": "MEDIUM", "label": "Medium - Needed within 3 months" },
+        { "value": "HIGH", "label": "High - Needed within 1 month" },
+        { "value": "CRITICAL", "label": "Critical - Immediate need" }
+      ],
+      "defaultValue": "MEDIUM",
+      "description": "How urgent is this request?"
+    },
+    {
+      "id": "expectedROI",
+      "type": "number",
+      "label": "Expected ROI (%)",
+      "required": false,
+      "min": 0,
+      "max": 1000,
+      "suffix": "%",
+      "description": "Expected return on investment (if applicable)"
+    },
+    {
+      "id": "paybackPeriod",
+      "type": "number",
+      "label": "Payback Period (months)",
+      "required": false,
+      "min": 0,
+      "max": 120,
+      "suffix": "months",
+      "description": "Expected payback period (if applicable)"
+    }
+  ],
+  "validations": [
+    {
+      "rule": "amount > 0",
+      "message": "Amount must be greater than zero"
+    },
+    {
+      "rule": "expectedDeliveryDate > today",
+      "message": "Delivery date must be in the future"
+    },
+    {
+      "rule": "budgetType == 'capex' || budgetType == 'opex'",
+      "message": "Budget type must be either CapEx or OpEx"
+    }
+  ],
+  "sections": [
+    {
+      "id": "requestInfo",
+      "title": "Request Information",
+      "fields": ["requesterId", "department", "costCenter", "urgency"]
+    },
+    {
+      "id": "assetDetails",
+      "title": "Asset Details",
+      "fields": ["itemDescription", "assetCategory", "amount", "budgetType"]
+    },
+    {
+      "id": "justificationSection",
+      "title": "Business Justification",
+      "fields": ["justification", "expectedROI", "paybackPeriod"]
+    },
+    {
+      "id": "vendorSection",
+      "title": "Vendor Information",
+      "fields": ["vendor", "alternateVendors", "expectedDeliveryDate"]
+    },
+    {
+      "id": "attachmentsSection",
+      "title": "Supporting Documents",
+      "fields": ["attachments"]
+    }
+  ]
+}

@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://werkflow.com/finance">
+
+  <process id="capexApproval" name="Capital Expenditure Approval" isExecutable="true">
+
+    <!-- Start Event -->
+    <startEvent id="startEvent" name="CapEx Request Submitted" />
+
+    <!-- Budget Availability Check -->
+    <serviceTask id="budgetCheck" name="Check Budget Availability"
+                 flowable:delegateExpression="${budgetAvailabilityDelegate}">
+      <documentation>Verify that sufficient budget is available for this CapEx request</documentation>
+    </serviceTask>
+
+    <!-- Decision: Budget Available? -->
+    <exclusiveGateway id="budgetDecision" name="Budget Available?" />
+
+    <!-- Budget Not Available Path -->
+    <serviceTask id="notifyBudgetShortfall" name="Notify Budget Shortfall"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[BUDGET_SHORTFALL]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Rejected -->
+    <endEvent id="endRejectedBudget" name="Rejected - No Budget" />
+
+    <!-- Department Head Approval -->
+    <userTask id="deptHeadApproval" name="Department Head Approval"
+              flowable:candidateGroups="DEPARTMENT_HEAD_${departmentId}"
+              flowable:formKey="capex-dept-head-approval">
+      <documentation>Department head must review and approve the CapEx request</documentation>
+      <extensionElements>
+        <flowable:taskListener event="create" delegateExpression="${taskAssignmentListener}" />
+      </extensionElements>
+    </userTask>
+
+    <!-- Decision: Department Head Approved? -->
+    <exclusiveGateway id="deptHeadDecision" name="Department Head Approved?" />
+
+    <!-- Rejected by Department Head -->
+    <serviceTask id="notifyDeptHeadRejection" name="Notify Rejection"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[DEPT_HEAD_REJECTED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Rejected by Dept Head -->
+    <endEvent id="endRejectedDeptHead" name="Rejected by Department Head" />
+
+    <!-- Amount-Based Decision Gateway -->
+    <exclusiveGateway id="amountGateway" name="Amount Check" />
+
+    <!-- CFO Approval (< $10K) -->
+    <userTask id="cfoApproval" name="CFO Approval"
+              flowable:candidateGroups="CFO"
+              flowable:formKey="capex-cfo-approval">
+      <documentation>CFO must approve CapEx requests under $10,000</documentation>
+    </userTask>
+
+    <!-- CFO + CEO Approval ($10K - $100K) -->
+    <userTask id="cfoCeoApproval" name="CFO + CEO Approval"
+              flowable:candidateGroups="CFO,CEO"
+              flowable:formKey="capex-executive-approval">
+      <documentation>CFO and CEO must approve CapEx requests between $10K and $100K</documentation>
+      <extensionElements>
+        <flowable:taskListener event="complete" delegateExpression="${multiApprovalListener}" />
+      </extensionElements>
+    </userTask>
+
+    <!-- CFO + CEO + Board Approval (> $100K) -->
+    <userTask id="boardApproval" name="Board Approval"
+              flowable:candidateGroups="BOARD_MEMBER"
+              flowable:formKey="capex-board-approval">
+      <documentation>Board of Directors must approve CapEx requests over $100K</documentation>
+    </userTask>
+
+    <!-- Merge Gateway after amount-based approvals -->
+    <exclusiveGateway id="approvalMerge" name="Merge Approvals" />
+
+    <!-- Decision: Executive Approved? -->
+    <exclusiveGateway id="executiveDecision" name="Executive Approved?" />
+
+    <!-- Rejected by Executives -->
+    <serviceTask id="notifyExecutiveRejection" name="Notify Executive Rejection"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[EXECUTIVE_REJECTED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Rejected by Executives -->
+    <endEvent id="endRejectedExecutive" name="Rejected by Executive" />
+
+    <!-- Legal Contract Review (if > $100K) -->
+    <exclusiveGateway id="legalReviewGateway" name="Requires Legal Review?" />
+
+    <serviceTask id="legalReview" name="Legal Contract Review"
+                 flowable:delegateExpression="${legalReviewDelegate}">
+      <documentation>Legal department reviews contracts for CapEx over $100K</documentation>
+    </serviceTask>
+
+    <userTask id="legalApproval" name="Legal Approval"
+              flowable:candidateGroups="LEGAL_COUNSEL"
+              flowable:formKey="capex-legal-approval">
+      <documentation>Legal counsel must approve the contract terms</documentation>
+    </userTask>
+
+    <!-- Merge after legal review -->
+    <exclusiveGateway id="legalMerge" name="Merge Legal" />
+
+    <!-- Decision: Legal Approved? -->
+    <exclusiveGateway id="legalDecision" name="Legal Approved?" />
+
+    <!-- Rejected by Legal -->
+    <serviceTask id="notifyLegalRejection" name="Notify Legal Rejection"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[LEGAL_REJECTED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Rejected by Legal -->
+    <endEvent id="endRejectedLegal" name="Rejected by Legal" />
+
+    <!-- Vendor Selection & RFQ Process -->
+    <serviceTask id="vendorSelection" name="Vendor Selection & RFQ"
+                 flowable:delegateExpression="${vendorSelectionDelegate}">
+      <documentation>Initiate vendor selection and RFQ process via Procurement Service</documentation>
+    </serviceTask>
+
+    <!-- Create Purchase Order -->
+    <serviceTask id="createPO" name="Create Purchase Order"
+                 flowable:delegateExpression="${purchaseOrderDelegate}">
+      <documentation>Create purchase order in Procurement Service</documentation>
+    </serviceTask>
+
+    <!-- Wait for Goods Receipt -->
+    <receiveTask id="waitGoodsReceipt" name="Wait for Goods Receipt" />
+
+    <!-- Invoice Processing & Payment -->
+    <serviceTask id="processInvoice" name="Process Invoice & Payment"
+                 flowable:delegateExpression="${invoiceProcessingDelegate}">
+      <documentation>Process vendor invoice and schedule payment</documentation>
+    </serviceTask>
+
+    <!-- Asset Registration -->
+    <serviceTask id="registerAsset" name="Register Asset"
+                 flowable:delegateExpression="${assetRegistrationDelegate}">
+      <documentation>Register the capital asset in the Finance system</documentation>
+    </serviceTask>
+
+    <!-- Notify Completion -->
+    <serviceTask id="notifyCompletion" name="Notify CapEx Completion"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[CAPEX_COMPLETED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Success -->
+    <endEvent id="endSuccess" name="CapEx Completed" />
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="budgetCheck" />
+    <sequenceFlow id="flow2" sourceRef="budgetCheck" targetRef="budgetDecision" />
+
+    <!-- Budget Decision Flows -->
+    <sequenceFlow id="budgetAvailable" name="Yes" sourceRef="budgetDecision" targetRef="deptHeadApproval">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${budgetAvailable == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="budgetNotAvailable" name="No" sourceRef="budgetDecision" targetRef="notifyBudgetShortfall">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${budgetAvailable == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow3" sourceRef="notifyBudgetShortfall" targetRef="endRejectedBudget" />
+
+    <!-- Department Head Approval Flow -->
+    <sequenceFlow id="flow4" sourceRef="deptHeadApproval" targetRef="deptHeadDecision" />
+
+    <sequenceFlow id="deptHeadApproved" name="Approved" sourceRef="deptHeadDecision" targetRef="amountGateway">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${deptHeadApproved == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="deptHeadRejected" name="Rejected" sourceRef="deptHeadDecision" targetRef="notifyDeptHeadRejection">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${deptHeadApproved == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow5" sourceRef="notifyDeptHeadRejection" targetRef="endRejectedDeptHead" />
+
+    <!-- Amount-Based Routing -->
+    <sequenceFlow id="amountLessThan10K" name="&lt; $10K" sourceRef="amountGateway" targetRef="cfoApproval">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${amount < 10000}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="amount10KTo100K" name="$10K - $100K" sourceRef="amountGateway" targetRef="cfoCeoApproval">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${amount >= 10000 && amount <= 100000}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="amountOver100K" name="&gt; $100K" sourceRef="amountGateway" targetRef="boardApproval">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${amount > 100000}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <!-- Merge Approvals -->
+    <sequenceFlow id="flow6" sourceRef="cfoApproval" targetRef="approvalMerge" />
+    <sequenceFlow id="flow7" sourceRef="cfoCeoApproval" targetRef="approvalMerge" />
+    <sequenceFlow id="flow8" sourceRef="boardApproval" targetRef="approvalMerge" />
+
+    <sequenceFlow id="flow9" sourceRef="approvalMerge" targetRef="executiveDecision" />
+
+    <!-- Executive Decision -->
+    <sequenceFlow id="executiveApproved" name="Approved" sourceRef="executiveDecision" targetRef="legalReviewGateway">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${executiveApproved == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="executiveRejected" name="Rejected" sourceRef="executiveDecision" targetRef="notifyExecutiveRejection">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${executiveApproved == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow10" sourceRef="notifyExecutiveRejection" targetRef="endRejectedExecutive" />
+
+    <!-- Legal Review Gateway -->
+    <sequenceFlow id="requiresLegalReview" name="&gt; $100K" sourceRef="legalReviewGateway" targetRef="legalReview">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${amount > 100000}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="noLegalReview" name="&lt;= $100K" sourceRef="legalReviewGateway" targetRef="legalMerge">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${amount <= 100000}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="flow11" sourceRef="legalReview" targetRef="legalApproval" />
+    <sequenceFlow id="flow12" sourceRef="legalApproval" targetRef="legalDecision" />
+
+    <!-- Legal Decision -->
+    <sequenceFlow id="legalApproved" name="Approved" sourceRef="legalDecision" targetRef="legalMerge">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${legalApproved == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="legalRejected" name="Rejected" sourceRef="legalDecision" targetRef="notifyLegalRejection">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${legalApproved == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow13" sourceRef="notifyLegalRejection" targetRef="endRejectedLegal" />
+
+    <!-- Vendor Selection & Procurement -->
+    <sequenceFlow id="flow14" sourceRef="legalMerge" targetRef="vendorSelection" />
+    <sequenceFlow id="flow15" sourceRef="vendorSelection" targetRef="createPO" />
+    <sequenceFlow id="flow16" sourceRef="createPO" targetRef="waitGoodsReceipt" />
+    <sequenceFlow id="flow17" sourceRef="waitGoodsReceipt" targetRef="processInvoice" />
+    <sequenceFlow id="flow18" sourceRef="processInvoice" targetRef="registerAsset" />
+    <sequenceFlow id="flow19" sourceRef="registerAsset" targetRef="notifyCompletion" />
+    <sequenceFlow id="flow20" sourceRef="notifyCompletion" targetRef="endSuccess" />
+
+  </process>
+
+</definitions>

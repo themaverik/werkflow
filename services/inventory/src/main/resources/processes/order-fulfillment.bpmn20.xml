@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://werkflow.com/inventory">
+
+  <process id="orderFulfillment" name="E-commerce Order Fulfillment with Hub Assignment" isExecutable="true">
+
+    <documentation>
+      Order fulfillment workflow with batch processing and intelligent hub assignment.
+      Orders received are tentatively reserved but hub assignment happens in batches at 12 PM and 6 PM.
+    </documentation>
+
+    <!-- Start Event -->
+    <startEvent id="startEvent" name="Order Placed" />
+
+    <!-- Validate Order -->
+    <serviceTask id="validateOrder" name="Validate Order"
+                 flowable:delegateExpression="${orderValidationDelegate}">
+      <documentation>Validate order details, customer info, and payment confirmation</documentation>
+    </serviceTask>
+
+    <!-- Decision: Valid Order? -->
+    <exclusiveGateway id="validationDecision" name="Valid Order?" />
+
+    <!-- Invalid Order -->
+    <serviceTask id="notifyInvalidOrder" name="Notify Invalid Order"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[ORDER_INVALID]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Invalid -->
+    <endEvent id="endInvalid" name="Order Invalid" />
+
+    <!-- Check Item Availability Across All Hubs -->
+    <serviceTask id="checkAvailability" name="Check Item Availability"
+                 flowable:delegateExpression="${inventoryAvailabilityDelegate}">
+      <documentation>Check if all order items are available across all warehouse hubs</documentation>
+    </serviceTask>
+
+    <!-- Decision: All Items Available? -->
+    <exclusiveGateway id="availabilityDecision" name="All Items Available?" />
+
+    <!-- Partial/No Availability -->
+    <serviceTask id="handleUnavailability" name="Handle Item Unavailability"
+                 flowable:delegateExpression="${unavailabilityHandlerDelegate}">
+      <documentation>Handle partial or no availability - notify customer and offer alternatives</documentation>
+    </serviceTask>
+
+    <!-- End Event: Cancelled -->
+    <endEvent id="endCancelled" name="Order Cancelled" />
+
+    <!-- Tentatively Reserve Items (No Hub Assigned Yet) -->
+    <serviceTask id="reserveItems" name="Reserve Items Tentatively"
+                 flowable:delegateExpression="${reservationDelegate}">
+      <documentation>
+        Reserve items across available hubs without committing to specific hub.
+        Actual hub will be assigned during batch processing.
+      </documentation>
+    </serviceTask>
+
+    <!-- Confirm Order to Customer -->
+    <serviceTask id="confirmOrder" name="Confirm Order to Customer"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[ORDER_CONFIRMED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- CRITICAL: Wait for Batch Processing (12 PM or 6 PM) -->
+    <intermediateCatchEvent id="waitForBatch" name="Wait for Hub Assignment Batch">
+      <documentation>
+        Order waits in queue until next batch processing time (12 PM or 6 PM).
+        Hub assignment is done in batches to optimize logistics and routing.
+      </documentation>
+      <messageEventDefinition messageRef="hubAssigned"/>
+    </intermediateCatchEvent>
+
+    <!-- Note: External batch processing job triggers this message event -->
+
+    <!-- Hub Has Been Assigned - Continue Fulfillment -->
+    <serviceTask id="validateHubAssignment" name="Validate Hub Assignment"
+                 flowable:delegateExpression="${hubValidationDelegate}">
+      <documentation>Verify hub assignment and finalize stock reservation at assigned hub</documentation>
+    </serviceTask>
+
+    <!-- Decision: Hub Assignment Successful? -->
+    <exclusiveGateway id="hubAssignmentDecision" name="Hub Assignment Successful?" />
+
+    <!-- Hub Assignment Failed -->
+    <serviceTask id="handleHubFailure" name="Handle Hub Assignment Failure"
+                 flowable:delegateExpression="${hubFailureDelegate}">
+      <documentation>Retry hub assignment or cancel order if no suitable hub found</documentation>
+    </serviceTask>
+
+    <!-- End Event: Hub Assignment Failed -->
+    <endEvent id="endHubFailed" name="Hub Assignment Failed" />
+
+    <!-- Finalize Stock Reservation at Assigned Hub -->
+    <serviceTask id="finalizeReservation" name="Finalize Stock Reservation at Hub"
+                 flowable:delegateExpression="${finalizeReservationDelegate}">
+      <documentation>Convert tentative reservation to committed reservation at assigned hub</documentation>
+    </serviceTask>
+
+    <!-- Generate Pick List -->
+    <serviceTask id="generatePickList" name="Generate Pick List"
+                 flowable:delegateExpression="${pickListDelegate}">
+      <documentation>Generate optimized pick list for warehouse staff</documentation>
+    </serviceTask>
+
+    <!-- Pick Items from Hub -->
+    <userTask id="pickItems" name="Pick Items from Hub"
+              flowable:candidateGroups="HUB_${assignedHubId}_PICKER"
+              flowable:formKey="order-picking">
+      <documentation>Warehouse picker collects items from designated locations</documentation>
+    </userTask>
+
+    <!-- Quality Check -->
+    <userTask id="qualityCheck" name="Quality Check"
+              flowable:candidateGroups="HUB_${assignedHubId}_QC"
+              flowable:formKey="order-quality-check">
+      <documentation>Quality control check before packing</documentation>
+    </userTask>
+
+    <!-- Decision: QC Passed? -->
+    <exclusiveGateway id="qcDecision" name="QC Passed?" />
+
+    <!-- QC Failed - Re-pick -->
+    <serviceTask id="handleQCFailure" name="Handle QC Failure"
+                 flowable:delegateExpression="${qcFailureDelegate}">
+      <documentation>Log QC failure and initiate re-picking</documentation>
+    </serviceTask>
+
+    <!-- Pack Order -->
+    <userTask id="packOrder" name="Pack Order"
+              flowable:candidateGroups="HUB_${assignedHubId}_PACKER"
+              flowable:formKey="order-packing">
+      <documentation>Pack order items securely for shipment</documentation>
+    </userTask>
+
+    <!-- Generate Shipping Label -->
+    <serviceTask id="generateShippingLabel" name="Generate Shipping Label"
+                 flowable:delegateExpression="${shippingLabelDelegate}">
+      <documentation>Generate shipping label with tracking number</documentation>
+    </serviceTask>
+
+    <!-- Dispatch from Hub -->
+    <serviceTask id="dispatchOrder" name="Dispatch from Hub"
+                 flowable:delegateExpression="${dispatchDelegate}">
+      <documentation>Hand over to courier and update order status to dispatched</documentation>
+    </serviceTask>
+
+    <!-- Update Inventory Records -->
+    <serviceTask id="updateInventory" name="Update Inventory Records"
+                 flowable:delegateExpression="${inventoryUpdateDelegate}">
+      <documentation>Update inventory system with stock issued</documentation>
+    </serviceTask>
+
+    <!-- Update Tracking Information -->
+    <serviceTask id="updateTracking" name="Update Tracking Information"
+                 flowable:delegateExpression="${trackingDelegate}">
+      <documentation>Publish tracking information to customer portal</documentation>
+    </serviceTask>
+
+    <!-- Notify Customer of Dispatch -->
+    <serviceTask id="notifyDispatch" name="Notify Customer of Dispatch"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[ORDER_DISPATCHED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- Wait for Delivery Confirmation -->
+    <receiveTask id="waitDeliveryConfirmation" name="Wait for Delivery Confirmation">
+      <documentation>Wait for courier to confirm delivery</documentation>
+    </receiveTask>
+
+    <!-- Timer: Delivery Timeout (7 days) -->
+    <boundaryEvent id="deliveryTimeout" name="Delivery Timeout (7 days)"
+                   attachedToRef="waitDeliveryConfirmation" cancelActivity="true">
+      <timerEventDefinition>
+        <timeDuration>P7D</timeDuration>
+      </timerEventDefinition>
+    </boundaryEvent>
+
+    <!-- Handle Delivery Timeout -->
+    <userTask id="handleDeliveryTimeout" name="Investigate Delivery Delay"
+              flowable:candidateGroups="CUSTOMER_SERVICE"
+              flowable:formKey="delivery-investigation">
+      <documentation>Customer service investigates delayed delivery</documentation>
+    </userTask>
+
+    <!-- Update Order Status to Delivered -->
+    <serviceTask id="markDelivered" name="Mark Order as Delivered"
+                 flowable:delegateExpression="${orderStatusDelegate}">
+      <extensionElements>
+        <flowable:field name="status">
+          <flowable:string><![CDATA[DELIVERED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- Trigger Review Request -->
+    <serviceTask id="requestReview" name="Request Customer Review"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[REQUEST_REVIEW]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Success -->
+    <endEvent id="endSuccess" name="Order Completed" />
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="validateOrder" />
+    <sequenceFlow id="flow2" sourceRef="validateOrder" targetRef="validationDecision" />
+
+    <!-- Validation Decision -->
+    <sequenceFlow id="validOrder" name="Valid" sourceRef="validationDecision" targetRef="checkAvailability">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${orderValid == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="invalidOrder" name="Invalid" sourceRef="validationDecision" targetRef="notifyInvalidOrder">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${orderValid == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow3" sourceRef="notifyInvalidOrder" targetRef="endInvalid" />
+
+    <!-- Availability Check -->
+    <sequenceFlow id="flow4" sourceRef="checkAvailability" targetRef="availabilityDecision" />
+
+    <sequenceFlow id="itemsAvailable" name="Available" sourceRef="availabilityDecision" targetRef="reserveItems">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${itemsAvailable == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="itemsUnavailable" name="Unavailable" sourceRef="availabilityDecision" targetRef="handleUnavailability">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${itemsAvailable == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow5" sourceRef="handleUnavailability" targetRef="endCancelled" />
+
+    <!-- Reservation and Batch Wait -->
+    <sequenceFlow id="flow6" sourceRef="reserveItems" targetRef="confirmOrder" />
+    <sequenceFlow id="flow7" sourceRef="confirmOrder" targetRef="waitForBatch" />
+
+    <!-- Hub Assignment Continuation -->
+    <sequenceFlow id="flow8" sourceRef="waitForBatch" targetRef="validateHubAssignment" />
+    <sequenceFlow id="flow9" sourceRef="validateHubAssignment" targetRef="hubAssignmentDecision" />
+
+    <!-- Hub Assignment Decision -->
+    <sequenceFlow id="hubAssignmentSuccess" name="Success" sourceRef="hubAssignmentDecision" targetRef="finalizeReservation">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${hubAssignmentSuccess == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="hubAssignmentFailed" name="Failed" sourceRef="hubAssignmentDecision" targetRef="handleHubFailure">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${hubAssignmentSuccess == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow10" sourceRef="handleHubFailure" targetRef="endHubFailed" />
+
+    <!-- Fulfillment Flow -->
+    <sequenceFlow id="flow11" sourceRef="finalizeReservation" targetRef="generatePickList" />
+    <sequenceFlow id="flow12" sourceRef="generatePickList" targetRef="pickItems" />
+    <sequenceFlow id="flow13" sourceRef="pickItems" targetRef="qualityCheck" />
+    <sequenceFlow id="flow14" sourceRef="qualityCheck" targetRef="qcDecision" />
+
+    <!-- QC Decision -->
+    <sequenceFlow id="qcPassed" name="Passed" sourceRef="qcDecision" targetRef="packOrder">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${qcPassed == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="qcFailed" name="Failed" sourceRef="qcDecision" targetRef="handleQCFailure">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${qcPassed == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow15" sourceRef="handleQCFailure" targetRef="pickItems" />
+
+    <!-- Packing and Dispatch -->
+    <sequenceFlow id="flow16" sourceRef="packOrder" targetRef="generateShippingLabel" />
+    <sequenceFlow id="flow17" sourceRef="generateShippingLabel" targetRef="dispatchOrder" />
+    <sequenceFlow id="flow18" sourceRef="dispatchOrder" targetRef="updateInventory" />
+    <sequenceFlow id="flow19" sourceRef="updateInventory" targetRef="updateTracking" />
+    <sequenceFlow id="flow20" sourceRef="updateTracking" targetRef="notifyDispatch" />
+    <sequenceFlow id="flow21" sourceRef="notifyDispatch" targetRef="waitDeliveryConfirmation" />
+
+    <!-- Delivery Confirmation -->
+    <sequenceFlow id="flow22" sourceRef="waitDeliveryConfirmation" targetRef="markDelivered" />
+    <sequenceFlow id="flow23" sourceRef="deliveryTimeout" targetRef="handleDeliveryTimeout" />
+    <sequenceFlow id="flow24" sourceRef="handleDeliveryTimeout" targetRef="markDelivered" />
+
+    <!-- Completion -->
+    <sequenceFlow id="flow25" sourceRef="markDelivered" targetRef="requestReview" />
+    <sequenceFlow id="flow26" sourceRef="requestReview" targetRef="endSuccess" />
+
+  </process>
+
+  <!-- Message Definition for Hub Assignment -->
+  <message id="hubAssigned" name="hubAssigned" />
+
+</definitions>

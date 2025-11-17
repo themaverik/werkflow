@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://werkflow.com/procurement">
+
+  <process id="prToPo" name="Purchase Requisition to Purchase Order" isExecutable="true">
+
+    <!-- Start Event -->
+    <startEvent id="startEvent" name="PR Created" />
+
+    <!-- Budget Check via Finance Service -->
+    <serviceTask id="budgetCheck" name="Check Budget Availability"
+                 flowable:delegateExpression="${financeBudgetCheckDelegate}">
+      <documentation>Verify budget availability via Finance Service API</documentation>
+    </serviceTask>
+
+    <!-- Decision: Budget Available? -->
+    <exclusiveGateway id="budgetDecision" name="Budget Available?" />
+
+    <!-- Budget Not Available Path -->
+    <serviceTask id="notifyBudgetShortfall" name="Notify Budget Shortfall"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[PR_BUDGET_SHORTFALL]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Rejected -->
+    <endEvent id="endRejectedBudget" name="Rejected - No Budget" />
+
+    <!-- Manager Approval -->
+    <userTask id="managerApproval" name="Manager Approval"
+              flowable:candidateGroups="MANAGER_${departmentId}"
+              flowable:formKey="pr-manager-approval">
+      <documentation>Department manager must approve the purchase requisition</documentation>
+    </userTask>
+
+    <!-- Decision: Manager Approved? -->
+    <exclusiveGateway id="managerDecision" name="Manager Approved?" />
+
+    <!-- Rejected by Manager -->
+    <serviceTask id="notifyManagerRejection" name="Notify Manager Rejection"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[PR_MANAGER_REJECTED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Rejected by Manager -->
+    <endEvent id="endRejectedManager" name="Rejected by Manager" />
+
+    <!-- Procurement Review -->
+    <userTask id="procurementReview" name="Procurement Review"
+              flowable:candidateGroups="PROCUREMENT_SPECIALIST"
+              flowable:formKey="pr-procurement-review">
+      <documentation>Procurement specialist reviews the PR for vendor selection</documentation>
+    </userTask>
+
+    <!-- Decision: Vendor Selection Needed? -->
+    <exclusiveGateway id="vendorSelectionDecision" name="Vendor Selection Needed?" />
+
+    <!-- RFQ Sub-Process -->
+    <callActivity id="rfqProcess" name="RFQ Process"
+                  calledElement="rfqProcess">
+      <extensionElements>
+        <flowable:in source="prId" target="prId" />
+        <flowable:in source="itemDescription" target="itemDescription" />
+        <flowable:in source="quantity" target="quantity" />
+        <flowable:out source="selectedVendorId" target="selectedVendorId" />
+        <flowable:out source="quotedPrice" target="quotedPrice" />
+      </extensionElements>
+    </callActivity>
+
+    <!-- Merge after RFQ -->
+    <exclusiveGateway id="rfqMerge" name="Merge RFQ" />
+
+    <!-- Create Purchase Order -->
+    <serviceTask id="createPO" name="Create Purchase Order"
+                 flowable:delegateExpression="${purchaseOrderCreationDelegate}">
+      <documentation>Create PO in the system with approved vendor and pricing</documentation>
+    </serviceTask>
+
+    <!-- Send PO to Vendor -->
+    <serviceTask id="sendPOToVendor" name="Send PO to Vendor"
+                 flowable:delegateExpression="${vendorCommunicationDelegate}">
+      <documentation>Send purchase order to vendor via email/portal</documentation>
+      <extensionElements>
+        <flowable:field name="communicationType">
+          <flowable:string><![CDATA[SEND_PO]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- Wait for Vendor Acknowledgment -->
+    <receiveTask id="waitVendorAck" name="Wait for Vendor Acknowledgment">
+      <documentation>Wait for vendor to acknowledge the PO</documentation>
+    </receiveTask>
+
+    <!-- Timer Boundary Event for Vendor Acknowledgment Timeout -->
+    <boundaryEvent id="ackTimeout" name="No Ack in 48h" attachedToRef="waitVendorAck" cancelActivity="true">
+      <timerEventDefinition>
+        <timeDuration>PT48H</timeDuration>
+      </timerEventDefinition>
+    </boundaryEvent>
+
+    <!-- Follow-up on No Acknowledgment -->
+    <userTask id="vendorFollowUp" name="Follow Up with Vendor"
+              flowable:candidateGroups="PROCUREMENT_SPECIALIST"
+              flowable:formKey="vendor-followup">
+      <documentation>Procurement specialist must follow up with vendor</documentation>
+    </userTask>
+
+    <!-- Update PO Status -->
+    <serviceTask id="updatePOStatus" name="Update PO Status to Acknowledged"
+                 flowable:delegateExpression="${poStatusUpdateDelegate}">
+      <extensionElements>
+        <flowable:field name="status">
+          <flowable:string><![CDATA[ACKNOWLEDGED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- Notify Requester -->
+    <serviceTask id="notifyCompletion" name="Notify PO Created"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[PO_CREATED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Success -->
+    <endEvent id="endSuccess" name="PO Acknowledged" />
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="budgetCheck" />
+    <sequenceFlow id="flow2" sourceRef="budgetCheck" targetRef="budgetDecision" />
+
+    <!-- Budget Decision Flows -->
+    <sequenceFlow id="budgetAvailable" name="Yes" sourceRef="budgetDecision" targetRef="managerApproval">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${budgetAvailable == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="budgetNotAvailable" name="No" sourceRef="budgetDecision" targetRef="notifyBudgetShortfall">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${budgetAvailable == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow3" sourceRef="notifyBudgetShortfall" targetRef="endRejectedBudget" />
+
+    <!-- Manager Approval Flow -->
+    <sequenceFlow id="flow4" sourceRef="managerApproval" targetRef="managerDecision" />
+
+    <sequenceFlow id="managerApproved" name="Approved" sourceRef="managerDecision" targetRef="procurementReview">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${managerApproved == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="managerRejected" name="Rejected" sourceRef="managerDecision" targetRef="notifyManagerRejection">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${managerApproved == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow5" sourceRef="notifyManagerRejection" targetRef="endRejectedManager" />
+
+    <!-- Procurement Review Flow -->
+    <sequenceFlow id="flow6" sourceRef="procurementReview" targetRef="vendorSelectionDecision" />
+
+    <!-- Vendor Selection Decision -->
+    <sequenceFlow id="needsRFQ" name="Yes" sourceRef="vendorSelectionDecision" targetRef="rfqProcess">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${vendorSelectionNeeded == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="hasVendor" name="No" sourceRef="vendorSelectionDecision" targetRef="rfqMerge">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${vendorSelectionNeeded == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <!-- RFQ Completion -->
+    <sequenceFlow id="flow7" sourceRef="rfqProcess" targetRef="rfqMerge" />
+
+    <!-- Create and Send PO -->
+    <sequenceFlow id="flow8" sourceRef="rfqMerge" targetRef="createPO" />
+    <sequenceFlow id="flow9" sourceRef="createPO" targetRef="sendPOToVendor" />
+    <sequenceFlow id="flow10" sourceRef="sendPOToVendor" targetRef="waitVendorAck" />
+
+    <!-- Vendor Acknowledgment -->
+    <sequenceFlow id="flow11" sourceRef="waitVendorAck" targetRef="updatePOStatus" />
+
+    <!-- Timeout Follow-up -->
+    <sequenceFlow id="flow12" sourceRef="ackTimeout" targetRef="vendorFollowUp" />
+    <sequenceFlow id="flow13" sourceRef="vendorFollowUp" targetRef="updatePOStatus" />
+
+    <!-- Completion -->
+    <sequenceFlow id="flow14" sourceRef="updatePOStatus" targetRef="notifyCompletion" />
+    <sequenceFlow id="flow15" sourceRef="notifyCompletion" targetRef="endSuccess" />
+
+  </process>
+
+</definitions>

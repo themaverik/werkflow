@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://werkflow.com/procurement">
+
+  <process id="goodsReceipt" name="Goods Receipt Process" isExecutable="true">
+
+    <!-- Start Event -->
+    <startEvent id="startEvent" name="Goods Arrived at Warehouse" />
+
+    <!-- Fetch PO Details -->
+    <serviceTask id="fetchPODetails" name="Fetch PO Details"
+                 flowable:delegateExpression="${poDetailsDelegate}">
+      <documentation>Retrieve purchase order details for verification</documentation>
+    </serviceTask>
+
+    <!-- Physical Inspection by Warehouse Staff -->
+    <userTask id="physicalInspection" name="Physical Inspection"
+              flowable:candidateGroups="WAREHOUSE_STAFF"
+              flowable:formKey="goods-physical-inspection">
+      <documentation>Warehouse staff performs physical inspection and count</documentation>
+    </userTask>
+
+    <!-- Decision: Inspection Passed? -->
+    <exclusiveGateway id="inspectionDecision" name="Inspection Passed?" />
+
+    <!-- Quantity/Quality Discrepancy Handling -->
+    <userTask id="handleDiscrepancy" name="Handle Discrepancy"
+              flowable:candidateGroups="WAREHOUSE_MANAGER,PROCUREMENT_SPECIALIST"
+              flowable:formKey="goods-discrepancy-handling">
+      <documentation>Document discrepancies (quantity shortage, damage, wrong items)</documentation>
+    </userTask>
+
+    <!-- Decision: Accept with Discrepancy or Reject? -->
+    <exclusiveGateway id="discrepancyDecision" name="Accept or Reject?" />
+
+    <!-- Reject Shipment -->
+    <serviceTask id="rejectShipment" name="Reject Shipment"
+                 flowable:delegateExpression="${shipmentRejectionDelegate}">
+      <documentation>Reject shipment and initiate return process</documentation>
+    </serviceTask>
+
+    <!-- Notify Vendor of Rejection -->
+    <serviceTask id="notifyVendorRejection" name="Notify Vendor of Rejection"
+                 flowable:delegateExpression="${vendorNotificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[SHIPMENT_REJECTED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- Create Debit Note for Rejected Items -->
+    <serviceTask id="createDebitNote" name="Create Debit Note"
+                 flowable:delegateExpression="${debitNoteDelegate}">
+      <documentation>Create debit note for rejected or damaged items</documentation>
+    </serviceTask>
+
+    <!-- End Event: Rejected -->
+    <endEvent id="endRejected" name="Shipment Rejected" />
+
+    <!-- Partial Acceptance Path -->
+    <serviceTask id="partialAcceptance" name="Process Partial Acceptance"
+                 flowable:delegateExpression="${partialAcceptanceDelegate}">
+      <documentation>Process partial goods receipt with discrepancy notes</documentation>
+    </serviceTask>
+
+    <!-- Merge Gateway -->
+    <exclusiveGateway id="acceptanceMerge" name="Merge Acceptance" />
+
+    <!-- 3-Way Matching: PO vs GR vs Invoice -->
+    <serviceTask id="threeWayMatching" name="3-Way Matching (PO-GR-Invoice)"
+                 flowable:delegateExpression="${threeWayMatchDelegate}">
+      <documentation>Verify quantities and prices match across PO, GR, and Invoice</documentation>
+    </serviceTask>
+
+    <!-- Decision: Matching Successful? -->
+    <exclusiveGateway id="matchingDecision" name="Matching Successful?" />
+
+    <!-- Matching Discrepancy -->
+    <userTask id="resolveMatchingDiscrepancy" name="Resolve Matching Discrepancy"
+              flowable:candidateGroups="PROCUREMENT_SPECIALIST,FINANCE_REVIEWER"
+              flowable:formKey="goods-matching-discrepancy">
+      <documentation>Resolve discrepancies between PO, GR, and Invoice</documentation>
+    </userTask>
+
+    <!-- Decision: Discrepancy Resolved? -->
+    <exclusiveGateway id="resolutionDecision" name="Discrepancy Resolved?" />
+
+    <!-- Escalate to Manager -->
+    <userTask id="escalateToManager" name="Escalate to Manager"
+              flowable:candidateGroups="PROCUREMENT_MANAGER"
+              flowable:formKey="goods-escalation">
+      <documentation>Manager review and decision on unresolved discrepancies</documentation>
+    </userTask>
+
+    <!-- Merge after resolution -->
+    <exclusiveGateway id="resolutionMerge" name="Merge Resolution" />
+
+    <!-- Update Inventory via Inventory Service -->
+    <serviceTask id="updateInventory" name="Update Inventory"
+                 flowable:delegateExpression="${inventoryUpdateDelegate}">
+      <documentation>Update inventory system with received goods</documentation>
+    </serviceTask>
+
+    <!-- Quality Check (if required) -->
+    <exclusiveGateway id="qualityCheckDecision" name="Quality Check Required?" />
+
+    <!-- Quality Inspection -->
+    <userTask id="qualityInspection" name="Quality Inspection"
+              flowable:candidateGroups="QUALITY_INSPECTOR"
+              flowable:formKey="goods-quality-inspection">
+      <documentation>Detailed quality inspection for critical items</documentation>
+    </userTask>
+
+    <!-- Decision: Quality Passed? -->
+    <exclusiveGateway id="qualityDecision" name="Quality Passed?" />
+
+    <!-- Quality Failed -->
+    <serviceTask id="handleQualityFailure" name="Handle Quality Failure"
+                 flowable:delegateExpression="${qualityFailureDelegate}">
+      <documentation>Quarantine items and notify procurement</documentation>
+    </serviceTask>
+
+    <!-- End Event: Quality Failed -->
+    <endEvent id="endQualityFailed" name="Quality Failed - Items Quarantined" />
+
+    <!-- Merge after quality check -->
+    <exclusiveGateway id="qualityMerge" name="Merge Quality" />
+
+    <!-- Update PO Status -->
+    <serviceTask id="updatePOStatus" name="Update PO Status"
+                 flowable:delegateExpression="${poStatusUpdateDelegate}">
+      <documentation>Update PO status to partially/fully received</documentation>
+    </serviceTask>
+
+    <!-- Trigger Invoice Processing in Finance Service -->
+    <serviceTask id="triggerInvoiceProcessing" name="Trigger Invoice Processing"
+                 flowable:delegateExpression="${invoiceTriggerDelegate}">
+      <documentation>Notify Finance Service that goods are received for payment</documentation>
+    </serviceTask>
+
+    <!-- Generate Goods Receipt Note -->
+    <serviceTask id="generateGRN" name="Generate Goods Receipt Note"
+                 flowable:delegateExpression="${grnGenerationDelegate}">
+      <documentation>Generate GRN document for records</documentation>
+    </serviceTask>
+
+    <!-- Notify Stakeholders -->
+    <serviceTask id="notifyStakeholders" name="Notify Stakeholders"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[GOODS_RECEIVED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Success -->
+    <endEvent id="endSuccess" name="Goods Receipt Completed" />
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="fetchPODetails" />
+    <sequenceFlow id="flow2" sourceRef="fetchPODetails" targetRef="physicalInspection" />
+    <sequenceFlow id="flow3" sourceRef="physicalInspection" targetRef="inspectionDecision" />
+
+    <!-- Inspection Decision -->
+    <sequenceFlow id="inspectionPassed" name="Passed" sourceRef="inspectionDecision" targetRef="acceptanceMerge">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${inspectionPassed == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="inspectionFailed" name="Discrepancy Found" sourceRef="inspectionDecision" targetRef="handleDiscrepancy">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${inspectionPassed == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <!-- Discrepancy Handling -->
+    <sequenceFlow id="flow4" sourceRef="handleDiscrepancy" targetRef="discrepancyDecision" />
+
+    <sequenceFlow id="acceptWithDiscrepancy" name="Partial Accept" sourceRef="discrepancyDecision" targetRef="partialAcceptance">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${acceptanceDecision == 'PARTIAL'}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="rejectFully" name="Reject" sourceRef="discrepancyDecision" targetRef="rejectShipment">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${acceptanceDecision == 'REJECT'}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <!-- Rejection Path -->
+    <sequenceFlow id="flow5" sourceRef="rejectShipment" targetRef="notifyVendorRejection" />
+    <sequenceFlow id="flow6" sourceRef="notifyVendorRejection" targetRef="createDebitNote" />
+    <sequenceFlow id="flow7" sourceRef="createDebitNote" targetRef="endRejected" />
+
+    <!-- Partial Acceptance -->
+    <sequenceFlow id="flow8" sourceRef="partialAcceptance" targetRef="acceptanceMerge" />
+
+    <!-- 3-Way Matching -->
+    <sequenceFlow id="flow9" sourceRef="acceptanceMerge" targetRef="threeWayMatching" />
+    <sequenceFlow id="flow10" sourceRef="threeWayMatching" targetRef="matchingDecision" />
+
+    <!-- Matching Decision -->
+    <sequenceFlow id="matchingSuccess" name="Match" sourceRef="matchingDecision" targetRef="resolutionMerge">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${matchingSuccess == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="matchingFailed" name="Mismatch" sourceRef="matchingDecision" targetRef="resolveMatchingDiscrepancy">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${matchingSuccess == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <!-- Resolution Flow -->
+    <sequenceFlow id="flow11" sourceRef="resolveMatchingDiscrepancy" targetRef="resolutionDecision" />
+
+    <sequenceFlow id="resolved" name="Resolved" sourceRef="resolutionDecision" targetRef="resolutionMerge">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${discrepancyResolved == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="notResolved" name="Not Resolved" sourceRef="resolutionDecision" targetRef="escalateToManager">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${discrepancyResolved == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="flow12" sourceRef="escalateToManager" targetRef="resolutionMerge" />
+
+    <!-- Inventory Update -->
+    <sequenceFlow id="flow13" sourceRef="resolutionMerge" targetRef="updateInventory" />
+    <sequenceFlow id="flow14" sourceRef="updateInventory" targetRef="qualityCheckDecision" />
+
+    <!-- Quality Check Decision -->
+    <sequenceFlow id="qualityCheckRequired" name="Yes" sourceRef="qualityCheckDecision" targetRef="qualityInspection">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${qualityCheckRequired == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="noQualityCheck" name="No" sourceRef="qualityCheckDecision" targetRef="qualityMerge">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${qualityCheckRequired == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <!-- Quality Inspection -->
+    <sequenceFlow id="flow15" sourceRef="qualityInspection" targetRef="qualityDecision" />
+
+    <sequenceFlow id="qualityPassed" name="Passed" sourceRef="qualityDecision" targetRef="qualityMerge">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${qualityPassed == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="qualityFailed" name="Failed" sourceRef="qualityDecision" targetRef="handleQualityFailure">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${qualityPassed == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="flow16" sourceRef="handleQualityFailure" targetRef="endQualityFailed" />
+
+    <!-- Completion Flow -->
+    <sequenceFlow id="flow17" sourceRef="qualityMerge" targetRef="updatePOStatus" />
+    <sequenceFlow id="flow18" sourceRef="updatePOStatus" targetRef="triggerInvoiceProcessing" />
+    <sequenceFlow id="flow19" sourceRef="triggerInvoiceProcessing" targetRef="generateGRN" />
+    <sequenceFlow id="flow20" sourceRef="generateGRN" targetRef="notifyStakeholders" />
+    <sequenceFlow id="flow21" sourceRef="notifyStakeholders" targetRef="endSuccess" />
+
+  </process>
+
+</definitions>

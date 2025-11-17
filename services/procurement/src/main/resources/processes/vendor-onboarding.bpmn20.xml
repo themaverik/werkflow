@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://werkflow.com/procurement">
+
+  <process id="vendorOnboarding" name="Vendor Onboarding Process" isExecutable="true">
+
+    <!-- Start Event -->
+    <startEvent id="startEvent" name="Vendor Registration Submitted" />
+
+    <!-- Initial Screening by Procurement -->
+    <userTask id="initialScreening" name="Initial Screening"
+              flowable:candidateGroups="PROCUREMENT_SPECIALIST"
+              flowable:formKey="vendor-initial-screening">
+      <documentation>Procurement specialist performs initial screening of vendor application</documentation>
+    </userTask>
+
+    <!-- Decision: Passes Initial Screening? -->
+    <exclusiveGateway id="screeningDecision" name="Passes Initial Screening?" />
+
+    <!-- Rejected at Screening -->
+    <serviceTask id="notifyRejectedScreening" name="Notify Rejection"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[VENDOR_REJECTED_SCREENING]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Rejected -->
+    <endEvent id="endRejectedScreening" name="Rejected at Screening" />
+
+    <!-- Document Verification -->
+    <serviceTask id="documentVerification" name="Document Verification"
+                 flowable:delegateExpression="${documentVerificationDelegate}">
+      <documentation>Automated verification of submitted documents (business license, tax ID, etc.)</documentation>
+    </serviceTask>
+
+    <!-- Manual Document Review (if needed) -->
+    <userTask id="manualDocReview" name="Manual Document Review"
+              flowable:candidateGroups="PROCUREMENT_SPECIALIST"
+              flowable:formKey="vendor-document-review">
+      <documentation>Manual review of documents that failed automated verification</documentation>
+    </userTask>
+
+    <!-- Parallel Gateway: Start Concurrent Reviews -->
+    <parallelGateway id="startParallelReviews" name="Start Parallel Reviews" />
+
+    <!-- Financial Background Check via Finance Service -->
+    <serviceTask id="financialBackgroundCheck" name="Financial Background Check"
+                 flowable:delegateExpression="${financeBackgroundCheckDelegate}">
+      <documentation>Finance Service performs credit check and financial background verification</documentation>
+    </serviceTask>
+
+    <!-- Legal Contract Terms Review -->
+    <userTask id="legalReview" name="Contract Terms Review"
+              flowable:candidateGroups="LEGAL_COUNSEL"
+              flowable:formKey="vendor-legal-review">
+      <documentation>Legal reviews standard contract terms with vendor</documentation>
+    </userTask>
+
+    <!-- Compliance Check -->
+    <serviceTask id="complianceCheck" name="Compliance Check"
+                 flowable:delegateExpression="${complianceCheckDelegate}">
+      <documentation>Verify vendor compliance with regulatory requirements</documentation>
+    </serviceTask>
+
+    <!-- Parallel Gateway: Join Reviews -->
+    <parallelGateway id="joinParallelReviews" name="Join Parallel Reviews" />
+
+    <!-- Decision: All Reviews Passed? -->
+    <exclusiveGateway id="reviewsDecision" name="All Reviews Passed?" />
+
+    <!-- Rejected after Reviews -->
+    <serviceTask id="notifyRejectedReviews" name="Notify Rejection"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[VENDOR_REJECTED_REVIEWS]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Rejected -->
+    <endEvent id="endRejectedReviews" name="Rejected after Reviews" />
+
+    <!-- Procurement Manager Final Approval -->
+    <userTask id="procurementManagerApproval" name="Procurement Manager Approval"
+              flowable:candidateGroups="PROCUREMENT_MANAGER"
+              flowable:formKey="vendor-manager-approval">
+      <documentation>Procurement manager provides final approval for vendor onboarding</documentation>
+    </userTask>
+
+    <!-- Decision: Manager Approved? -->
+    <exclusiveGateway id="managerDecision" name="Manager Approved?" />
+
+    <!-- Rejected by Manager -->
+    <serviceTask id="notifyRejectedManager" name="Notify Manager Rejection"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[VENDOR_REJECTED_MANAGER]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Rejected -->
+    <endEvent id="endRejectedManager" name="Rejected by Manager" />
+
+    <!-- Activate Vendor in System -->
+    <serviceTask id="activateVendor" name="Activate Vendor in System"
+                 flowable:delegateExpression="${vendorActivationDelegate}">
+      <documentation>Activate vendor record and assign vendor code</documentation>
+    </serviceTask>
+
+    <!-- Create Vendor Portal Account -->
+    <serviceTask id="createPortalAccount" name="Create Vendor Portal Account"
+                 flowable:delegateExpression="${vendorPortalDelegate}">
+      <documentation>Create vendor portal account for online interaction</documentation>
+    </serviceTask>
+
+    <!-- Send Welcome Email -->
+    <serviceTask id="sendWelcomeEmail" name="Send Welcome Email to Vendor"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[VENDOR_WELCOME]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- Notify Internal Stakeholders -->
+    <serviceTask id="notifyInternalTeams" name="Notify Internal Teams"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[NEW_VENDOR_ACTIVATED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Success -->
+    <endEvent id="endSuccess" name="Vendor Onboarded Successfully" />
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="initialScreening" />
+    <sequenceFlow id="flow2" sourceRef="initialScreening" targetRef="screeningDecision" />
+
+    <!-- Screening Decision -->
+    <sequenceFlow id="screeningPassed" name="Passed" sourceRef="screeningDecision" targetRef="documentVerification">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${screeningPassed == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="screeningFailed" name="Failed" sourceRef="screeningDecision" targetRef="notifyRejectedScreening">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${screeningPassed == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow3" sourceRef="notifyRejectedScreening" targetRef="endRejectedScreening" />
+
+    <!-- Document Verification -->
+    <sequenceFlow id="flow4" sourceRef="documentVerification" targetRef="manualDocReview" />
+    <sequenceFlow id="flow5" sourceRef="manualDocReview" targetRef="startParallelReviews" />
+
+    <!-- Parallel Reviews -->
+    <sequenceFlow id="flow6" sourceRef="startParallelReviews" targetRef="financialBackgroundCheck" />
+    <sequenceFlow id="flow7" sourceRef="startParallelReviews" targetRef="legalReview" />
+    <sequenceFlow id="flow8" sourceRef="startParallelReviews" targetRef="complianceCheck" />
+
+    <sequenceFlow id="flow9" sourceRef="financialBackgroundCheck" targetRef="joinParallelReviews" />
+    <sequenceFlow id="flow10" sourceRef="legalReview" targetRef="joinParallelReviews" />
+    <sequenceFlow id="flow11" sourceRef="complianceCheck" targetRef="joinParallelReviews" />
+
+    <!-- Reviews Decision -->
+    <sequenceFlow id="flow12" sourceRef="joinParallelReviews" targetRef="reviewsDecision" />
+
+    <sequenceFlow id="reviewsPassed" name="All Passed" sourceRef="reviewsDecision" targetRef="procurementManagerApproval">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${financialCheckPassed == true && legalReviewPassed == true && complianceCheckPassed == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="reviewsFailed" name="Any Failed" sourceRef="reviewsDecision" targetRef="notifyRejectedReviews">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${financialCheckPassed == false || legalReviewPassed == false || complianceCheckPassed == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow13" sourceRef="notifyRejectedReviews" targetRef="endRejectedReviews" />
+
+    <!-- Manager Approval -->
+    <sequenceFlow id="flow14" sourceRef="procurementManagerApproval" targetRef="managerDecision" />
+
+    <sequenceFlow id="managerApproved" name="Approved" sourceRef="managerDecision" targetRef="activateVendor">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${managerApproved == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="managerRejected" name="Rejected" sourceRef="managerDecision" targetRef="notifyRejectedManager">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${managerApproved == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow15" sourceRef="notifyRejectedManager" targetRef="endRejectedManager" />
+
+    <!-- Activation and Completion -->
+    <sequenceFlow id="flow16" sourceRef="activateVendor" targetRef="createPortalAccount" />
+    <sequenceFlow id="flow17" sourceRef="createPortalAccount" targetRef="sendWelcomeEmail" />
+    <sequenceFlow id="flow18" sourceRef="sendWelcomeEmail" targetRef="notifyInternalTeams" />
+    <sequenceFlow id="flow19" sourceRef="notifyInternalTeams" targetRef="endSuccess" />
+
+  </process>
+
+</definitions>

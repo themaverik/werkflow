@@ -1,4 +1,4 @@
-# Werkflow Enterprise Platform
+# W[ER]kflow Enterprise Platform
 
 A comprehensive enterprise workflow platform with self-service workflow creation, visual BPMN designer, dynamic form builder, and multi-department orchestration.
 

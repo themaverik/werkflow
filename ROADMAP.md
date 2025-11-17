@@ -878,7 +878,70 @@ KEYCLOAK_ISSUER=https://keycloak.werkflow.com/realms/werkflow
 
 ## 📊 Progress Tracking
 
-### Overall Progress
+### Backend Services Progress
+
+#### Phase 3: CapEx, Procurement, and Inventory Services ✅ COMPLETED
+**Completion Date**: 2025-11-17
+**Status**: Completed
+
+**Services Implemented:**
+- [x] Finance Service (Port 8084) - CapEx domain ✅
+  - Complete entity models (CapExRequest, CapExApproval, Budget)
+  - REST API controllers for CapEx management
+  - Flyway database migrations
+  - Integration with Engine Service
+
+- [x] Procurement Service (Port 8085) - Procurement domain ✅
+  - Complete entity models (PurchaseRequest, Vendor, PurchaseOrder)
+  - REST API controllers for procurement and vendor management
+  - Flyway database migrations
+  - Integration with Engine Service
+
+- [x] Inventory Service (Port 8086) - Asset management domain ✅
+  - Complete entity models (AssetCategory, AssetDefinition, AssetInstance, CustodyRecord, TransferRequest, MaintenanceRecord)
+  - REST API controllers for asset and custody management
+  - Flyway database migrations
+  - Inter-department custody tracking
+  - Integration with Engine Service
+
+**BPMN Workflows Created:**
+- [x] CapEx Approval Process (capex-approval-process.bpmn20.xml) ✅
+  - Multi-level approval workflow based on amount thresholds
+  - Budget verification and reservation
+  - Manager, VP, and CFO approval gates
+
+- [x] Procurement Approval Process (procurement-approval-process.bpmn20.xml) ✅
+  - Vendor selection and quotation workflow
+  - Multi-level approval based on purchase amount
+  - Purchase order generation
+
+- [x] Asset Transfer Approval Process (asset-transfer-approval-process.bpmn20.xml) ✅
+  - Custody tracking and transfer workflow
+  - Current custodian release approval
+  - Manager approval for high-value assets
+  - New custodian acceptance
+
+**Form.io Templates Created:**
+- [x] capex-request - Capital expenditure request form with ROI and payback period ✅
+- [x] procurement-request - Purchase request form with vendor and quantities ✅
+- [x] asset-transfer-request - Asset transfer form with transfer types and custody ✅
+
+**Infrastructure Updates:**
+- [x] Docker Compose configuration updated with all three services ✅
+- [x] Database initialization with finance_service, procurement_service, inventory_service schemas ✅
+- [x] Engine Service configuration updated with service URLs ✅
+
+**Architecture Corrections:**
+- Corrected misunderstanding that CapEx, Procurement, and Inventory are WORKFLOWS, not DEPARTMENTS
+- CapEx workflows orchestrated by Engine Service, data managed by Finance Service
+- Procurement workflows orchestrated by Engine Service, data managed by Procurement Service
+- Asset transfer workflows orchestrated by Engine Service, data managed by Inventory Service
+
+---
+
+### Frontend Development Progress
+
+#### Overall Progress
 - [x] Phase 1: Foundation (0% complete)
 - [ ] Phase 2: BPMN Designer (0% complete)
 - [ ] Phase 3: Form Builder (0% complete)

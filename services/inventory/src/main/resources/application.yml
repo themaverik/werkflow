@@ -41,7 +41,7 @@ spring:
           jwk-set-uri: ${KEYCLOAK_URL:http://localhost:8090}/realms/${KEYCLOAK_REALM:werkflow}/protocol/openid-connect/certs
 
 server:
-  port: ${SERVER_PORT:8084}
+  port: ${SERVER_PORT:8086}
   servlet:
     context-path: /
   error:

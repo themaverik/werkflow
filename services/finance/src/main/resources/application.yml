@@ -1,0 +1,144 @@
+spring:
+  application:
+    name: werkflow-finance
+
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/werkflow_db
+    username: werkflow_user
+    password: werkflow_pass
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+
+  # JPA Configuration
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+        default_schema: finance_service
+
+  # Flyway Configuration
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    schemas: finance_service
+    out-of-order: false
+
+  # Security Configuration with Keycloak OAuth2
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8090/realms/werkflow
+          jwk-set-uri: http://localhost:8090/realms/werkflow/protocol/openid-connect/certs
+
+  # Jackson Configuration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: UTC
+    default-property-inclusion: non_null
+
+# Flowable Configuration
+flowable:
+  async-executor-activate: true
+  database-schema-update: true
+  process-definition-cache-limit: 10
+
+  # Process Engine Configuration
+  process:
+    definition-cache-limit: 100
+    enable-safe-xml-api: true
+
+  # DMN Engine Configuration
+  dmn:
+    enabled: true
+    strict-mode: false
+
+  # Form Engine Configuration
+  form:
+    enabled: true
+
+  # Content Engine Configuration
+  content:
+    enabled: false
+
+  # IDM Engine Configuration
+  idm:
+    enabled: true
+    ldap:
+      enabled: false
+
+  # History Configuration
+  history-level: full
+
+  # Async Executor Configuration
+  async:
+    executor:
+      default-async-job-acquire-wait-time: 10000
+      default-timer-job-acquire-wait-time: 10000
+      async-executor-activate: true
+
+  # REST API Configuration
+  rest-api-enabled: true
+
+# Server Configuration
+server:
+  port: 8084
+  servlet:
+    context-path: /api
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+  show-actuator: false
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.werkflow: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.flowable: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# Application Information
+info:
+  app:
+    name: werkflow-finance
+    description: Finance Management Service with CapEx and Budget Capabilities
+    version: 1.0.0
+
+# Keycloak Configuration
+keycloak:
+  realm: werkflow
+  auth-server-url: http://localhost:8090
+  resource: werkflow-finance-api
+  credentials:
+    secret: your-client-secret-will-be-generated
+  use-resource-role-mappings: true
+  bearer-only: true

@@ -139,3 +139,4 @@ app:
     admin-url: ${ADMIN_SERVICE_URL:http://localhost:8083}
     finance-url: ${FINANCE_SERVICE_URL:http://localhost:8084}
     procurement-url: ${PROCUREMENT_SERVICE_URL:http://localhost:8085}
+    inventory-url: ${INVENTORY_SERVICE_URL:http://localhost:8086}

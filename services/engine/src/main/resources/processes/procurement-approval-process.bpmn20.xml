@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://werkflow.com/bpmn/procurement">
+
+  <process id="procurement-approval-process" name="Procurement Approval Process" isExecutable="true">
+
+    <documentation>Purchase request approval workflow with vendor selection and multi-level approvals</documentation>
+
+    <!-- Start Event -->
+    <startEvent id="startEvent" name="Purchase Request Submitted" flowable:formKey="procurement-request">
+      <documentation>Employee submits a purchase request</documentation>
+    </startEvent>
+
+    <!-- Service Task: Create Purchase Request in Procurement Service -->
+    <serviceTask id="createPurchaseRequest" name="Create Purchase Request"
+                 flowable:expression="${execution.setVariable('requestId', procurementService.createRequest(execution.getVariables()))}">
+      <documentation>Creates purchase request record in Procurement Service via REST API</documentation>
+    </serviceTask>
+
+    <!-- Service Task: Fetch Approved Vendors -->
+    <serviceTask id="fetchVendors" name="Fetch Approved Vendors"
+                 flowable:expression="${execution.setVariable('vendors', procurementService.getApprovedVendors(itemCategory))}">
+      <documentation>Retrieves list of approved vendors for the requested item category</documentation>
+    </serviceTask>
+
+    <!-- User Task: Select Vendor -->
+    <userTask id="selectVendor" name="Select Vendor" flowable:candidateGroups="PROCUREMENT_TEAM" flowable:formKey="vendor-selection">
+      <documentation>Procurement team selects vendor from approved vendor list</documentation>
+    </userTask>
+
+    <!-- Service Task: Request Quotations -->
+    <serviceTask id="requestQuotations" name="Request Quotations"
+                 flowable:expression="${procurementService.requestQuotations(requestId, selectedVendorIds)}">
+      <documentation>Sends quotation requests to selected vendors</documentation>
+    </serviceTask>
+
+    <!-- User Task: Review Quotations -->
+    <userTask id="reviewQuotations" name="Review Quotations" flowable:candidateGroups="PROCUREMENT_TEAM" flowable:formKey="quotation-review">
+      <documentation>Procurement team reviews and compares vendor quotations</documentation>
+    </userTask>
+
+    <!-- Service Task: Calculate Total Cost -->
+    <serviceTask id="calculateTotalCost" name="Calculate Total Cost"
+                 flowable:expression="${execution.setVariable('totalCost', procurementService.calculateTotalCost(requestId, selectedQuotationId))}">
+      <documentation>Calculates total cost including taxes and shipping</documentation>
+    </serviceTask>
+
+    <!-- Exclusive Gateway: Amount-based Approval Routing -->
+    <exclusiveGateway id="amountGateway" name="Amount > $10,000?" />
+
+    <!-- User Task: Supervisor Approval (all requests) -->
+    <userTask id="supervisorApproval" name="Supervisor Review" flowable:candidateGroups="PROCUREMENT_SUPERVISOR" flowable:formKey="procurement-approval">
+      <documentation>Supervisor reviews and approves purchase request</documentation>
+    </userTask>
+
+    <!-- User Task: Manager Approval (amounts > $10k) -->
+    <userTask id="managerApproval" name="Manager Review" flowable:candidateGroups="PROCUREMENT_MANAGER" flowable:formKey="procurement-approval">
+      <documentation>Manager reviews high-value purchase requests exceeding $10,000</documentation>
+    </userTask>
+
+    <!-- Exclusive Gateway: Check Amount for Director Approval -->
+    <exclusiveGateway id="directorGateway" name="Amount > $50,000?" />
+
+    <!-- User Task: Director Approval (amounts > $50k) -->
+    <userTask id="directorApproval" name="Director Review" flowable:candidateGroups="PROCUREMENT_DIRECTOR" flowable:formKey="procurement-approval">
+      <documentation>Director reviews very high-value purchase requests exceeding $50,000</documentation>
+    </userTask>
+
+    <!-- Merge Gateway -->
+    <exclusiveGateway id="mergeGateway" name="Merge Approvals" />
+
+    <!-- Exclusive Gateway: Final Decision -->
+    <exclusiveGateway id="decisionGateway" name="Approved?" />
+
+    <!-- Service Task: Create Purchase Order -->
+    <serviceTask id="createPurchaseOrder" name="Create Purchase Order"
+                 flowable:expression="${execution.setVariable('poNumber', procurementService.createPurchaseOrder(requestId, selectedQuotationId))}">
+      <documentation>Creates purchase order in Procurement Service</documentation>
+    </serviceTask>
+
+    <!-- Service Task: Send PO to Vendor -->
+    <serviceTask id="sendPOToVendor" name="Send PO to Vendor"
+                 flowable:expression="${procurementService.sendPurchaseOrder(poNumber, vendorEmail)}">
+      <documentation>Sends purchase order to selected vendor via email</documentation>
+    </serviceTask>
+
+    <!-- Service Task: Update Request Status - Approved -->
+    <serviceTask id="updateApproved" name="Update Status: Approved"
+                 flowable:expression="${procurementService.updateRequestStatus(requestId, 'APPROVED', poNumber)}">
+      <documentation>Updates purchase request status to APPROVED with PO number</documentation>
+    </serviceTask>
+
+    <!-- Service Task: Send Approval Notification -->
+    <serviceTask id="sendApprovalNotification" name="Send Approval Notification"
+                 flowable:expression="${notificationService.sendEmail(requesterEmail, 'Purchase Request Approved', approvalMessage)}">
+      <documentation>Sends email notification to requester about approval</documentation>
+    </serviceTask>
+
+    <!-- Service Task: Update Request Status - Rejected -->
+    <serviceTask id="updateRejected" name="Update Status: Rejected"
+                 flowable:expression="${procurementService.updateRequestStatus(requestId, 'REJECTED', execution.getVariable('rejectionReason'))}">
+      <documentation>Updates purchase request status to REJECTED</documentation>
+    </serviceTask>
+
+    <!-- Service Task: Send Rejection Notification -->
+    <serviceTask id="sendRejectionNotification" name="Send Rejection Notification"
+                 flowable:expression="${notificationService.sendEmail(requesterEmail, 'Purchase Request Rejected', rejectionMessage)}">
+      <documentation>Sends email notification to requester about rejection</documentation>
+    </serviceTask>
+
+    <!-- End Events -->
+    <endEvent id="endEventApproved" name="PO Created" />
+    <endEvent id="endEventRejected" name="Request Rejected" />
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="createPurchaseRequest" />
+    <sequenceFlow id="flow2" sourceRef="createPurchaseRequest" targetRef="fetchVendors" />
+    <sequenceFlow id="flow3" sourceRef="fetchVendors" targetRef="selectVendor" />
+    <sequenceFlow id="flow4" sourceRef="selectVendor" targetRef="requestQuotations" />
+    <sequenceFlow id="flow5" sourceRef="requestQuotations" targetRef="reviewQuotations" />
+    <sequenceFlow id="flow6" sourceRef="reviewQuotations" targetRef="calculateTotalCost" />
+    <sequenceFlow id="flow7" sourceRef="calculateTotalCost" targetRef="amountGateway" />
+
+    <!-- Amount Gateway Flows -->
+    <sequenceFlow id="amountLow" sourceRef="amountGateway" targetRef="supervisorApproval">
+      <conditionExpression xsi:type="tFormalExpression">${totalCost &lt;= 10000}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="amountHigh" sourceRef="amountGateway" targetRef="supervisorApproval">
+      <conditionExpression xsi:type="tFormalExpression">${totalCost &gt; 10000}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="flow8" sourceRef="supervisorApproval" targetRef="directorGateway" />
+
+    <!-- Director Gateway Flows -->
+    <sequenceFlow id="directorNotNeeded" sourceRef="directorGateway" targetRef="mergeGateway">
+      <conditionExpression xsi:type="tFormalExpression">${totalCost &lt;= 10000}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="directorPath" sourceRef="directorGateway" targetRef="managerApproval">
+      <conditionExpression xsi:type="tFormalExpression">${totalCost &gt; 10000}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="flow9" sourceRef="managerApproval" targetRef="directorApproval" />
+    <sequenceFlow id="flow10" sourceRef="directorApproval" targetRef="mergeGateway" />
+    <sequenceFlow id="flow11" sourceRef="mergeGateway" targetRef="decisionGateway" />
+
+    <!-- Decision Gateway Flows -->
+    <sequenceFlow id="approved" sourceRef="decisionGateway" targetRef="createPurchaseOrder">
+      <conditionExpression xsi:type="tFormalExpression">${approvalDecision == 'APPROVED'}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="rejected" sourceRef="decisionGateway" targetRef="updateRejected">
+      <conditionExpression xsi:type="tFormalExpression">${approvalDecision == 'REJECTED'}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Approval Path -->
+    <sequenceFlow id="flow12" sourceRef="createPurchaseOrder" targetRef="sendPOToVendor" />
+    <sequenceFlow id="flow13" sourceRef="sendPOToVendor" targetRef="updateApproved" />
+    <sequenceFlow id="flow14" sourceRef="updateApproved" targetRef="sendApprovalNotification" />
+    <sequenceFlow id="flow15" sourceRef="sendApprovalNotification" targetRef="endEventApproved" />
+
+    <!-- Rejection Path -->
+    <sequenceFlow id="flow16" sourceRef="updateRejected" targetRef="sendRejectionNotification" />
+    <sequenceFlow id="flow17" sourceRef="sendRejectionNotification" targetRef="endEventRejected" />
+
+  </process>
+
+  <!-- BPMN Diagram (Visual Layout) -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_procurement-approval-process">
+    <bpmndi:BPMNPlane bpmnElement="procurement-approval-process" id="BPMNPlane_procurement-approval-process">
+      <bpmndi:BPMNShape bpmnElement="startEvent" id="BPMNShape_startEvent">
+        <omgdc:Bounds height="30.0" width="30.0" x="100.0" y="163.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="supervisorApproval" id="BPMNShape_supervisorApproval">
+        <omgdc:Bounds height="80.0" width="100.0" x="700.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endEventApproved" id="BPMNShape_endEventApproved">
+        <omgdc:Bounds height="28.0" width="28.0" x="1600.0" y="164.0"/>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>

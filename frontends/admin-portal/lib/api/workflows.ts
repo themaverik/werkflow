@@ -113,3 +113,65 @@ export async function getProcessVariables(processInstanceId: string): Promise<Re
 export async function setProcessVariables(processInstanceId: string, variables: Record<string, any>): Promise<void> {
   await apiClient.put(`/workflows/processes/${processInstanceId}/variables`, variables)
 }
+
+// ================================================================
+// MONITORING & STATISTICS APIs
+// ================================================================
+
+export interface ProcessStatistics {
+  activeProcesses: number
+  completedToday: number
+  failedToday: number
+  avgCompletionTime: string
+  totalDeployed: number
+  activeUsers: number
+}
+
+export interface RunningProcessInstance {
+  id: string
+  processDefinitionKey: string
+  processDefinitionName: string
+  businessKey?: string
+  startTime: string
+  startedBy: string
+  currentActivity: string
+  status: 'active' | 'suspended'
+}
+
+export interface ActivityLogEntry {
+  id: string
+  type: 'completed' | 'started' | 'failed' | 'deployed'
+  message: string
+  timestamp: string
+  user: string
+}
+
+// Get process execution statistics
+export async function getProcessStatistics(): Promise<ProcessStatistics> {
+  const response = await apiClient.get('/workflows/statistics')
+  return response.data
+}
+
+// Get all running process instances with details
+export async function getRunningProcesses(): Promise<RunningProcessInstance[]> {
+  const response = await apiClient.get('/workflows/processes/running')
+  return response.data
+}
+
+// Get recent activity logs
+export async function getActivityLogs(limit: number = 50): Promise<ActivityLogEntry[]> {
+  const response = await apiClient.get('/workflows/activity', {
+    params: { limit }
+  })
+  return response.data
+}
+
+// Suspend a process instance
+export async function suspendProcessInstance(processInstanceId: string): Promise<void> {
+  await apiClient.post(`/workflows/processes/${processInstanceId}/suspend`)
+}
+
+// Activate a suspended process instance
+export async function activateProcessInstance(processInstanceId: string): Promise<void> {
+  await apiClient.post(`/workflows/processes/${processInstanceId}/activate`)
+}

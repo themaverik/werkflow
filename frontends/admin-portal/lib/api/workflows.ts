@@ -175,3 +175,78 @@ export async function suspendProcessInstance(processInstanceId: string): Promise
 export async function activateProcessInstance(processInstanceId: string): Promise<void> {
   await apiClient.post(`/workflows/processes/${processInstanceId}/activate`)
 }
+
+// ================================================================
+// ANALYTICS APIs
+// ================================================================
+
+export interface ProcessAnalytics {
+  totalProcesses: number
+  avgCompletionRate: number
+  avgDuration: string
+  activeUsers: number
+  changeFromLastPeriod: {
+    processes: number
+    completionRate: number
+    duration: number
+    users: number
+  }
+}
+
+export interface ProcessMetric {
+  processName: string
+  processDefinitionKey: string
+  totalInstances: number
+  completed: number
+  failed: number
+  active: number
+  avgDuration: string
+  completionRate: number
+}
+
+export interface ActivityMetric {
+  activity: string
+  activityId: string
+  avgDuration: string
+  bottleneck: boolean
+  instances: number
+}
+
+export interface ProcessTrend {
+  date: string
+  completed: number
+  started: number
+  failed: number
+}
+
+// Get process analytics overview
+export async function getProcessAnalytics(timeRange: string = '7d'): Promise<ProcessAnalytics> {
+  const response = await apiClient.get('/workflows/analytics/overview', {
+    params: { timeRange }
+  })
+  return response.data
+}
+
+// Get process-specific metrics
+export async function getProcessMetrics(timeRange: string = '7d'): Promise<ProcessMetric[]> {
+  const response = await apiClient.get('/workflows/analytics/processes', {
+    params: { timeRange }
+  })
+  return response.data
+}
+
+// Get activity bottleneck analysis
+export async function getActivityMetrics(timeRange: string = '7d'): Promise<ActivityMetric[]> {
+  const response = await apiClient.get('/workflows/analytics/activities', {
+    params: { timeRange }
+  })
+  return response.data
+}
+
+// Get process trends over time
+export async function getProcessTrends(timeRange: string = '7d'): Promise<ProcessTrend[]> {
+  const response = await apiClient.get('/workflows/analytics/trends', {
+    params: { timeRange }
+  })
+  return response.data
+}

@@ -138,10 +138,10 @@ RUN npm run build
 # ================================================================
 # STAGE 9: HR Service Runtime
 # ================================================================
-FROM eclipse-temurin:17-jre-alpine AS hr-service
+FROM eclipse-temurin:17-jre AS hr-service
 
 # Add non-root user
-RUN addgroup -S werkflow && adduser -S werkflow -G werkflow
+RUN groupadd -r werkflow && useradd -r -g werkflow werkflow
 
 WORKDIR /app
 
@@ -170,10 +170,10 @@ ENTRYPOINT ["java", \
 # ================================================================
 # STAGE 10: Engine Service Runtime
 # ================================================================
-FROM eclipse-temurin:17-jre-alpine AS engine-service
+FROM eclipse-temurin:17-jre AS engine-service
 
 # Add non-root user
-RUN addgroup -S werkflow && adduser -S werkflow -G werkflow
+RUN groupadd -r werkflow && useradd -r -g werkflow werkflow
 
 WORKDIR /app
 
@@ -202,10 +202,10 @@ ENTRYPOINT ["java", \
 # ================================================================
 # STAGE 11: Admin Service Runtime
 # ================================================================
-FROM eclipse-temurin:17-jre-alpine AS admin-service
+FROM eclipse-temurin:17-jre AS admin-service
 
 # Add non-root user
-RUN addgroup -S werkflow && adduser -S werkflow -G werkflow
+RUN groupadd -r werkflow && useradd -r -g werkflow werkflow
 
 WORKDIR /app
 
@@ -247,10 +247,10 @@ RUN mvn clean package -DskipTests -B
 # ================================================================
 # STAGE 13: Inventory Service Runtime
 # ================================================================
-FROM eclipse-temurin:17-jre-alpine AS inventory-service
+FROM eclipse-temurin:17-jre AS inventory-service
 
 # Add non-root user
-RUN addgroup -S werkflow && adduser -S werkflow -G werkflow
+RUN groupadd -r werkflow && useradd -r -g werkflow werkflow
 
 WORKDIR /app
 
@@ -263,11 +263,11 @@ RUN mkdir -p /app/logs && \
 
 USER werkflow
 
-EXPOSE 8084
+EXPOSE 8086
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8084/actuator/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8086/actuator/health || exit 1
 
 ENTRYPOINT ["java", \
     "-Djava.security.egd=file:/dev/./urandom", \
@@ -292,10 +292,10 @@ RUN mvn clean package -DskipTests -B
 # ================================================================
 # STAGE 15: Finance Service Runtime
 # ================================================================
-FROM eclipse-temurin:17-jre-alpine AS finance-service
+FROM eclipse-temurin:17-jre AS finance-service
 
 # Add non-root user
-RUN addgroup -S werkflow && adduser -S werkflow -G werkflow
+RUN groupadd -r werkflow && useradd -r -g werkflow werkflow
 
 WORKDIR /app
 
@@ -308,11 +308,11 @@ RUN mkdir -p /app/logs && \
 
 USER werkflow
 
-EXPOSE 8085
+EXPOSE 8084
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8085/actuator/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8084/actuator/health || exit 1
 
 ENTRYPOINT ["java", \
     "-Djava.security.egd=file:/dev/./urandom", \
@@ -337,10 +337,10 @@ RUN mvn clean package -DskipTests -B
 # ================================================================
 # STAGE 17: Procurement Service Runtime
 # ================================================================
-FROM eclipse-temurin:17-jre-alpine AS procurement-service
+FROM eclipse-temurin:17-jre AS procurement-service
 
 # Add non-root user
-RUN addgroup -S werkflow && adduser -S werkflow -G werkflow
+RUN groupadd -r werkflow && useradd -r -g werkflow werkflow
 
 WORKDIR /app
 
@@ -353,11 +353,11 @@ RUN mkdir -p /app/logs && \
 
 USER werkflow
 
-EXPOSE 8086
+EXPOSE 8085
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8086/actuator/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8085/actuator/health || exit 1
 
 ENTRYPOINT ["java", \
     "-Djava.security.egd=file:/dev/./urandom", \
@@ -421,79 +421,3 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:4001/api/health || exit 1
 
 CMD ["node", "server.js"]
-
-# ================================================================
-# STAGE 14: Finance Service Build
-# ================================================================
-FROM backend-base AS finance-service-build
-WORKDIR /build/services/finance
-COPY services/finance/pom.xml .
-RUN mvn dependency:go-offline -B
-COPY services/finance/src ./src
-RUN mvn clean package -DskipTests -B
-
-# ================================================================
-# STAGE 15: Finance Service Runtime
-# ================================================================
-FROM eclipse-temurin:17-jre-alpine AS finance-service
-
-RUN addgroup -S werkflow && adduser -S werkflow -G werkflow
-
-WORKDIR /app
-
-COPY --from=finance-service-build /build/services/finance/target/*.jar app.jar
-
-RUN mkdir -p /app/logs && \
-    chown -R werkflow:werkflow /app
-
-USER werkflow
-
-EXPOSE 8085
-
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8085/actuator/health || exit 1
-
-ENTRYPOINT ["java", \
-    "-Djava.security.egd=file:/dev/./urandom", \
-    "-XX:MaxRAMPercentage=75.0", \
-    "-XX:+UseContainerSupport", \
-    "-jar", \
-    "app.jar"]
-
-# ================================================================
-# STAGE 16: Procurement Service Build
-# ================================================================
-FROM backend-base AS procurement-service-build
-WORKDIR /build/services/procurement
-COPY services/procurement/pom.xml .
-RUN mvn dependency:go-offline -B
-COPY services/procurement/src ./src
-RUN mvn clean package -DskipTests -B
-
-# ================================================================
-# STAGE 17: Procurement Service Runtime
-# ================================================================
-FROM eclipse-temurin:17-jre-alpine AS procurement-service
-
-RUN addgroup -S werkflow && adduser -S werkflow -G werkflow
-
-WORKDIR /app
-
-COPY --from=procurement-service-build /build/services/procurement/target/*.jar app.jar
-
-RUN mkdir -p /app/logs && \
-    chown -R werkflow:werkflow /app
-
-USER werkflow
-
-EXPOSE 8086
-
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8086/actuator/health || exit 1
-
-ENTRYPOINT ["java", \
-    "-Djava.security.egd=file:/dev/./urandom", \
-    "-XX:MaxRAMPercentage=75.0", \
-    "-XX:+UseContainerSupport", \
-    "-jar", \
-    "app.jar"]

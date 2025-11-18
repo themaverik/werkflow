@@ -107,13 +107,6 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>org.flowable</groupId>
-            <artifactId>flowable-engine-test</artifactId>
-            <version>${flowable.version}</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>

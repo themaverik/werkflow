@@ -52,7 +52,7 @@ werkflow/
 
 ## 🚀 Current Features
 
-### ✅ Implemented (Phase 3)
+### ✅ Phase 3: Backend Services (Completed)
 
 **Department Services:**
 - **HR Management**: Complete employee lifecycle, leave, attendance, performance reviews, payroll
@@ -68,29 +68,36 @@ werkflow/
   - Procurement approval with vendor selection (Procurement)
   - Asset transfer with custody tracking (Inventory)
 
-**Admin Portal:**
+### ✅ Phase 3.5: Frontend Orchestration (Completed)
+
+**Admin Portal Features:**
 - **Visual BPMN Designer**: Create workflows with bpmn-js (no code required)
 - **Dynamic Form Builder**: Form.io integration for workflow forms
-- **Workflow Dashboard**: Centralized view of all workflows across departments
+- **Multi-Department Workflow Dashboard**: Centralized view across HR, Finance, Procurement, Inventory
+- **Monitoring Dashboard**: Real-time process statistics with 30-second polling
+- **Analytics Dashboard**: Performance metrics, completion rates, bottleneck analysis
+- **Task Portal**: My Tasks and Group Tasks with claiming and completion
 - **Process Management**: Deploy, version, and manage workflows via UI
 
 **Platform Features:**
 - **Authentication**: Keycloak OAuth2/JWT with role-based access control
 - **90%+ No-Code**: Generic delegates enable workflow creation without coding
-- **Multi-Department**: HR, Finance, Procurement, Inventory with more planned
+- **Real-Time Updates**: React Query polling for live dashboard updates
+- **Multi-Department**: HR, Finance, Procurement, Inventory with centralized orchestration
 - **Microservices Architecture**: Schema-separated PostgreSQL, independent services
 
 ### 🚧 In Progress
 - Admin Service (User/Org/Dept Management)
 - Generic Delegates Library (REST, Email, Notification, Approval)
 - HR Portal (employee-facing)
+- Comprehensive testing and QA
 
 ### 📋 Planned (Future Phases)
 - Legal service (Contract review, compliance workflows)
 - Event-driven architecture (Kafka)
 - CQRS pattern implementation
-- Real-time notifications
 - Advanced analytics and reporting
+- Production deployment (Kubernetes, CI/CD)
 
 ## 🛠️ Technology Stack
 
@@ -187,19 +194,27 @@ npm run dev
 
 ### 6. Access Applications
 
-**Services:**
-- HR Service API: http://localhost:8082/api
-- HR Swagger UI: http://localhost:8082/api/swagger-ui.html
+**Backend Services:**
+- Engine Service: http://localhost:8081/api
+- HR Service: http://localhost:8082/api
+- Admin Service: http://localhost:8083/api
+- Finance Service: http://localhost:8084/api
+- Procurement Service: http://localhost:8085/api
+- Inventory Service: http://localhost:8086/api
+- Swagger UI: http://localhost:808X/api/swagger-ui.html (replace X with service port)
 
-**Frontends:**
-- Admin Portal: http://localhost:4000
-- Process Designer: http://localhost:4000/processes
-- Form Builder: http://localhost:4000/forms
-- Task Portal: http://localhost:4000/tasks
+**Admin Portal (http://localhost:4000):**
+- Studio → Processes: BPMN workflow designer
+- Studio → Forms: Form.io form builder
+- Studio → Workflows: Multi-department workflow dashboard
+- Portal → Monitoring: Real-time process monitoring
+- Portal → Analytics: Performance metrics and analytics
+- Portal → Tasks: My Tasks and Group Tasks management
 
 **Infrastructure:**
 - Keycloak: http://localhost:8090 (admin/admin123)
 - PostgreSQL: localhost:5433 (werkflow_admin/secure_password)
+- pgAdmin: http://localhost:5050 (admin@werkflow.com/admin)
 
 ## 🔐 Authentication & Roles
 
@@ -348,55 +363,59 @@ See ROADMAP-DRAFT.md for production deployment strategy (Phase 3):
 ## 🛣️ Development Roadmap
 
 ### ✅ Phase 0: Foundation (Completed)
-- [x] Rename whrkflow → werkflow
-- [x] Restructure to monorepo
+- [x] Monorepo restructure
 - [x] Environment configuration
-- [x] Git repository setup
 - [x] Docker Compose setup
 - [x] PostgreSQL schema separation
 
-### 🚧 Phase 1: Core Platform (In Progress)
-- [x] Flowable Engine Service ✅
-- [ ] Generic Delegates Library (REST, Email, Notification)
-- [ ] Admin Service (User/Org/Dept Management)
-- [x] HR Service integration ✅
+### ✅ Phase 1: Core Platform (Completed)
+- [x] Flowable Engine Service
+- [x] HR Service integration
+- [x] Basic BPMN workflows
 
-### ✅ Phase 3: Finance, Procurement & Inventory (Completed)
-- [x] **Finance Service** with CapEx workflow ✅
-  - Multi-level approval (Manager/VP/CFO)
+### ✅ Phase 3: Multi-Department Services (Completed)
+- [x] **Finance Service** (port 8084)
+  - CapEx approval workflow with multi-level approvals
   - Budget verification and reservation
-  - Form.io template for CapEx requests
-- [x] **Procurement Service** with purchase workflow ✅
-  - Vendor selection and quotation
-  - Multi-level approval (Supervisor/Manager/Director)
-  - Purchase order generation
-- [x] **Inventory Service** with asset transfer workflow ✅
-  - Custody tracking model
-  - Current custodian release approval
-  - Manager approval for high-value assets
-- [x] **BPMN Processes** in Engine Service ✅
-  - capex-approval-process.bpmn20.xml
-  - procurement-approval-process.bpmn20.xml
-  - asset-transfer-approval-process.bpmn20.xml
-- [x] **Infrastructure Updates** ✅
-  - Docker Compose with all services
-  - Database schemas (finance_service, procurement_service, inventory_service)
-  - Admin Portal workflow dashboard
+- [x] **Procurement Service** (port 8085)
+  - Purchase request workflow with vendor selection
+  - Multi-level approval and PO generation
+- [x] **Inventory Service** (port 8086)
+  - Asset transfer workflow with custody tracking
+  - Inter-department asset management
+- [x] **BPMN Workflows** in Engine Service
+- [x] **Infrastructure** updates (Docker, DB schemas)
 
-### 📋 Phase 2: Department Portals (Planned)
+### ✅ Phase 3.5: Frontend Orchestration (Completed)
+- [x] **Monitoring Dashboard** - Real-time process statistics
+- [x] **Analytics Dashboard** - Performance metrics and bottlenecks
+- [x] **Multi-Department Workflow Dashboard** - Centralized orchestration view
+- [x] **Task Portal** - My Tasks, Group Tasks, claiming, completion
+- [x] **Real-time updates** - 30-second polling with React Query
+- [x] **Zero mock data** - All dashboards connected to Engine Service APIs
+
+### 🚧 Phase 4: Testing & Quality Assurance (In Progress)
+- [x] Sanity testing documentation
+- [ ] Service health checks
+- [ ] Integration testing
+- [ ] End-to-end testing
+- [ ] Performance testing
+
+### 📋 Phase 5: Production Readiness (Planned)
+- [ ] Admin Service (User/Org/Dept Management)
+- [ ] Generic Delegates Library
 - [ ] HR Portal (employee-facing)
-- [ ] Department-specific dashboards
-- [ ] Enhanced monitoring
+- [ ] Kubernetes deployment
+- [ ] CI/CD pipelines
+- [ ] Monitoring and observability
 
-### 📋 Phase 4: Future Enhancements
-- [ ] Legal service (Contract review, compliance)
+### 📋 Phase 6: Future Enhancements
+- [ ] Legal service
 - [ ] Event-driven architecture (Kafka)
 - [ ] CQRS implementation
-- [ ] Kubernetes deployment
-- [ ] CI/CD automation
 - [ ] Advanced analytics
 
-See [ROADMAP.md](./ROADMAP.md) for development tracking and [ROADMAP-DRAFT.md](./ROADMAP-DRAFT.md) for detailed implementation plan.
+See [ROADMAP.md](./ROADMAP.md) for detailed development tracking and [docs/TESTING.md](./docs/TESTING.md) for testing procedures.
 
 ## 🔧 Configuration
 
@@ -444,12 +463,16 @@ Proprietary - All rights reserved
 
 ---
 
-**Status**: Phase 3 completed - Multi-department workflow platform with Finance, Procurement, and Inventory services
+**Status**: Phase 3.5 completed - Multi-department workflow platform with comprehensive frontend orchestration
 
-**Architecture**: Microservices with centralized BPM orchestration via Engine Service
+**Architecture**: Microservices with centralized BPM orchestration and real-time monitoring
 
 **Approach**: 90%+ no-code through BPMN workflows, generic delegates, and visual designers
 
-**Key Achievement**: Workflows can be added with minimal code changes - only BPMN XML files required, department services remain unchanged
+**Key Features**:
+- Multi-Department Support: HR, Finance, Procurement, Inventory
+- Real-Time Dashboards: Monitoring, Analytics, Multi-Department Workflows
+- Task Management: My Tasks, Group Tasks with dynamic form completion
+- Visual Tools: BPMN Designer, Form Builder with zero-code workflow creation
 
-**Latest Update**: 2025-11-17 - Phase 3 implementation with CapEx, Procurement, and Asset Transfer workflows
+**Latest Update**: 2025-11-18 - Phase 3.5 frontend orchestration with centralized task management and real-time monitoring

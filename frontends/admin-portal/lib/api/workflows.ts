@@ -250,3 +250,65 @@ export async function getProcessTrends(timeRange: string = '7d'): Promise<Proces
   })
   return response.data
 }
+
+// ================================================================
+// MULTI-DEPARTMENT WORKFLOW APIs
+// ================================================================
+
+export interface DepartmentWorkflowStats {
+  department: string
+  totalWorkflows: number
+  activeWorkflows: number
+  completedWorkflows: number
+  failedWorkflows: number
+  suspendedWorkflows: number
+}
+
+export interface WorkflowInstance {
+  id: string
+  processDefinitionKey: string
+  processDefinitionName: string
+  department: string
+  businessKey?: string
+  startTime: string
+  endTime?: string
+  startedBy: string
+  currentActivity?: string
+  status: 'active' | 'completed' | 'failed' | 'suspended'
+  variables?: Record<string, any>
+}
+
+// Get workflow statistics for all departments
+export async function getAllDepartmentStats(): Promise<DepartmentWorkflowStats[]> {
+  const response = await apiClient.get('/workflows/departments/stats')
+  return response.data
+}
+
+// Get workflow statistics for a specific department
+export async function getDepartmentStats(department: string): Promise<DepartmentWorkflowStats> {
+  const response = await apiClient.get(`/workflows/departments/${department}/stats`)
+  return response.data
+}
+
+// Get workflow instances for a specific department
+export async function getDepartmentWorkflows(
+  department: string,
+  status?: 'active' | 'completed' | 'failed' | 'suspended',
+  limit: number = 20
+): Promise<WorkflowInstance[]> {
+  const response = await apiClient.get(`/workflows/departments/${department}/instances`, {
+    params: { status, limit }
+  })
+  return response.data
+}
+
+// Get all workflow instances across departments
+export async function getAllWorkflowInstances(
+  status?: 'active' | 'completed' | 'failed' | 'suspended',
+  limit: number = 20
+): Promise<WorkflowInstance[]> {
+  const response = await apiClient.get('/workflows/instances', {
+    params: { status, limit }
+  })
+  return response.data
+}

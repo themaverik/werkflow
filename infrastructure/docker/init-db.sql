@@ -33,7 +33,7 @@ GRANT USAGE, CREATE ON SCHEMA inventory_service TO werkflow_admin;
 GRANT USAGE, CREATE ON SCHEMA legal_service TO werkflow_admin;
 
 -- Set default search path for services
-ALTER DATABASE werkflow SET search_path TO public, flowable, hr_service, admin_service;
+ALTER DATABASE werkflow SET search_path TO public, flowable, hr_service, admin_service, finance_service, procurement_service, inventory_service;
 
 -- Create extensions if needed
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -50,9 +50,9 @@ BEGIN
     RAISE NOTICE '  - flowable (Flowable BPM Engine)';
     RAISE NOTICE '  - hr_service (HR Domain)';
     RAISE NOTICE '  - admin_service (User/Org/Dept Management)';
-    RAISE NOTICE '  - finance_service (Finance Domain - Future)';
-    RAISE NOTICE '  - procurement_service (Procurement Domain - Future)';
-    RAISE NOTICE '  - inventory_service (Inventory Domain - Future)';
+    RAISE NOTICE '  - finance_service (Finance Domain - Phase 3)';
+    RAISE NOTICE '  - procurement_service (Procurement Domain - Phase 3)';
+    RAISE NOTICE '  - inventory_service (Inventory Domain - Phase 3)';
     RAISE NOTICE '  - legal_service (Legal Domain - Future)';
     RAISE NOTICE '========================================';
 END $$;

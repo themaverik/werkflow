@@ -1,39 +1,73 @@
 package com.werkflow.inventory.repository;
 
+import com.werkflow.inventory.entity.AssetInstance;
 import com.werkflow.inventory.entity.CustodyRecord;
-import com.werkflow.inventory.entity.CustodyRecord.CustodyType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repository for CustodyRecord entity
+ */
 @Repository
 public interface CustodyRecordRepository extends JpaRepository<CustodyRecord, Long> {
 
-    List<CustodyRecord> findByAssetInstanceId(Long assetInstanceId);
+    /**
+     * Find current custody record for an asset (active custody, no end date)
+     */
+    @Query("SELECT c FROM CustodyRecord c WHERE c.assetInstance = :assetInstance AND c.endDate IS NULL")
+    Optional<CustodyRecord> findCurrentCustody(@Param("assetInstance") AssetInstance assetInstance);
 
-    @Query("SELECT cr FROM CustodyRecord cr WHERE cr.assetInstance.id = :assetId AND cr.endDate IS NULL")
-    Optional<CustodyRecord> findCurrentCustodyByAssetId(@Param("assetId") Long assetInstanceId);
+    /**
+     * Find custody history for an asset
+     */
+    List<CustodyRecord> findByAssetInstanceOrderByStartDateDesc(AssetInstance assetInstance);
 
+    /**
+     * Find custody records by custodian department
+     */
     List<CustodyRecord> findByCustodianDeptId(Long deptId);
 
+    /**
+     * Find custody records by custodian user
+     */
     List<CustodyRecord> findByCustodianUserId(Long userId);
 
-    @Query("SELECT cr FROM CustodyRecord cr WHERE cr.custodianDeptId = :deptId AND cr.endDate IS NULL")
-    List<CustodyRecord> findCurrentCustodyByDepartment(@Param("deptId") Long deptId);
+    /**
+     * Find custody records by custody type
+     */
+    List<CustodyRecord> findByCustodyType(String custodyType);
 
-    @Query("SELECT cr FROM CustodyRecord cr WHERE cr.custodianUserId = :userId AND cr.endDate IS NULL")
-    List<CustodyRecord> findCurrentCustodyByUser(@Param("userId") Long userId);
+    /**
+     * Find current custody records (active, no end date)
+     */
+    @Query("SELECT c FROM CustodyRecord c WHERE c.endDate IS NULL")
+    List<CustodyRecord> findActiveCustodyRecords();
 
-    @Query("SELECT cr FROM CustodyRecord cr WHERE cr.custodyType = :type AND cr.endDate IS NULL")
-    List<CustodyRecord> findActiveCustodyByType(@Param("type") CustodyType type);
+    /**
+     * Find temporary custody records that are past their end date
+     */
+    @Query("SELECT c FROM CustodyRecord c WHERE c.custodyType = 'TEMPORARY' AND c.endDate <= :currentDate AND c.endDate IS NOT NULL")
+    List<CustodyRecord> findOverdueTemporaryCustody(@Param("currentDate") LocalDateTime currentDate);
 
-    @Query("SELECT COUNT(cr) FROM CustodyRecord cr WHERE cr.custodianDeptId = :deptId AND cr.endDate IS NULL")
-    Long countCurrentAssetsInDepartment(@Param("deptId") Long deptId);
+    /**
+     * Find custody records by asset instance and custody type
+     */
+    List<CustodyRecord> findByAssetInstanceAndCustodyType(AssetInstance assetInstance, String custodyType);
 
-    @Query("SELECT COUNT(cr) FROM CustodyRecord cr WHERE cr.custodianUserId = :userId AND cr.endDate IS NULL")
-    Long countCurrentAssetsWithUser(@Param("userId") Long userId);
+    /**
+     * Find custody records for specific department and user
+     */
+    List<CustodyRecord> findByCustodianDeptIdAndCustodianUserId(Long deptId, Long userId);
+
+    /**
+     * Find all custody records for a department
+     */
+    @Query("SELECT c FROM CustodyRecord c WHERE c.custodianDeptId = :deptId AND c.endDate IS NULL")
+    List<CustodyRecord> findActiveCustodyByDepartment(@Param("deptId") Long deptId);
 }

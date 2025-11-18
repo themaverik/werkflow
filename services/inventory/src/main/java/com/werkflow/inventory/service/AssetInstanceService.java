@@ -1,198 +1,182 @@
 package com.werkflow.inventory.service;
 
-import com.werkflow.inventory.dto.AssetInstanceRequest;
-import com.werkflow.inventory.dto.AssetInstanceResponse;
-import com.werkflow.inventory.dto.CustodyRecordResponse;
 import com.werkflow.inventory.entity.AssetDefinition;
 import com.werkflow.inventory.entity.AssetInstance;
-import com.werkflow.inventory.entity.CustodyRecord;
 import com.werkflow.inventory.repository.AssetDefinitionRepository;
 import com.werkflow.inventory.repository.AssetInstanceRepository;
-import com.werkflow.inventory.repository.CustodyRecordRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
+/**
+ * Service for AssetInstance operations
+ */
 @Service
 @RequiredArgsConstructor
+@Transactional
 @Slf4j
 public class AssetInstanceService {
 
     private final AssetInstanceRepository instanceRepository;
     private final AssetDefinitionRepository definitionRepository;
-    private final CustodyRecordRepository custodyRecordRepository;
 
-    @Transactional
-    public AssetInstanceResponse createInstance(AssetInstanceRequest request) {
-        log.info("Creating asset instance with tag: {}", request.getAssetTag());
+    /**
+     * Create a new asset instance
+     */
+    public AssetInstance createInstance(AssetInstance instance) {
+        log.info("Creating new asset instance with tag: {}", instance.getAssetTag());
 
-        if (instanceRepository.existsByAssetTag(request.getAssetTag())) {
-            throw new RuntimeException("Asset instance with tag '" + request.getAssetTag() + "' already exists");
+        if (instanceRepository.findByAssetTag(instance.getAssetTag()).isPresent()) {
+            throw new IllegalArgumentException("Asset instance with tag already exists: " + instance.getAssetTag());
         }
 
-        AssetDefinition definition = definitionRepository.findById(request.getAssetDefinitionId())
-            .orElseThrow(() -> new RuntimeException("Asset definition not found with ID: " + request.getAssetDefinitionId()));
-
-        AssetInstance instance = AssetInstance.builder()
-            .assetDefinition(definition)
-            .assetTag(request.getAssetTag())
-            .serialNumber(request.getSerialNumber())
-            .purchaseDate(request.getPurchaseDate())
-            .purchaseCost(request.getPurchaseCost())
-            .warrantyExpiryDate(request.getWarrantyExpiryDate())
-            .condition(request.getCondition() != null ? request.getCondition() : AssetInstance.AssetCondition.NEW)
-            .status(request.getStatus() != null ? request.getStatus() : AssetInstance.AssetStatus.AVAILABLE)
-            .currentLocation(request.getCurrentLocation())
-            .notes(request.getNotes())
-            .metadata(request.getMetadata())
-            .build();
-
-        instance = instanceRepository.save(instance);
-        log.info("Asset instance created successfully with ID: {}", instance.getId());
-
-        return mapToResponse(instance);
+        AssetInstance saved = instanceRepository.save(instance);
+        log.info("Asset instance created with id: {}", saved.getId());
+        return saved;
     }
 
+    /**
+     * Get asset instance by ID
+     */
     @Transactional(readOnly = true)
-    public AssetInstanceResponse getInstanceById(Long id) {
-        log.debug("Fetching asset instance with ID: {}", id);
-        AssetInstance instance = instanceRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Asset instance not found with ID: " + id));
-        return mapToResponse(instance);
+    public AssetInstance getInstanceById(Long id) {
+        return instanceRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Asset instance not found with id: " + id));
     }
 
+    /**
+     * Get asset instance by asset tag
+     */
     @Transactional(readOnly = true)
-    public AssetInstanceResponse getInstanceByTag(String assetTag) {
-        log.debug("Fetching asset instance with tag: {}", assetTag);
-        AssetInstance instance = instanceRepository.findByAssetTag(assetTag)
-            .orElseThrow(() -> new RuntimeException("Asset instance not found with tag: " + assetTag));
-        return mapToResponse(instance);
+    public AssetInstance getInstanceByAssetTag(String assetTag) {
+        return instanceRepository.findByAssetTag(assetTag)
+            .orElseThrow(() -> new EntityNotFoundException("Asset instance not found with tag: " + assetTag));
     }
 
+    /**
+     * Get asset instances by asset definition
+     */
     @Transactional(readOnly = true)
-    public List<AssetInstanceResponse> getAllInstances() {
-        log.debug("Fetching all asset instances");
-        return instanceRepository.findAll().stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public List<AssetInstance> getInstancesByDefinition(Long definitionId) {
+        AssetDefinition definition = definitionRepository.findById(definitionId)
+            .orElseThrow(() -> new EntityNotFoundException("Asset definition not found with id: " + definitionId));
+
+        return instanceRepository.findByAssetDefinition(definition);
     }
 
+    /**
+     * Get asset instances by status
+     */
     @Transactional(readOnly = true)
-    public List<AssetInstanceResponse> getInstancesByDefinition(Long definitionId) {
-        log.debug("Fetching asset instances for definition ID: {}", definitionId);
-        return instanceRepository.findByAssetDefinitionId(definitionId).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public List<AssetInstance> getInstancesByStatus(String status) {
+        return instanceRepository.findByStatus(status);
     }
 
+    /**
+     * Get available assets
+     */
     @Transactional(readOnly = true)
-    public List<AssetInstanceResponse> getInstancesByStatus(AssetInstance.AssetStatus status) {
-        log.debug("Fetching asset instances with status: {}", status);
-        return instanceRepository.findByStatus(status).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public List<AssetInstance> getAvailableAssets() {
+        return instanceRepository.findAvailableAssets();
     }
 
+    /**
+     * Get assets in use
+     */
     @Transactional(readOnly = true)
-    public List<AssetInstanceResponse> searchInstances(String searchTerm) {
-        log.debug("Searching asset instances with term: {}", searchTerm);
-        return instanceRepository.searchByTagOrSerialOrName(searchTerm).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public List<AssetInstance> getAssetsInUse() {
+        return instanceRepository.findAssetsInUse();
     }
 
-    @Transactional
-    public AssetInstanceResponse updateInstance(Long id, AssetInstanceRequest request) {
-        log.info("Updating asset instance with ID: {}", id);
+    /**
+     * Get assets requiring maintenance
+     */
+    @Transactional(readOnly = true)
+    public List<AssetInstance> getAssetsRequiringMaintenance() {
+        return instanceRepository.findAssetsRequiringMaintenance();
+    }
 
-        AssetInstance instance = instanceRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Asset instance not found with ID: " + id));
+    /**
+     * Get assets with warranty expiring soon
+     */
+    @Transactional(readOnly = true)
+    public List<AssetInstance> getAssetsWithExpiringWarranty(LocalDate expiryDate) {
+        return instanceRepository.findAssetsWithExpiringWarranty(expiryDate);
+    }
 
-        if (!request.getAssetTag().equals(instance.getAssetTag()) &&
-            instanceRepository.existsByAssetTag(request.getAssetTag())) {
-            throw new RuntimeException("Asset instance with tag '" + request.getAssetTag() + "' already exists");
+    /**
+     * Get all asset instances
+     */
+    @Transactional(readOnly = true)
+    public List<AssetInstance> getAllInstances() {
+        return instanceRepository.findAll();
+    }
+
+    /**
+     * Update asset instance
+     */
+    public AssetInstance updateInstance(Long id, AssetInstance instanceDetails) {
+        log.info("Updating asset instance with id: {}", id);
+
+        AssetInstance instance = getInstanceById(id);
+
+        // Validate asset tag uniqueness if changed
+        if (!instance.getAssetTag().equals(instanceDetails.getAssetTag())) {
+            if (instanceRepository.findByAssetTag(instanceDetails.getAssetTag()).isPresent()) {
+                throw new IllegalArgumentException("Asset instance with tag already exists: " + instanceDetails.getAssetTag());
+            }
         }
 
-        AssetDefinition definition = definitionRepository.findById(request.getAssetDefinitionId())
-            .orElseThrow(() -> new RuntimeException("Asset definition not found with ID: " + request.getAssetDefinitionId()));
+        instance.setAssetTag(instanceDetails.getAssetTag());
+        instance.setSerialNumber(instanceDetails.getSerialNumber());
+        instance.setPurchaseDate(instanceDetails.getPurchaseDate());
+        instance.setPurchaseCost(instanceDetails.getPurchaseCost());
+        instance.setWarrantyExpiryDate(instanceDetails.getWarrantyExpiryDate());
+        instance.setCondition(instanceDetails.getCondition());
+        instance.setStatus(instanceDetails.getStatus());
+        instance.setCurrentLocation(instanceDetails.getCurrentLocation());
+        instance.setNotes(instanceDetails.getNotes());
+        instance.setMetadata(instanceDetails.getMetadata());
 
-        instance.setAssetDefinition(definition);
-        instance.setAssetTag(request.getAssetTag());
-        instance.setSerialNumber(request.getSerialNumber());
-        instance.setPurchaseDate(request.getPurchaseDate());
-        instance.setPurchaseCost(request.getPurchaseCost());
-        instance.setWarrantyExpiryDate(request.getWarrantyExpiryDate());
-        if (request.getCondition() != null) {
-            instance.setCondition(request.getCondition());
+        if (instanceDetails.getAssetDefinition() != null) {
+            instance.setAssetDefinition(instanceDetails.getAssetDefinition());
         }
-        if (request.getStatus() != null) {
-            instance.setStatus(request.getStatus());
-        }
-        instance.setCurrentLocation(request.getCurrentLocation());
-        instance.setNotes(request.getNotes());
-        instance.setMetadata(request.getMetadata());
 
-        instance = instanceRepository.save(instance);
-        log.info("Asset instance updated successfully: {}", id);
-
-        return mapToResponse(instance);
+        AssetInstance updated = instanceRepository.save(instance);
+        log.info("Asset instance updated with id: {}", id);
+        return updated;
     }
 
-    @Transactional
-    public void deleteInstance(Long id) {
-        log.info("Deleting asset instance with ID: {}", id);
+    /**
+     * Update asset status
+     */
+    public AssetInstance updateStatus(Long id, String status) {
+        log.info("Updating asset instance status to: {}", status);
 
-        if (!instanceRepository.existsById(id)) {
-            throw new RuntimeException("Asset instance not found with ID: " + id);
-        }
+        AssetInstance instance = getInstanceById(id);
+        instance.setStatus(status);
 
-        instanceRepository.deleteById(id);
-        log.info("Asset instance deleted successfully: {}", id);
+        return instanceRepository.save(instance);
     }
 
-    private AssetInstanceResponse mapToResponse(AssetInstance instance) {
-        AssetInstanceResponse.AssetInstanceResponseBuilder builder = AssetInstanceResponse.builder()
-            .id(instance.getId())
-            .assetDefinitionId(instance.getAssetDefinition().getId())
-            .assetDefinitionName(instance.getAssetDefinition().getName())
-            .assetTag(instance.getAssetTag())
-            .serialNumber(instance.getSerialNumber())
-            .purchaseDate(instance.getPurchaseDate())
-            .purchaseCost(instance.getPurchaseCost())
-            .warrantyExpiryDate(instance.getWarrantyExpiryDate())
-            .condition(instance.getCondition())
-            .status(instance.getStatus())
-            .currentLocation(instance.getCurrentLocation())
-            .notes(instance.getNotes())
-            .metadata(instance.getMetadata())
-            .createdAt(instance.getCreatedAt())
-            .updatedAt(instance.getUpdatedAt());
+    /**
+     * Search asset instances
+     */
+    @Transactional(readOnly = true)
+    public List<AssetInstance> searchInstances(String searchTerm) {
+        return instanceRepository.searchAssets(searchTerm);
+    }
 
-        Optional<CustodyRecord> currentCustody = custodyRecordRepository.findCurrentCustodyByAssetId(instance.getId());
-        if (currentCustody.isPresent()) {
-            CustodyRecord custody = currentCustody.get();
-            builder.currentCustody(CustodyRecordResponse.builder()
-                .id(custody.getId())
-                .assetInstanceId(instance.getId())
-                .assetTag(instance.getAssetTag())
-                .custodianDeptId(custody.getCustodianDeptId())
-                .custodianUserId(custody.getCustodianUserId())
-                .physicalLocation(custody.getPhysicalLocation())
-                .custodyType(custody.getCustodyType())
-                .startDate(custody.getStartDate())
-                .endDate(custody.getEndDate())
-                .assignedByUserId(custody.getAssignedByUserId())
-                .returnCondition(custody.getReturnCondition() != null ? custody.getReturnCondition().name() : null)
-                .notes(custody.getNotes())
-                .createdAt(custody.getCreatedAt())
-                .build());
-        }
-
-        return builder.build();
+    /**
+     * Get assets needing attention
+     */
+    @Transactional(readOnly = true)
+    public List<AssetInstance> getAssetsNeedingAttention() {
+        return instanceRepository.findAssetsNeedingAttention();
     }
 }

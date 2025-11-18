@@ -1,7 +1,5 @@
 package com.werkflow.inventory.service;
 
-import com.werkflow.inventory.dto.AssetCategoryRequest;
-import com.werkflow.inventory.dto.AssetCategoryResponse;
 import com.werkflow.inventory.entity.AssetCategory;
 import com.werkflow.inventory.repository.AssetCategoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -9,141 +7,150 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
-import java.util.stream.Collectors;
 
+/**
+ * Service for AssetCategory operations
+ */
 @Service
 @RequiredArgsConstructor
+@Transactional
 @Slf4j
 public class AssetCategoryService {
 
     private final AssetCategoryRepository categoryRepository;
 
-    @Transactional
-    public AssetCategoryResponse createCategory(AssetCategoryRequest request) {
-        log.info("Creating asset category: {}", request.getName());
+    /**
+     * Create a new asset category
+     */
+    public AssetCategory createCategory(AssetCategory category) {
+        log.info("Creating new asset category: {}", category.getName());
 
-        if (request.getCode() != null && categoryRepository.existsByCode(request.getCode())) {
-            throw new RuntimeException("Category with code '" + request.getCode() + "' already exists");
+        if (category.getCode() != null) {
+            if (categoryRepository.findByCode(category.getCode()).isPresent()) {
+                throw new IllegalArgumentException("Category code already exists: " + category.getCode());
+            }
         }
 
-        AssetCategory.AssetCategoryBuilder builder = AssetCategory.builder()
-            .name(request.getName())
-            .code(request.getCode())
-            .description(request.getDescription())
-            .primaryCustodianDeptId(request.getPrimaryCustodianDeptId())
-            .requiresApproval(request.getRequiresApproval() != null ? request.getRequiresApproval() : true)
-            .active(request.getActive() != null ? request.getActive() : true);
-
-        if (request.getParentCategoryId() != null) {
-            AssetCategory parent = categoryRepository.findById(request.getParentCategoryId())
-                .orElseThrow(() -> new RuntimeException("Parent category not found with ID: " + request.getParentCategoryId()));
-            builder.parentCategory(parent);
-        }
-
-        AssetCategory category = builder.build();
-        category = categoryRepository.save(category);
-        log.info("Asset category created successfully with ID: {}", category.getId());
-
-        return mapToResponse(category);
+        AssetCategory saved = categoryRepository.save(category);
+        log.info("Asset category created with id: {}", saved.getId());
+        return saved;
     }
 
+    /**
+     * Get asset category by ID
+     */
     @Transactional(readOnly = true)
-    public AssetCategoryResponse getCategoryById(Long id) {
-        log.debug("Fetching asset category with ID: {}", id);
-        AssetCategory category = categoryRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Asset category not found with ID: " + id));
-        return mapToResponse(category);
+    public AssetCategory getCategoryById(Long id) {
+        return categoryRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Asset category not found with id: " + id));
     }
 
+    /**
+     * Get asset category by code
+     */
     @Transactional(readOnly = true)
-    public List<AssetCategoryResponse> getAllCategories() {
-        log.debug("Fetching all asset categories");
-        return categoryRepository.findAll().stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public AssetCategory getCategoryByCode(String code) {
+        return categoryRepository.findByCode(code)
+            .orElseThrow(() -> new EntityNotFoundException("Asset category not found with code: " + code));
     }
 
+    /**
+     * Get all active categories
+     */
     @Transactional(readOnly = true)
-    public List<AssetCategoryResponse> getTopLevelCategories() {
-        log.debug("Fetching top-level asset categories");
-        return categoryRepository.findByParentCategoryIsNull().stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public List<AssetCategory> getActiveCategories() {
+        return categoryRepository.findByActiveTrue();
     }
 
+    /**
+     * Get all categories
+     */
     @Transactional(readOnly = true)
-    public List<AssetCategoryResponse> getCategoriesByDepartment(Long deptId) {
-        log.debug("Fetching asset categories for department ID: {}", deptId);
-        return categoryRepository.findByPrimaryCustodianDeptId(deptId).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public List<AssetCategory> getAllCategories() {
+        return categoryRepository.findAll();
     }
 
-    @Transactional
-    public AssetCategoryResponse updateCategory(Long id, AssetCategoryRequest request) {
-        log.info("Updating asset category with ID: {}", id);
-
-        AssetCategory category = categoryRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Asset category not found with ID: " + id));
-
-        if (request.getCode() != null &&
-            !request.getCode().equals(category.getCode()) &&
-            categoryRepository.existsByCode(request.getCode())) {
-            throw new RuntimeException("Category with code '" + request.getCode() + "' already exists");
-        }
-
-        category.setName(request.getName());
-        category.setCode(request.getCode());
-        category.setDescription(request.getDescription());
-        category.setPrimaryCustodianDeptId(request.getPrimaryCustodianDeptId());
-        if (request.getRequiresApproval() != null) {
-            category.setRequiresApproval(request.getRequiresApproval());
-        }
-        if (request.getActive() != null) {
-            category.setActive(request.getActive());
-        }
-
-        if (request.getParentCategoryId() != null) {
-            AssetCategory parent = categoryRepository.findById(request.getParentCategoryId())
-                .orElseThrow(() -> new RuntimeException("Parent category not found with ID: " + request.getParentCategoryId()));
-            category.setParentCategory(parent);
-        }
-
-        category = categoryRepository.save(category);
-        log.info("Asset category updated successfully: {}", id);
-
-        return mapToResponse(category);
+    /**
+     * Get root categories
+     */
+    @Transactional(readOnly = true)
+    public List<AssetCategory> getRootCategories() {
+        return categoryRepository.findRootCategories();
     }
 
-    @Transactional
+    /**
+     * Get child categories
+     */
+    @Transactional(readOnly = true)
+    public List<AssetCategory> getChildCategories(Long parentId) {
+        return categoryRepository.findByParentCategoryIdAndActiveTrue(parentId);
+    }
+
+    /**
+     * Update asset category
+     */
+    public AssetCategory updateCategory(Long id, AssetCategory categoryDetails) {
+        log.info("Updating asset category with id: {}", id);
+
+        AssetCategory category = getCategoryById(id);
+
+        category.setName(categoryDetails.getName());
+        category.setCode(categoryDetails.getCode());
+        category.setDescription(categoryDetails.getDescription());
+        category.setRequiresApproval(categoryDetails.getRequiresApproval());
+        category.setActive(categoryDetails.getActive());
+        category.setPrimaryCustodianDeptId(categoryDetails.getPrimaryCustodianDeptId());
+
+        AssetCategory updated = categoryRepository.save(category);
+        log.info("Asset category updated with id: {}", id);
+        return updated;
+    }
+
+    /**
+     * Deactivate category
+     */
+    public AssetCategory deactivateCategory(Long id) {
+        log.info("Deactivating asset category with id: {}", id);
+
+        AssetCategory category = getCategoryById(id);
+        category.setActive(false);
+
+        return categoryRepository.save(category);
+    }
+
+    /**
+     * Activate category
+     */
+    public AssetCategory activateCategory(Long id) {
+        log.info("Activating asset category with id: {}", id);
+
+        AssetCategory category = getCategoryById(id);
+        category.setActive(true);
+
+        return categoryRepository.save(category);
+    }
+
+    /**
+     * Delete category
+     */
     public void deleteCategory(Long id) {
-        log.info("Deleting asset category with ID: {}", id);
+        log.info("Deleting asset category with id: {}", id);
 
         if (!categoryRepository.existsById(id)) {
-            throw new RuntimeException("Asset category not found with ID: " + id);
+            throw new EntityNotFoundException("Asset category not found with id: " + id);
         }
 
         categoryRepository.deleteById(id);
-        log.info("Asset category deleted successfully: {}", id);
+        log.info("Asset category deleted with id: {}", id);
     }
 
-    private AssetCategoryResponse mapToResponse(AssetCategory category) {
-        return AssetCategoryResponse.builder()
-            .id(category.getId())
-            .parentCategoryId(category.getParentCategory() != null ? category.getParentCategory().getId() : null)
-            .parentCategoryName(category.getParentCategory() != null ? category.getParentCategory().getName() : null)
-            .name(category.getName())
-            .code(category.getCode())
-            .description(category.getDescription())
-            .primaryCustodianDeptId(category.getPrimaryCustodianDeptId())
-            .requiresApproval(category.getRequiresApproval())
-            .active(category.getActive())
-            .childCategories(category.getChildCategories().stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList()))
-            .createdAt(category.getCreatedAt())
-            .updatedAt(category.getUpdatedAt())
-            .build();
+    /**
+     * Search categories
+     */
+    @Transactional(readOnly = true)
+    public List<AssetCategory> searchCategories(String searchTerm) {
+        return categoryRepository.searchCategories(searchTerm);
     }
 }

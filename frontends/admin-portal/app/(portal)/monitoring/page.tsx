@@ -1,90 +1,103 @@
-import { Activity, CheckCircle2, Clock, XCircle, TrendingUp, Users } from 'lucide-react';
-import Link from 'next/link';
+'use client'
 
-export default async function ProcessMonitoringPage() {
-  // In production, fetch from Engine Service API
-  const stats = {
-    activeProcesses: 24,
-    completedToday: 18,
-    failedToday: 2,
-    avgCompletionTime: '2.5 hours',
-    totalDeployed: 12,
-    activeUsers: 45,
+import { Activity, CheckCircle2, Clock, XCircle, TrendingUp, Users, RefreshCw } from 'lucide-react';
+import Link from 'next/link';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import {
+  getProcessStatistics,
+  getRunningProcesses,
+  getActivityLogs,
+  activateProcessInstance,
+  type ProcessStatistics,
+  type RunningProcessInstance,
+  type ActivityLogEntry
+} from '@/lib/api/workflows';
+import { useState } from 'react';
+
+export default function ProcessMonitoringPage() {
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Fetch process statistics with 30-second polling
+  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<ProcessStatistics>({
+    queryKey: ['process-statistics'],
+    queryFn: getProcessStatistics,
+    refetchInterval: 30000, // Poll every 30 seconds
+    staleTime: 20000, // Consider data stale after 20 seconds
+  });
+
+  // Fetch running processes with 30-second polling
+  const { data: runningProcesses, isLoading: processesLoading, error: processesError } = useQuery<RunningProcessInstance[]>({
+    queryKey: ['running-processes'],
+    queryFn: getRunningProcesses,
+    refetchInterval: 30000,
+    staleTime: 20000,
+  });
+
+  // Fetch recent activities with 30-second polling
+  const { data: recentActivities, isLoading: activitiesLoading, error: activitiesError } = useQuery<ActivityLogEntry[]>({
+    queryKey: ['activity-logs'],
+    queryFn: () => getActivityLogs(10),
+    refetchInterval: 30000,
+    staleTime: 20000,
+  });
+
+  // Mutation for activating/resuming suspended processes
+  const activateMutation = useMutation({
+    mutationFn: (processInstanceId: string) => activateProcessInstance(processInstanceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['running-processes'] });
+      queryClient.invalidateQueries({ queryKey: ['process-statistics'] });
+    },
+  });
+
+  // Manual refresh handler
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['process-statistics'] }),
+      queryClient.invalidateQueries({ queryKey: ['running-processes'] }),
+      queryClient.invalidateQueries({ queryKey: ['activity-logs'] }),
+    ]);
+    setTimeout(() => setRefreshing(false), 500);
   };
 
-  const runningProcesses = [
-    {
-      id: 'proc-001',
-      processDefinitionKey: 'employee-onboarding',
-      processDefinitionName: 'Employee Onboarding',
-      businessKey: 'EMP-2024-001',
-      startTime: '2024-11-16T10:30:00Z',
-      startedBy: 'hr.manager@werkflow.com',
-      currentActivity: 'Manager Approval',
-      status: 'active',
-    },
-    {
-      id: 'proc-002',
-      processDefinitionKey: 'leave-request',
-      processDefinitionName: 'Leave Request',
-      businessKey: 'LEAVE-2024-123',
-      startTime: '2024-11-16T09:15:00Z',
-      startedBy: 'john.doe@werkflow.com',
-      currentActivity: 'HR Review',
-      status: 'active',
-    },
-    {
-      id: 'proc-003',
-      processDefinitionKey: 'performance-review',
-      processDefinitionName: 'Performance Review Q4',
-      businessKey: 'PERF-Q4-2024-045',
-      startTime: '2024-11-16T08:00:00Z',
-      startedBy: 'manager@werkflow.com',
-      currentActivity: 'Employee Self Assessment',
-      status: 'active',
-    },
-    {
-      id: 'proc-004',
-      processDefinitionKey: 'expense-claim',
-      processDefinitionName: 'Expense Claim',
-      businessKey: 'EXP-2024-789',
-      startTime: '2024-11-16T11:45:00Z',
-      startedBy: 'employee@werkflow.com',
-      currentActivity: 'Finance Approval',
-      status: 'suspended',
-    },
-  ];
+  // Loading state
+  if (statsLoading || processesLoading || activitiesLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+            <p className="text-gray-600">Loading monitoring data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const recentActivities = [
-    {
-      id: 1,
-      type: 'completed',
-      message: 'Leave Request LEAVE-2024-120 completed successfully',
-      timestamp: '5 minutes ago',
-      user: 'system',
-    },
-    {
-      id: 2,
-      type: 'started',
-      message: 'New Expense Claim process started by employee@werkflow.com',
-      timestamp: '15 minutes ago',
-      user: 'employee@werkflow.com',
-    },
-    {
-      id: 3,
-      type: 'failed',
-      message: 'Onboarding process ONB-2024-032 failed at Document Verification',
-      timestamp: '1 hour ago',
-      user: 'system',
-    },
-    {
-      id: 4,
-      type: 'deployed',
-      message: 'New process definition deployed: Asset Request v2.0',
-      timestamp: '2 hours ago',
-      user: 'admin@werkflow.com',
-    },
-  ];
+  // Error state
+  if (statsError || processesError || activitiesError) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <XCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
+            <p className="text-gray-900 font-medium mb-2">Failed to load monitoring data</p>
+            <p className="text-gray-600 text-sm mb-4">
+              {(statsError || processesError || activitiesError)?.toString() || 'Unknown error occurred'}
+            </p>
+            <button
+              onClick={handleRefresh}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -96,11 +109,13 @@ export default async function ProcessMonitoringPage() {
           </p>
         </div>
         <div className="flex space-x-2">
-          <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-            Export Report
-          </button>
-          <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
-            Refresh
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
           </button>
         </div>
       </div>
@@ -120,11 +135,7 @@ export default async function ProcessMonitoringPage() {
                   </dt>
                   <dd className="flex items-baseline">
                     <div className="text-2xl font-semibold text-gray-900">
-                      {stats.activeProcesses}
-                    </div>
-                    <div className="ml-2 flex items-baseline text-sm font-semibold text-green-600">
-                      <TrendingUp className="h-4 w-4 mr-1" />
-                      12%
+                      {stats?.activeProcesses || 0}
                     </div>
                   </dd>
                 </dl>
@@ -146,7 +157,7 @@ export default async function ProcessMonitoringPage() {
                   </dt>
                   <dd className="flex items-baseline">
                     <div className="text-2xl font-semibold text-gray-900">
-                      {stats.completedToday}
+                      {stats?.completedToday || 0}
                     </div>
                   </dd>
                 </dl>
@@ -168,7 +179,7 @@ export default async function ProcessMonitoringPage() {
                   </dt>
                   <dd className="flex items-baseline">
                     <div className="text-2xl font-semibold text-gray-900">
-                      {stats.failedToday}
+                      {stats?.failedToday || 0}
                     </div>
                   </dd>
                 </dl>
@@ -190,7 +201,7 @@ export default async function ProcessMonitoringPage() {
                   </dt>
                   <dd className="flex items-baseline">
                     <div className="text-2xl font-semibold text-gray-900">
-                      {stats.avgCompletionTime}
+                      {stats?.avgCompletionTime || 'N/A'}
                     </div>
                   </dd>
                 </dl>
@@ -212,7 +223,7 @@ export default async function ProcessMonitoringPage() {
                   </dt>
                   <dd className="flex items-baseline">
                     <div className="text-2xl font-semibold text-gray-900">
-                      {stats.totalDeployed}
+                      {stats?.totalDeployed || 0}
                     </div>
                   </dd>
                 </dl>
@@ -234,7 +245,7 @@ export default async function ProcessMonitoringPage() {
                   </dt>
                   <dd className="flex items-baseline">
                     <div className="text-2xl font-semibold text-gray-900">
-                      {stats.activeUsers}
+                      {stats?.activeUsers || 0}
                     </div>
                   </dd>
                 </dl>
@@ -255,55 +266,68 @@ export default async function ProcessMonitoringPage() {
             View All
           </Link>
         </div>
-        <ul className="divide-y divide-gray-200">
-          {runningProcesses.map((process) => (
-            <li key={process.id} className="p-6 hover:bg-gray-50">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3">
-                    <h3 className="text-lg font-medium text-gray-900">
-                      {process.processDefinitionName}
-                    </h3>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        process.status === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}
-                    >
-                      {process.status}
-                    </span>
+        {runningProcesses && runningProcesses.length > 0 ? (
+          <ul className="divide-y divide-gray-200">
+            {runningProcesses.map((process) => (
+              <li key={process.id} className="p-6 hover:bg-gray-50">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3">
+                      <h3 className="text-lg font-medium text-gray-900">
+                        {process.processDefinitionName}
+                      </h3>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          process.status === 'active'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}
+                      >
+                        {process.status}
+                      </span>
+                    </div>
+                    <div className="mt-2 grid grid-cols-2 gap-4 text-sm text-gray-600">
+                      <div>
+                        <span className="font-medium">Business Key:</span> {process.businessKey || 'N/A'}
+                      </div>
+                      <div>
+                        <span className="font-medium">Current Activity:</span> {process.currentActivity}
+                      </div>
+                      <div>
+                        <span className="font-medium">Started:</span>{' '}
+                        {new Date(process.startTime).toLocaleString()}
+                      </div>
+                      <div>
+                        <span className="font-medium">Started By:</span> {process.startedBy}
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-2 grid grid-cols-2 gap-4 text-sm text-gray-600">
-                    <div>
-                      <span className="font-medium">Business Key:</span> {process.businessKey}
-                    </div>
-                    <div>
-                      <span className="font-medium">Current Activity:</span> {process.currentActivity}
-                    </div>
-                    <div>
-                      <span className="font-medium">Started:</span>{' '}
-                      {new Date(process.startTime).toLocaleString()}
-                    </div>
-                    <div>
-                      <span className="font-medium">Started By:</span> {process.startedBy}
-                    </div>
+                  <div className="ml-4 flex space-x-2">
+                    <Link href={`/portal/processes/${process.id}`}>
+                      <button className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                        View Details
+                      </button>
+                    </Link>
+                    {process.status === 'suspended' && (
+                      <button
+                        onClick={() => activateMutation.mutate(process.id)}
+                        disabled={activateMutation.isPending}
+                        className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {activateMutation.isPending ? 'Resuming...' : 'Resume'}
+                      </button>
+                    )}
                   </div>
                 </div>
-                <div className="ml-4 flex space-x-2">
-                  <button className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-                    View Details
-                  </button>
-                  {process.status === 'suspended' && (
-                    <button className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
-                      Resume
-                    </button>
-                  )}
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="px-6 py-12 text-center text-gray-500">
+            <Activity className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+            <p className="text-sm">No running process instances found</p>
+          </div>
+        )}
       </div>
 
       {/* Recent Activity */}
@@ -311,32 +335,39 @@ export default async function ProcessMonitoringPage() {
         <div className="px-6 py-5 border-b border-gray-200">
           <h2 className="text-lg font-medium text-gray-900">Recent Activity</h2>
         </div>
-        <ul className="divide-y divide-gray-200">
-          {recentActivities.map((activity) => (
-            <li key={activity.id} className="px-6 py-4 hover:bg-gray-50">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2">
-                    {activity.type === 'completed' && (
-                      <CheckCircle2 className="h-5 w-5 text-green-600" />
-                    )}
-                    {activity.type === 'started' && (
-                      <Activity className="h-5 w-5 text-blue-600" />
-                    )}
-                    {activity.type === 'failed' && (
-                      <XCircle className="h-5 w-5 text-red-600" />
-                    )}
-                    {activity.type === 'deployed' && (
-                      <TrendingUp className="h-5 w-5 text-purple-600" />
-                    )}
-                    <p className="text-sm font-medium text-gray-900">{activity.message}</p>
+        {recentActivities && recentActivities.length > 0 ? (
+          <ul className="divide-y divide-gray-200">
+            {recentActivities.map((activity) => (
+              <li key={activity.id} className="px-6 py-4 hover:bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2">
+                      {activity.type === 'completed' && (
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      )}
+                      {activity.type === 'started' && (
+                        <Activity className="h-5 w-5 text-blue-600" />
+                      )}
+                      {activity.type === 'failed' && (
+                        <XCircle className="h-5 w-5 text-red-600" />
+                      )}
+                      {activity.type === 'deployed' && (
+                        <TrendingUp className="h-5 w-5 text-purple-600" />
+                      )}
+                      <p className="text-sm font-medium text-gray-900">{activity.message}</p>
+                    </div>
+                    <p className="mt-1 text-sm text-gray-500">{activity.timestamp}</p>
                   </div>
-                  <p className="mt-1 text-sm text-gray-500">{activity.timestamp}</p>
                 </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="px-6 py-12 text-center text-gray-500">
+            <Clock className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+            <p className="text-sm">No recent activity found</p>
+          </div>
+        )}
       </div>
     </div>
   );

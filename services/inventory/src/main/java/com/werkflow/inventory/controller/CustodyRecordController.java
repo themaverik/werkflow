@@ -1,8 +1,10 @@
 package com.werkflow.inventory.controller;
 
-import com.werkflow.inventory.dto.CustodyRecordRequest;
-import com.werkflow.inventory.dto.CustodyRecordResponse;
+import com.werkflow.inventory.dto.CustodyRecordRequestDto;
+import com.werkflow.inventory.dto.CustodyRecordResponseDto;
 import com.werkflow.inventory.entity.AssetInstance;
+import com.werkflow.inventory.entity.CustodyRecord;
+import com.werkflow.inventory.service.AssetInstanceService;
 import com.werkflow.inventory.service.CustodyRecordService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -10,88 +12,150 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
+/**
+ * REST Controller for CustodyRecord operations
+ */
 @RestController
-@RequestMapping("/api/inventory/custody")
+@RequestMapping("/custody-records")
 @RequiredArgsConstructor
-@Tag(name = "Custody Records", description = "Asset custody tracking APIs")
+@Tag(name = "Custody Records", description = "Inter-department asset custody management APIs")
 public class CustodyRecordController {
 
-    private final CustodyRecordService custodyRecordService;
+    private final CustodyRecordService custodyService;
+    private final AssetInstanceService assetService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'INVENTORY_MANAGER')")
-    @Operation(summary = "Create custody record", description = "Create a new custody record")
-    public ResponseEntity<CustodyRecordResponse> createCustodyRecord(@Valid @RequestBody CustodyRecordRequest request) {
-        CustodyRecordResponse response = custodyRecordService.createCustodyRecord(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    @Operation(summary = "Create custody record", description = "Create a new custody record for asset assignment")
+    public ResponseEntity<CustodyRecordResponseDto> createCustodyRecord(@Valid @RequestBody CustodyRecordRequestDto requestDto) {
+        AssetInstance asset = assetService.getInstanceById(requestDto.getAssetInstanceId());
+
+        CustodyRecord record = CustodyRecord.builder()
+            .assetInstance(asset)
+            .custodianDeptId(requestDto.getCustodianDeptId())
+            .custodianUserId(requestDto.getCustodianUserId())
+            .physicalLocation(requestDto.getPhysicalLocation())
+            .custodyType(CustodyRecord.CustodyType.valueOf(requestDto.getCustodyType()))
+            .startDate(requestDto.getStartDate())
+            .endDate(requestDto.getEndDate())
+            .assignedByUserId(requestDto.getAssignedByUserId())
+            .returnCondition(requestDto.getReturnCondition() != null ?
+                AssetInstance.AssetCondition.valueOf(requestDto.getReturnCondition()) : null)
+            .notes(requestDto.getNotes())
+            .build();
+
+        CustodyRecord created = custodyService.createCustodyRecord(record);
+        return ResponseEntity.status(HttpStatus.CREATED).body(mapToResponse(created));
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get custody record by ID", description = "Retrieve custody record details by ID")
-    public ResponseEntity<CustodyRecordResponse> getCustodyRecordById(@PathVariable Long id) {
-        CustodyRecordResponse response = custodyRecordService.getCustodyRecordById(id);
-        return ResponseEntity.ok(response);
+    @Operation(summary = "Get custody record by ID", description = "Retrieve a custody record by its ID")
+    public ResponseEntity<CustodyRecordResponseDto> getCustodyRecordById(@PathVariable Long id) {
+        CustodyRecord record = custodyService.getCustodyRecordById(id);
+        return ResponseEntity.ok(mapToResponse(record));
     }
 
-    @GetMapping("/asset/{assetId}/current")
-    @Operation(summary = "Get current custody for asset", description = "Retrieve current custody record for an asset")
-    public ResponseEntity<CustodyRecordResponse> getCurrentCustodyForAsset(@PathVariable Long assetId) {
-        return custodyRecordService.getCurrentCustodyForAsset(assetId)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+    @GetMapping("/current/asset/{assetId}")
+    @Operation(summary = "Get current custody", description = "Get the current active custody record for an asset")
+    public ResponseEntity<CustodyRecordResponseDto> getCurrentCustody(@PathVariable Long assetId) {
+        CustodyRecord record = custodyService.getCurrentCustody(assetId);
+        return ResponseEntity.ok(mapToResponse(record));
     }
 
-    @GetMapping("/asset/{assetId}/history")
-    @Operation(summary = "Get custody history for asset", description = "Retrieve complete custody history for an asset")
-    public ResponseEntity<List<CustodyRecordResponse>> getCustodyHistoryForAsset(@PathVariable Long assetId) {
-        List<CustodyRecordResponse> response = custodyRecordService.getCustodyHistoryForAsset(assetId);
-        return ResponseEntity.ok(response);
+    @GetMapping("/history/asset/{assetId}")
+    @Operation(summary = "Get custody history", description = "Get custody history for an asset")
+    public ResponseEntity<List<CustodyRecordResponseDto>> getCustodyHistory(@PathVariable Long assetId) {
+        List<CustodyRecord> records = custodyService.getCustodyHistory(assetId);
+        return ResponseEntity.ok(records.stream().map(this::mapToResponse).collect(Collectors.toList()));
+    }
+
+    @GetMapping
+    @Operation(summary = "Get all custody records", description = "Retrieve all custody records")
+    public ResponseEntity<List<CustodyRecordResponseDto>> getAllCustodyRecords() {
+        List<CustodyRecord> records = custodyService.getAllCustodyRecords();
+        return ResponseEntity.ok(records.stream().map(this::mapToResponse).collect(Collectors.toList()));
+    }
+
+    @GetMapping("/active")
+    @Operation(summary = "Get active custody records", description = "Retrieve all active (current) custody records")
+    public ResponseEntity<List<CustodyRecordResponseDto>> getActiveCustodyRecords() {
+        List<CustodyRecord> records = custodyService.getActiveCustodyRecords();
+        return ResponseEntity.ok(records.stream().map(this::mapToResponse).collect(Collectors.toList()));
     }
 
     @GetMapping("/department/{deptId}")
-    @Operation(summary = "Get current custody by department", description = "Retrieve all current custody records for a department")
-    public ResponseEntity<List<CustodyRecordResponse>> getCurrentCustodyByDepartment(@PathVariable Long deptId) {
-        List<CustodyRecordResponse> response = custodyRecordService.getCurrentCustodyByDepartment(deptId);
-        return ResponseEntity.ok(response);
+    @Operation(summary = "Get custody by department", description = "Get assets under custody of a department")
+    public ResponseEntity<List<CustodyRecordResponseDto>> getCustodyByDepartment(@PathVariable Long deptId) {
+        List<CustodyRecord> records = custodyService.getCustodyByDepartment(deptId);
+        return ResponseEntity.ok(records.stream().map(this::mapToResponse).collect(Collectors.toList()));
     }
 
     @GetMapping("/user/{userId}")
-    @Operation(summary = "Get current custody by user", description = "Retrieve all current custody records for a user")
-    public ResponseEntity<List<CustodyRecordResponse>> getCurrentCustodyByUser(@PathVariable Long userId) {
-        List<CustodyRecordResponse> response = custodyRecordService.getCurrentCustodyByUser(userId);
-        return ResponseEntity.ok(response);
+    @Operation(summary = "Get custody by user", description = "Get assets under custody of a user")
+    public ResponseEntity<List<CustodyRecordResponseDto>> getCustodyByUser(@PathVariable Long userId) {
+        List<CustodyRecord> records = custodyService.getCustodyByUser(userId);
+        return ResponseEntity.ok(records.stream().map(this::mapToResponse).collect(Collectors.toList()));
     }
 
-    @PostMapping("/transfer")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'INVENTORY_MANAGER')")
-    @Operation(summary = "Transfer custody", description = "Transfer custody of an asset to another department/user")
-    public ResponseEntity<CustodyRecordResponse> transferCustody(
-        @RequestParam Long assetInstanceId,
-        @RequestParam Long toDeptId,
-        @RequestParam(required = false) Long toUserId,
-        @RequestParam Long assignedByUserId,
-        @RequestParam(required = false) String notes
-    ) {
-        CustodyRecordResponse response = custodyRecordService.transferCustody(
-            assetInstanceId, toDeptId, toUserId, assignedByUserId, notes
-        );
-        return ResponseEntity.ok(response);
+    @GetMapping("/type/{custodyType}")
+    @Operation(summary = "Get custody by type", description = "Get custody records by custody type")
+    public ResponseEntity<List<CustodyRecordResponseDto>> getCustodyByType(@PathVariable String custodyType) {
+        List<CustodyRecord> records = custodyService.getCustodyByType(custodyType);
+        return ResponseEntity.ok(records.stream().map(this::mapToResponse).collect(Collectors.toList()));
     }
 
-    @PostMapping("/{id}/close")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'INVENTORY_MANAGER')")
-    @Operation(summary = "Close custody record", description = "Close an active custody record")
-    public ResponseEntity<Void> closeCustody(
-        @PathVariable Long id,
-        @RequestParam AssetInstance.AssetCondition returnCondition,
-        @RequestParam(required = false) String notes
-    ) {
-        custodyRecordService.closeCustody(id, returnCondition, notes);
-        return ResponseEntity.noContent().build();
+    @GetMapping("/overdue-temporary")
+    @Operation(summary = "Get overdue temporary custody", description = "Get overdue temporary custody records")
+    public ResponseEntity<List<CustodyRecordResponseDto>> getOverdueTemporaryCustody() {
+        List<CustodyRecord> records = custodyService.getOverdueTemporaryCustody();
+        return ResponseEntity.ok(records.stream().map(this::mapToResponse).collect(Collectors.toList()));
+    }
+
+    @PutMapping("/{id}/end")
+    @Operation(summary = "End custody", description = "End a custody record (asset return)")
+    public ResponseEntity<CustodyRecordResponseDto> endCustody(
+            @PathVariable Long id,
+            @RequestParam String returnCondition) {
+        CustodyRecord updated = custodyService.endCustody(id, returnCondition);
+        return ResponseEntity.ok(mapToResponse(updated));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Update custody record", description = "Update a custody record")
+    public ResponseEntity<CustodyRecordResponseDto> updateCustodyRecord(
+            @PathVariable Long id,
+            @Valid @RequestBody CustodyRecordRequestDto requestDto) {
+        CustodyRecord recordDetails = CustodyRecord.builder()
+            .physicalLocation(requestDto.getPhysicalLocation())
+            .custodyType(CustodyRecord.CustodyType.valueOf(requestDto.getCustodyType()))
+            .notes(requestDto.getNotes())
+            .build();
+
+        CustodyRecord updated = custodyService.updateCustodyRecord(id, recordDetails);
+        return ResponseEntity.ok(mapToResponse(updated));
+    }
+
+    private CustodyRecordResponseDto mapToResponse(CustodyRecord record) {
+        return CustodyRecordResponseDto.builder()
+            .id(record.getId())
+            .assetInstanceId(record.getAssetInstance().getId())
+            .assetTag(record.getAssetInstance().getAssetTag())
+            .custodianDeptId(record.getCustodianDeptId())
+            .custodianUserId(record.getCustodianUserId())
+            .physicalLocation(record.getPhysicalLocation())
+            .custodyType(record.getCustodyType().toString())
+            .startDate(record.getStartDate())
+            .endDate(record.getEndDate())
+            .assignedByUserId(record.getAssignedByUserId())
+            .returnCondition(record.getReturnCondition() != null ? record.getReturnCondition().toString() : null)
+            .notes(record.getNotes())
+            .createdAt(record.getCreatedAt())
+            .isActive(record.getEndDate() == null)
+            .build();
     }
 }

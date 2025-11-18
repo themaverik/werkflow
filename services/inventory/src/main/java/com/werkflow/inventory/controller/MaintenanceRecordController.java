@@ -1,106 +1,163 @@
 package com.werkflow.inventory.controller;
 
-import com.werkflow.inventory.dto.MaintenanceRecordRequest;
-import com.werkflow.inventory.dto.MaintenanceRecordResponse;
+import com.werkflow.inventory.dto.MaintenanceRecordRequestDto;
+import com.werkflow.inventory.dto.MaintenanceRecordResponseDto;
+import com.werkflow.inventory.entity.AssetInstance;
+import com.werkflow.inventory.entity.MaintenanceRecord;
+import com.werkflow.inventory.service.AssetInstanceService;
 import com.werkflow.inventory.service.MaintenanceRecordService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
+/**
+ * REST Controller for MaintenanceRecord operations
+ */
 @RestController
-@RequestMapping("/api/inventory/maintenance")
+@RequestMapping("/maintenance-records")
 @RequiredArgsConstructor
 @Tag(name = "Maintenance Records", description = "Asset maintenance tracking APIs")
 public class MaintenanceRecordController {
 
-    private final MaintenanceRecordService maintenanceRecordService;
+    private final MaintenanceRecordService maintenanceService;
+    private final AssetInstanceService assetService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'INVENTORY_MANAGER', 'MAINTENANCE_STAFF')")
-    @Operation(summary = "Create maintenance record", description = "Create a new maintenance record")
-    public ResponseEntity<MaintenanceRecordResponse> createMaintenanceRecord(@Valid @RequestBody MaintenanceRecordRequest request) {
-        MaintenanceRecordResponse response = maintenanceRecordService.createMaintenanceRecord(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    @Operation(summary = "Create maintenance record", description = "Create a new maintenance record for an asset")
+    public ResponseEntity<MaintenanceRecordResponseDto> createMaintenanceRecord(@Valid @RequestBody MaintenanceRecordRequestDto requestDto) {
+        AssetInstance asset = assetService.getInstanceById(requestDto.getAssetInstanceId());
+
+        MaintenanceRecord record = MaintenanceRecord.builder()
+            .assetInstance(asset)
+            .maintenanceType(MaintenanceRecord.MaintenanceType.valueOf(requestDto.getMaintenanceType()))
+            .scheduledDate(requestDto.getScheduledDate())
+            .completedDate(requestDto.getCompletedDate())
+            .performedBy(requestDto.getPerformedBy())
+            .cost(requestDto.getCost())
+            .description(requestDto.getDescription())
+            .nextMaintenanceDate(requestDto.getNextMaintenanceDate())
+            .build();
+
+        MaintenanceRecord created = maintenanceService.createMaintenanceRecord(record);
+        return ResponseEntity.status(HttpStatus.CREATED).body(mapToResponse(created));
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get maintenance record by ID", description = "Retrieve maintenance record details by ID")
-    public ResponseEntity<MaintenanceRecordResponse> getMaintenanceRecordById(@PathVariable Long id) {
-        MaintenanceRecordResponse response = maintenanceRecordService.getMaintenanceRecordById(id);
-        return ResponseEntity.ok(response);
+    @Operation(summary = "Get maintenance record by ID", description = "Retrieve a maintenance record by its ID")
+    public ResponseEntity<MaintenanceRecordResponseDto> getMaintenanceRecordById(@PathVariable Long id) {
+        MaintenanceRecord record = maintenanceService.getMaintenanceRecordById(id);
+        return ResponseEntity.ok(mapToResponse(record));
+    }
+
+    @GetMapping
+    @Operation(summary = "Get all maintenance records", description = "Retrieve all maintenance records")
+    public ResponseEntity<List<MaintenanceRecordResponseDto>> getAllMaintenanceRecords() {
+        List<MaintenanceRecord> records = maintenanceService.getAllMaintenanceRecords();
+        return ResponseEntity.ok(records.stream().map(this::mapToResponse).collect(Collectors.toList()));
     }
 
     @GetMapping("/asset/{assetId}")
-    @Operation(summary = "Get maintenance records by asset", description = "Retrieve all maintenance records for an asset")
-    public ResponseEntity<List<MaintenanceRecordResponse>> getMaintenanceRecordsByAsset(@PathVariable Long assetId) {
-        List<MaintenanceRecordResponse> response = maintenanceRecordService.getMaintenanceRecordsByAsset(assetId);
-        return ResponseEntity.ok(response);
+    @Operation(summary = "Get maintenance history", description = "Get maintenance history for an asset")
+    public ResponseEntity<List<MaintenanceRecordResponseDto>> getMaintenanceHistory(@PathVariable Long assetId) {
+        List<MaintenanceRecord> records = maintenanceService.getMaintenanceHistory(assetId);
+        return ResponseEntity.ok(records.stream().map(this::mapToResponse).collect(Collectors.toList()));
     }
 
-    @GetMapping("/scheduled")
-    @Operation(summary = "Get scheduled maintenance", description = "Retrieve scheduled maintenance within a date range")
-    public ResponseEntity<List<MaintenanceRecordResponse>> getScheduledMaintenance(
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
-    ) {
-        List<MaintenanceRecordResponse> response = maintenanceRecordService.getScheduledMaintenance(startDate, endDate);
-        return ResponseEntity.ok(response);
+    @GetMapping("/type/{maintenanceType}")
+    @Operation(summary = "Get maintenance by type", description = "Get maintenance records by type")
+    public ResponseEntity<List<MaintenanceRecordResponseDto>> getMaintenanceByType(@PathVariable String maintenanceType) {
+        List<MaintenanceRecord> records = maintenanceService.getMaintenanceByType(maintenanceType);
+        return ResponseEntity.ok(records.stream().map(this::mapToResponse).collect(Collectors.toList()));
     }
 
-    @GetMapping("/upcoming")
-    @Operation(summary = "Get upcoming maintenance", description = "Retrieve upcoming maintenance within a date range")
-    public ResponseEntity<List<MaintenanceRecordResponse>> getUpcomingMaintenance(
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
-    ) {
-        List<MaintenanceRecordResponse> response = maintenanceRecordService.getUpcomingMaintenance(startDate, endDate);
-        return ResponseEntity.ok(response);
+    @GetMapping("/incomplete")
+    @Operation(summary = "Get incomplete maintenance", description = "Retrieve incomplete maintenance records")
+    public ResponseEntity<List<MaintenanceRecordResponseDto>> getIncompleteMaintenanceRecords() {
+        List<MaintenanceRecord> records = maintenanceService.getIncompleteMaintenanceRecords();
+        return ResponseEntity.ok(records.stream().map(this::mapToResponse).collect(Collectors.toList()));
     }
 
     @GetMapping("/overdue")
     @Operation(summary = "Get overdue maintenance", description = "Retrieve overdue maintenance records")
-    public ResponseEntity<List<MaintenanceRecordResponse>> getOverdueMaintenance() {
-        List<MaintenanceRecordResponse> response = maintenanceRecordService.getOverdueMaintenance();
-        return ResponseEntity.ok(response);
+    public ResponseEntity<List<MaintenanceRecordResponseDto>> getOverdueMaintenanceRecords() {
+        List<MaintenanceRecord> records = maintenanceService.getOverdueMaintenanceRecords();
+        return ResponseEntity.ok(records.stream().map(this::mapToResponse).collect(Collectors.toList()));
     }
 
-    @PostMapping("/{id}/complete")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'INVENTORY_MANAGER', 'MAINTENANCE_STAFF')")
-    @Operation(summary = "Complete maintenance record", description = "Mark a maintenance record as completed")
-    public ResponseEntity<MaintenanceRecordResponse> completeMaintenanceRecord(
-        @PathVariable Long id,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate completedDate,
-        @RequestParam(required = false) String notes
-    ) {
-        MaintenanceRecordResponse response = maintenanceRecordService.completeMaintenanceRecord(id, completedDate, notes);
-        return ResponseEntity.ok(response);
+    @GetMapping("/completed")
+    @Operation(summary = "Get completed maintenance", description = "Retrieve completed maintenance records")
+    public ResponseEntity<List<MaintenanceRecordResponseDto>> getCompletedMaintenanceRecords() {
+        List<MaintenanceRecord> records = maintenanceService.getCompletedMaintenanceRecords();
+        return ResponseEntity.ok(records.stream().map(this::mapToResponse).collect(Collectors.toList()));
+    }
+
+    @GetMapping("/scheduled-due")
+    @Operation(summary = "Get scheduled maintenance due", description = "Retrieve scheduled maintenance coming due")
+    public ResponseEntity<List<MaintenanceRecordResponseDto>> getScheduledMaintenanceDue(
+            @RequestParam(defaultValue = "30") Integer daysFromNow) {
+        LocalDate dueDate = LocalDate.now().plusDays(daysFromNow);
+        List<MaintenanceRecord> records = maintenanceService.getScheduledMaintenanceDue(dueDate);
+        return ResponseEntity.ok(records.stream().map(this::mapToResponse).collect(Collectors.toList()));
+    }
+
+    @GetMapping("/expensive")
+    @Operation(summary = "Get expensive maintenance", description = "Retrieve expensive maintenance records")
+    public ResponseEntity<List<MaintenanceRecordResponseDto>> getExpensiveMaintenanceRecords(
+            @RequestParam BigDecimal minCost) {
+        List<MaintenanceRecord> records = maintenanceService.getExpensiveMaintenanceRecords(minCost);
+        return ResponseEntity.ok(records.stream().map(this::mapToResponse).collect(Collectors.toList()));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'INVENTORY_MANAGER')")
-    @Operation(summary = "Update maintenance record", description = "Update an existing maintenance record")
-    public ResponseEntity<MaintenanceRecordResponse> updateMaintenanceRecord(
-        @PathVariable Long id,
-        @Valid @RequestBody MaintenanceRecordRequest request
-    ) {
-        MaintenanceRecordResponse response = maintenanceRecordService.updateMaintenanceRecord(id, request);
-        return ResponseEntity.ok(response);
+    @Operation(summary = "Update maintenance record", description = "Update a maintenance record")
+    public ResponseEntity<MaintenanceRecordResponseDto> updateMaintenanceRecord(
+            @PathVariable Long id,
+            @Valid @RequestBody MaintenanceRecordRequestDto requestDto) {
+        MaintenanceRecord recordDetails = MaintenanceRecord.builder()
+            .scheduledDate(requestDto.getScheduledDate())
+            .completedDate(requestDto.getCompletedDate())
+            .performedBy(requestDto.getPerformedBy())
+            .cost(requestDto.getCost())
+            .description(requestDto.getDescription())
+            .nextMaintenanceDate(requestDto.getNextMaintenanceDate())
+            .build();
+
+        MaintenanceRecord updated = maintenanceService.updateMaintenanceRecord(id, recordDetails);
+        return ResponseEntity.ok(mapToResponse(updated));
     }
 
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @Operation(summary = "Delete maintenance record", description = "Delete a maintenance record (SUPER_ADMIN only)")
-    public ResponseEntity<Void> deleteMaintenanceRecord(@PathVariable Long id) {
-        maintenanceRecordService.deleteMaintenanceRecord(id);
-        return ResponseEntity.noContent().build();
+    @PutMapping("/{id}/complete")
+    @Operation(summary = "Complete maintenance", description = "Mark maintenance record as completed")
+    public ResponseEntity<MaintenanceRecordResponseDto> completeMaintenanceRecord(
+            @PathVariable Long id,
+            @RequestParam LocalDate completedDate,
+            @RequestParam(required = false) LocalDate nextMaintenanceDate) {
+        MaintenanceRecord updated = maintenanceService.completeMaintenanceRecord(id, completedDate, nextMaintenanceDate);
+        return ResponseEntity.ok(mapToResponse(updated));
+    }
+
+    private MaintenanceRecordResponseDto mapToResponse(MaintenanceRecord record) {
+        return MaintenanceRecordResponseDto.builder()
+            .id(record.getId())
+            .assetInstanceId(record.getAssetInstance().getId())
+            .assetTag(record.getAssetInstance().getAssetTag())
+            .maintenanceType(record.getMaintenanceType().toString())
+            .scheduledDate(record.getScheduledDate())
+            .completedDate(record.getCompletedDate())
+            .performedBy(record.getPerformedBy())
+            .cost(record.getCost())
+            .description(record.getDescription())
+            .nextMaintenanceDate(record.getNextMaintenanceDate())
+            .createdAt(record.getCreatedAt())
+            .build();
     }
 }

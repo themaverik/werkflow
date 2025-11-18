@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://werkflow.com/bpmn/capex">
+
+  <process id="capex-approval-process" name="CapEx Approval Process" isExecutable="true">
+
+    <documentation>Capital Expenditure approval workflow with multi-level approvals based on amount thresholds</documentation>
+
+    <!-- Start Event -->
+    <startEvent id="startEvent" name="CapEx Request Submitted" flowable:formKey="capex-request">
+      <documentation>Employee submits a capital expenditure request</documentation>
+    </startEvent>
+
+    <!-- Service Task: Create CapEx Request in Finance Service -->
+    <serviceTask id="createCapExRequest" name="Create CapEx Request"
+                 flowable:expression="${execution.setVariable('capexId', capexService.createRequest(execution.getVariables()))}">
+      <documentation>Creates CapEx request record in Finance Service via REST API</documentation>
+    </serviceTask>
+
+    <!-- Service Task: Check Budget Availability -->
+    <serviceTask id="checkBudget" name="Check Budget Availability"
+                 flowable:expression="${execution.setVariable('budgetAvailable', capexService.checkBudget(requestAmount, departmentId))}">
+      <documentation>Verifies if budget is available for the requested amount</documentation>
+    </serviceTask>
+
+    <!-- Exclusive Gateway: Budget Available? -->
+    <exclusiveGateway id="budgetGateway" name="Budget Available?" />
+
+    <!-- User Task: Department Manager Approval -->
+    <userTask id="managerApproval" name="Manager Review" flowable:candidateGroups="FINANCE_MANAGER" flowable:formKey="capex-approval">
+      <documentation>Department manager reviews and approves/rejects the CapEx request</documentation>
+    </userTask>
+
+    <!-- Exclusive Gateway: Check Amount for VP Approval -->
+    <exclusiveGateway id="amountGateway" name="Amount > $50,000?" />
+
+    <!-- User Task: VP Approval (for amounts > $50k) -->
+    <userTask id="vpApproval" name="VP Review" flowable:candidateGroups="FINANCE_VP" flowable:formKey="capex-approval">
+      <documentation>VP reviews high-value CapEx requests exceeding $50,000</documentation>
+    </userTask>
+
+    <!-- Exclusive Gateway: Check Amount for CFO Approval -->
+    <exclusiveGateway id="cfoGateway" name="Amount > $250,000?" />
+
+    <!-- User Task: CFO Approval (for amounts > $250k) -->
+    <userTask id="cfoApproval" name="CFO Review" flowable:candidateGroups="FINANCE_CFO" flowable:formKey="capex-approval">
+      <documentation>CFO reviews very high-value CapEx requests exceeding $250,000</documentation>
+    </userTask>
+
+    <!-- Merge Gateway: Collect all approval paths -->
+    <exclusiveGateway id="mergeGateway" name="Merge Approvals" />
+
+    <!-- Exclusive Gateway: Final Decision -->
+    <exclusiveGateway id="decisionGateway" name="Approved?" />
+
+    <!-- Service Task: Update CapEx Status - Approved -->
+    <serviceTask id="updateApproved" name="Update Status: Approved"
+                 flowable:expression="${capexService.updateStatus(capexId, 'APPROVED', execution.getVariable('approvalComments'))}">
+      <documentation>Updates CapEx request status to APPROVED in Finance Service</documentation>
+    </serviceTask>
+
+    <!-- Service Task: Reserve Budget -->
+    <serviceTask id="reserveBudget" name="Reserve Budget"
+                 flowable:expression="${capexService.reserveBudget(capexId, requestAmount, departmentId)}">
+      <documentation>Reserves the approved budget amount in the Finance Service</documentation>
+    </serviceTask>
+
+    <!-- Service Task: Send Approval Notification -->
+    <serviceTask id="sendApprovalNotification" name="Send Approval Notification"
+                 flowable:expression="${notificationService.sendEmail(requesterEmail, 'CapEx Request Approved', approvalMessage)}">
+      <documentation>Sends email notification to requester about approval</documentation>
+    </serviceTask>
+
+    <!-- Service Task: Update CapEx Status - Rejected -->
+    <serviceTask id="updateRejected" name="Update Status: Rejected"
+                 flowable:expression="${capexService.updateStatus(capexId, 'REJECTED', execution.getVariable('rejectionReason'))}">
+      <documentation>Updates CapEx request status to REJECTED in Finance Service</documentation>
+    </serviceTask>
+
+    <!-- Service Task: Send Rejection Notification -->
+    <serviceTask id="sendRejectionNotification" name="Send Rejection Notification"
+                 flowable:expression="${notificationService.sendEmail(requesterEmail, 'CapEx Request Rejected', rejectionMessage)}">
+      <documentation>Sends email notification to requester about rejection</documentation>
+    </serviceTask>
+
+    <!-- End Events -->
+    <endEvent id="endEventApproved" name="Request Approved" />
+    <endEvent id="endEventRejected" name="Request Rejected" />
+    <endEvent id="endEventNoBudget" name="Insufficient Budget" />
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="createCapExRequest" />
+    <sequenceFlow id="flow2" sourceRef="createCapExRequest" targetRef="checkBudget" />
+    <sequenceFlow id="flow3" sourceRef="checkBudget" targetRef="budgetGateway" />
+
+    <!-- Budget Gateway Flows -->
+    <sequenceFlow id="budgetYes" sourceRef="budgetGateway" targetRef="managerApproval">
+      <conditionExpression xsi:type="tFormalExpression">${budgetAvailable == true}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="budgetNo" sourceRef="budgetGateway" targetRef="endEventNoBudget">
+      <conditionExpression xsi:type="tFormalExpression">${budgetAvailable == false}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="flow4" sourceRef="managerApproval" targetRef="amountGateway" />
+
+    <!-- Amount Gateway Flows -->
+    <sequenceFlow id="amountLow" sourceRef="amountGateway" targetRef="mergeGateway">
+      <conditionExpression xsi:type="tFormalExpression">${requestAmount &lt;= 50000}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="amountHigh" sourceRef="amountGateway" targetRef="vpApproval">
+      <conditionExpression xsi:type="tFormalExpression">${requestAmount &gt; 50000}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="flow5" sourceRef="vpApproval" targetRef="cfoGateway" />
+
+    <!-- CFO Gateway Flows -->
+    <sequenceFlow id="cfoNotNeeded" sourceRef="cfoGateway" targetRef="mergeGateway">
+      <conditionExpression xsi:type="tFormalExpression">${requestAmount &lt;= 250000}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="cfoNeeded" sourceRef="cfoGateway" targetRef="cfoApproval">
+      <conditionExpression xsi:type="tFormalExpression">${requestAmount &gt; 250000}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="flow6" sourceRef="cfoApproval" targetRef="mergeGateway" />
+    <sequenceFlow id="flow7" sourceRef="mergeGateway" targetRef="decisionGateway" />
+
+    <!-- Decision Gateway Flows -->
+    <sequenceFlow id="approved" sourceRef="decisionGateway" targetRef="updateApproved">
+      <conditionExpression xsi:type="tFormalExpression">${approvalDecision == 'APPROVED'}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="rejected" sourceRef="decisionGateway" targetRef="updateRejected">
+      <conditionExpression xsi:type="tFormalExpression">${approvalDecision == 'REJECTED'}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Approval Path -->
+    <sequenceFlow id="flow8" sourceRef="updateApproved" targetRef="reserveBudget" />
+    <sequenceFlow id="flow9" sourceRef="reserveBudget" targetRef="sendApprovalNotification" />
+    <sequenceFlow id="flow10" sourceRef="sendApprovalNotification" targetRef="endEventApproved" />
+
+    <!-- Rejection Path -->
+    <sequenceFlow id="flow11" sourceRef="updateRejected" targetRef="sendRejectionNotification" />
+    <sequenceFlow id="flow12" sourceRef="sendRejectionNotification" targetRef="endEventRejected" />
+
+  </process>
+
+  <!-- BPMN Diagram (Visual Layout) -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_capex-approval-process">
+    <bpmndi:BPMNPlane bpmnElement="capex-approval-process" id="BPMNPlane_capex-approval-process">
+      <bpmndi:BPMNShape bpmnElement="startEvent" id="BPMNShape_startEvent">
+        <omgdc:Bounds height="30.0" width="30.0" x="100.0" y="163.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="managerApproval" id="BPMNShape_managerApproval">
+        <omgdc:Bounds height="80.0" width="100.0" x="500.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endEventApproved" id="BPMNShape_endEventApproved">
+        <omgdc:Bounds height="28.0" width="28.0" x="1400.0" y="164.0"/>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>

@@ -1,7 +1,5 @@
 package com.werkflow.inventory.service;
 
-import com.werkflow.inventory.dto.MaintenanceRecordRequest;
-import com.werkflow.inventory.dto.MaintenanceRecordResponse;
 import com.werkflow.inventory.entity.AssetInstance;
 import com.werkflow.inventory.entity.MaintenanceRecord;
 import com.werkflow.inventory.repository.AssetInstanceRepository;
@@ -11,168 +9,142 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityNotFoundException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
+/**
+ * Service for MaintenanceRecord operations
+ */
 @Service
 @RequiredArgsConstructor
+@Transactional
 @Slf4j
 public class MaintenanceRecordService {
 
-    private final MaintenanceRecordRepository maintenanceRecordRepository;
-    private final AssetInstanceRepository assetInstanceRepository;
+    private final MaintenanceRecordRepository maintenanceRepository;
+    private final AssetInstanceRepository assetRepository;
 
-    @Transactional
-    public MaintenanceRecordResponse createMaintenanceRecord(MaintenanceRecordRequest request) {
-        log.info("Creating maintenance record for asset ID: {}", request.getAssetInstanceId());
+    /**
+     * Create a new maintenance record
+     */
+    public MaintenanceRecord createMaintenanceRecord(MaintenanceRecord record) {
+        log.info("Creating new maintenance record for asset: {}", record.getAssetInstance().getAssetTag());
 
-        AssetInstance assetInstance = assetInstanceRepository.findById(request.getAssetInstanceId())
-            .orElseThrow(() -> new RuntimeException("Asset instance not found with ID: " + request.getAssetInstanceId()));
+        // Ensure asset exists
+        AssetInstance asset = assetRepository.findById(record.getAssetInstance().getId())
+            .orElseThrow(() -> new EntityNotFoundException("Asset instance not found"));
 
-        MaintenanceRecord maintenanceRecord = MaintenanceRecord.builder()
-            .assetInstance(assetInstance)
-            .maintenanceType(request.getMaintenanceType())
-            .scheduledDate(request.getScheduledDate())
-            .completedDate(request.getCompletedDate())
-            .performedBy(request.getPerformedBy())
-            .cost(request.getCost())
-            .description(request.getDescription())
-            .nextMaintenanceDate(request.getNextMaintenanceDate())
-            .build();
-
-        maintenanceRecord = maintenanceRecordRepository.save(maintenanceRecord);
-        log.info("Maintenance record created successfully with ID: {}", maintenanceRecord.getId());
-
-        if (request.getCompletedDate() == null && request.getScheduledDate() != null) {
-            assetInstance.setStatus(AssetInstance.AssetStatus.MAINTENANCE);
-            assetInstanceRepository.save(assetInstance);
-        }
-
-        return mapToResponse(maintenanceRecord);
+        MaintenanceRecord saved = maintenanceRepository.save(record);
+        log.info("Maintenance record created with id: {}", saved.getId());
+        return saved;
     }
 
+    /**
+     * Get maintenance record by ID
+     */
     @Transactional(readOnly = true)
-    public MaintenanceRecordResponse getMaintenanceRecordById(Long id) {
-        log.debug("Fetching maintenance record with ID: {}", id);
-        MaintenanceRecord maintenanceRecord = maintenanceRecordRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Maintenance record not found with ID: " + id));
-        return mapToResponse(maintenanceRecord);
+    public MaintenanceRecord getMaintenanceRecordById(Long id) {
+        return maintenanceRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Maintenance record not found with id: " + id));
     }
 
+    /**
+     * Get maintenance history for an asset
+     */
     @Transactional(readOnly = true)
-    public List<MaintenanceRecordResponse> getMaintenanceRecordsByAsset(Long assetInstanceId) {
-        log.debug("Fetching maintenance records for asset ID: {}", assetInstanceId);
-        return maintenanceRecordRepository.findByAssetInstanceId(assetInstanceId).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public List<MaintenanceRecord> getMaintenanceHistory(Long assetId) {
+        AssetInstance asset = assetRepository.findById(assetId)
+            .orElseThrow(() -> new EntityNotFoundException("Asset instance not found with id: " + assetId));
+
+        return maintenanceRepository.findByAssetInstanceOrderByScheduledDateDesc(asset);
     }
 
+    /**
+     * Get maintenance records by type
+     */
     @Transactional(readOnly = true)
-    public List<MaintenanceRecordResponse> getScheduledMaintenance(LocalDate startDate, LocalDate endDate) {
-        log.debug("Fetching scheduled maintenance between {} and {}", startDate, endDate);
-        return maintenanceRecordRepository.findScheduledBetween(startDate, endDate).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public List<MaintenanceRecord> getMaintenanceByType(String maintenanceType) {
+        return maintenanceRepository.findByMaintenanceType(maintenanceType);
     }
 
+    /**
+     * Get incomplete maintenance records
+     */
     @Transactional(readOnly = true)
-    public List<MaintenanceRecordResponse> getUpcomingMaintenance(LocalDate startDate, LocalDate endDate) {
-        log.debug("Fetching upcoming maintenance between {} and {}", startDate, endDate);
-        return maintenanceRecordRepository.findUpcomingMaintenance(startDate, endDate).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public List<MaintenanceRecord> getIncompleteMaintenanceRecords() {
+        return maintenanceRepository.findIncompleteMaintenanceRecords();
     }
 
+    /**
+     * Get overdue maintenance records
+     */
     @Transactional(readOnly = true)
-    public List<MaintenanceRecordResponse> getOverdueMaintenance() {
-        log.debug("Fetching overdue maintenance");
-        return maintenanceRecordRepository.findOverdueMaintenanceBefore(LocalDate.now()).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public List<MaintenanceRecord> getOverdueMaintenanceRecords() {
+        return maintenanceRepository.findOverdueMaintenanceRecords(LocalDate.now());
     }
 
-    @Transactional
-    public MaintenanceRecordResponse completeMaintenanceRecord(Long id, LocalDate completedDate, String notes) {
-        log.info("Completing maintenance record ID: {}", id);
-
-        MaintenanceRecord maintenanceRecord = maintenanceRecordRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Maintenance record not found with ID: " + id));
-
-        if (maintenanceRecord.getCompletedDate() != null) {
-            throw new RuntimeException("Maintenance record is already completed");
-        }
-
-        maintenanceRecord.setCompletedDate(completedDate);
-        if (notes != null) {
-            String existingDesc = maintenanceRecord.getDescription();
-            maintenanceRecord.setDescription(existingDesc != null ? existingDesc + "; " + notes : notes);
-        }
-
-        if (maintenanceRecord.getAssetInstance().getAssetDefinition().getMaintenanceIntervalMonths() != null) {
-            maintenanceRecord.setNextMaintenanceDate(
-                completedDate.plusMonths(maintenanceRecord.getAssetInstance().getAssetDefinition().getMaintenanceIntervalMonths())
-            );
-        }
-
-        maintenanceRecord = maintenanceRecordRepository.save(maintenanceRecord);
-
-        AssetInstance assetInstance = maintenanceRecord.getAssetInstance();
-        if (assetInstance.getStatus() == AssetInstance.AssetStatus.MAINTENANCE) {
-            assetInstance.setStatus(AssetInstance.AssetStatus.AVAILABLE);
-            assetInstanceRepository.save(assetInstance);
-        }
-
-        log.info("Maintenance record completed successfully: {}", id);
-        return mapToResponse(maintenanceRecord);
+    /**
+     * Get completed maintenance records
+     */
+    @Transactional(readOnly = true)
+    public List<MaintenanceRecord> getCompletedMaintenanceRecords() {
+        return maintenanceRepository.findCompletedMaintenanceRecords();
     }
 
-    @Transactional
-    public MaintenanceRecordResponse updateMaintenanceRecord(Long id, MaintenanceRecordRequest request) {
-        log.info("Updating maintenance record with ID: {}", id);
-
-        MaintenanceRecord maintenanceRecord = maintenanceRecordRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Maintenance record not found with ID: " + id));
-
-        maintenanceRecord.setMaintenanceType(request.getMaintenanceType());
-        maintenanceRecord.setScheduledDate(request.getScheduledDate());
-        maintenanceRecord.setCompletedDate(request.getCompletedDate());
-        maintenanceRecord.setPerformedBy(request.getPerformedBy());
-        maintenanceRecord.setCost(request.getCost());
-        maintenanceRecord.setDescription(request.getDescription());
-        maintenanceRecord.setNextMaintenanceDate(request.getNextMaintenanceDate());
-
-        maintenanceRecord = maintenanceRecordRepository.save(maintenanceRecord);
-        log.info("Maintenance record updated successfully: {}", id);
-
-        return mapToResponse(maintenanceRecord);
+    /**
+     * Get scheduled maintenance coming due
+     */
+    @Transactional(readOnly = true)
+    public List<MaintenanceRecord> getScheduledMaintenanceDue(LocalDate dueDate) {
+        return maintenanceRepository.findScheduledMaintenanceDue(dueDate);
     }
 
-    @Transactional
-    public void deleteMaintenanceRecord(Long id) {
-        log.info("Deleting maintenance record with ID: {}", id);
-
-        if (!maintenanceRecordRepository.existsById(id)) {
-            throw new RuntimeException("Maintenance record not found with ID: " + id);
-        }
-
-        maintenanceRecordRepository.deleteById(id);
-        log.info("Maintenance record deleted successfully: {}", id);
+    /**
+     * Get expensive maintenance records
+     */
+    @Transactional(readOnly = true)
+    public List<MaintenanceRecord> getExpensiveMaintenanceRecords(BigDecimal minCost) {
+        return maintenanceRepository.findExpensiveMaintenanceRecords(minCost);
     }
 
-    private MaintenanceRecordResponse mapToResponse(MaintenanceRecord maintenanceRecord) {
-        return MaintenanceRecordResponse.builder()
-            .id(maintenanceRecord.getId())
-            .assetInstanceId(maintenanceRecord.getAssetInstance().getId())
-            .assetTag(maintenanceRecord.getAssetInstance().getAssetTag())
-            .maintenanceType(maintenanceRecord.getMaintenanceType())
-            .scheduledDate(maintenanceRecord.getScheduledDate())
-            .completedDate(maintenanceRecord.getCompletedDate())
-            .performedBy(maintenanceRecord.getPerformedBy())
-            .cost(maintenanceRecord.getCost())
-            .description(maintenanceRecord.getDescription())
-            .nextMaintenanceDate(maintenanceRecord.getNextMaintenanceDate())
-            .createdAt(maintenanceRecord.getCreatedAt())
-            .build();
+    /**
+     * Update maintenance record
+     */
+    public MaintenanceRecord updateMaintenanceRecord(Long id, MaintenanceRecord recordDetails) {
+        log.info("Updating maintenance record with id: {}", id);
+
+        MaintenanceRecord record = getMaintenanceRecordById(id);
+
+        record.setScheduledDate(recordDetails.getScheduledDate());
+        record.setCompletedDate(recordDetails.getCompletedDate());
+        record.setPerformedBy(recordDetails.getPerformedBy());
+        record.setCost(recordDetails.getCost());
+        record.setDescription(recordDetails.getDescription());
+        record.setNextMaintenanceDate(recordDetails.getNextMaintenanceDate());
+
+        return maintenanceRepository.save(record);
+    }
+
+    /**
+     * Complete maintenance record
+     */
+    public MaintenanceRecord completeMaintenanceRecord(Long id, LocalDate completedDate, LocalDate nextMaintenanceDate) {
+        log.info("Completing maintenance record with id: {}", id);
+
+        MaintenanceRecord record = getMaintenanceRecordById(id);
+        record.setCompletedDate(completedDate);
+        record.setNextMaintenanceDate(nextMaintenanceDate);
+
+        return maintenanceRepository.save(record);
+    }
+
+    /**
+     * Get all maintenance records
+     */
+    @Transactional(readOnly = true)
+    public List<MaintenanceRecord> getAllMaintenanceRecords() {
+        return maintenanceRepository.findAll();
     }
 }

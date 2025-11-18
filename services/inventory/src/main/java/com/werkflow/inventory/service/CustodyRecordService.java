@@ -1,7 +1,5 @@
 package com.werkflow.inventory.service;
 
-import com.werkflow.inventory.dto.CustodyRecordRequest;
-import com.werkflow.inventory.dto.CustodyRecordResponse;
 import com.werkflow.inventory.entity.AssetInstance;
 import com.werkflow.inventory.entity.CustodyRecord;
 import com.werkflow.inventory.repository.AssetInstanceRepository;
@@ -11,173 +9,142 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
+/**
+ * Service for CustodyRecord operations (Inter-department asset assignments)
+ */
 @Service
 @RequiredArgsConstructor
+@Transactional
 @Slf4j
 public class CustodyRecordService {
 
-    private final CustodyRecordRepository custodyRecordRepository;
-    private final AssetInstanceRepository assetInstanceRepository;
+    private final CustodyRecordRepository custodyRepository;
+    private final AssetInstanceRepository assetRepository;
 
-    @Transactional
-    public CustodyRecordResponse createCustodyRecord(CustodyRecordRequest request) {
-        log.info("Creating custody record for asset ID: {}", request.getAssetInstanceId());
+    /**
+     * Create a new custody record
+     */
+    public CustodyRecord createCustodyRecord(CustodyRecord record) {
+        log.info("Creating new custody record for asset: {}", record.getAssetInstance().getAssetTag());
 
-        AssetInstance assetInstance = assetInstanceRepository.findById(request.getAssetInstanceId())
-            .orElseThrow(() -> new RuntimeException("Asset instance not found with ID: " + request.getAssetInstanceId()));
+        // Ensure asset exists
+        AssetInstance asset = assetRepository.findById(record.getAssetInstance().getId())
+            .orElseThrow(() -> new EntityNotFoundException("Asset instance not found"));
 
-        Optional<CustodyRecord> existingCustody = custodyRecordRepository
-            .findCurrentCustodyByAssetId(request.getAssetInstanceId());
-
-        if (existingCustody.isPresent() && request.getEndDate() == null) {
-            throw new RuntimeException("Asset already has an active custody record. Close existing custody before creating new one.");
-        }
-
-        CustodyRecord custodyRecord = CustodyRecord.builder()
-            .assetInstance(assetInstance)
-            .custodianDeptId(request.getCustodianDeptId())
-            .custodianUserId(request.getCustodianUserId())
-            .physicalLocation(request.getPhysicalLocation())
-            .custodyType(request.getCustodyType())
-            .startDate(request.getStartDate())
-            .endDate(request.getEndDate())
-            .assignedByUserId(request.getAssignedByUserId())
-            .returnCondition(request.getReturnCondition() != null ? AssetInstance.AssetCondition.valueOf(request.getReturnCondition()) : null)
-            .notes(request.getNotes())
-            .build();
-
-        custodyRecord = custodyRecordRepository.save(custodyRecord);
-        log.info("Custody record created successfully with ID: {}", custodyRecord.getId());
-
-        return mapToResponse(custodyRecord);
+        CustodyRecord saved = custodyRepository.save(record);
+        log.info("Custody record created with id: {}", saved.getId());
+        return saved;
     }
 
+    /**
+     * Get custody record by ID
+     */
     @Transactional(readOnly = true)
-    public CustodyRecordResponse getCustodyRecordById(Long id) {
-        log.debug("Fetching custody record with ID: {}", id);
-        CustodyRecord custodyRecord = custodyRecordRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Custody record not found with ID: " + id));
-        return mapToResponse(custodyRecord);
+    public CustodyRecord getCustodyRecordById(Long id) {
+        return custodyRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Custody record not found with id: " + id));
     }
 
+    /**
+     * Get current custody for an asset
+     */
     @Transactional(readOnly = true)
-    public Optional<CustodyRecordResponse> getCurrentCustodyForAsset(Long assetInstanceId) {
-        log.debug("Fetching current custody for asset ID: {}", assetInstanceId);
-        return custodyRecordRepository.findCurrentCustodyByAssetId(assetInstanceId)
-            .map(this::mapToResponse);
+    public CustodyRecord getCurrentCustody(Long assetId) {
+        AssetInstance asset = assetRepository.findById(assetId)
+            .orElseThrow(() -> new EntityNotFoundException("Asset instance not found with id: " + assetId));
+
+        return custodyRepository.findCurrentCustody(asset)
+            .orElseThrow(() -> new EntityNotFoundException("No active custody record found for asset: " + assetId));
     }
 
+    /**
+     * Get custody history for an asset
+     */
     @Transactional(readOnly = true)
-    public List<CustodyRecordResponse> getCustodyHistoryForAsset(Long assetInstanceId) {
-        log.debug("Fetching custody history for asset ID: {}", assetInstanceId);
-        return custodyRecordRepository.findByAssetInstanceId(assetInstanceId).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public List<CustodyRecord> getCustodyHistory(Long assetId) {
+        AssetInstance asset = assetRepository.findById(assetId)
+            .orElseThrow(() -> new EntityNotFoundException("Asset instance not found with id: " + assetId));
+
+        return custodyRepository.findByAssetInstanceOrderByStartDateDesc(asset);
     }
 
+    /**
+     * Get custody records by department
+     */
     @Transactional(readOnly = true)
-    public List<CustodyRecordResponse> getCurrentCustodyByDepartment(Long deptId) {
-        log.debug("Fetching current custody records for department ID: {}", deptId);
-        return custodyRecordRepository.findCurrentCustodyByDepartment(deptId).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public List<CustodyRecord> getCustodyByDepartment(Long deptId) {
+        return custodyRepository.findActiveCustodyByDepartment(deptId);
     }
 
+    /**
+     * Get custody records by user
+     */
     @Transactional(readOnly = true)
-    public List<CustodyRecordResponse> getCurrentCustodyByUser(Long userId) {
-        log.debug("Fetching current custody records for user ID: {}", userId);
-        return custodyRecordRepository.findCurrentCustodyByUser(userId).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public List<CustodyRecord> getCustodyByUser(Long userId) {
+        return custodyRepository.findByCustodianUserId(userId);
     }
 
-    @Transactional
-    public CustodyRecordResponse transferCustody(Long assetInstanceId, Long toDeptId, Long toUserId,
-                                                  Long assignedByUserId, String notes) {
-        log.info("Transferring custody for asset ID: {} to department: {}", assetInstanceId, toDeptId);
-
-        AssetInstance assetInstance = assetInstanceRepository.findById(assetInstanceId)
-            .orElseThrow(() -> new RuntimeException("Asset instance not found with ID: " + assetInstanceId));
-
-        Optional<CustodyRecord> currentCustody = custodyRecordRepository.findCurrentCustodyByAssetId(assetInstanceId);
-
-        if (currentCustody.isPresent()) {
-            CustodyRecord existing = currentCustody.get();
-            existing.setEndDate(LocalDateTime.now());
-            existing.setReturnCondition(assetInstance.getCondition());
-            custodyRecordRepository.save(existing);
-            log.info("Closed existing custody record ID: {}", existing.getId());
-        }
-
-        CustodyRecord newCustody = CustodyRecord.builder()
-            .assetInstance(assetInstance)
-            .custodianDeptId(toDeptId)
-            .custodianUserId(toUserId)
-            .physicalLocation(null)
-            .custodyType(CustodyRecord.CustodyType.PERMANENT)
-            .startDate(LocalDateTime.now())
-            .endDate(null)
-            .assignedByUserId(assignedByUserId)
-            .notes(notes)
-            .build();
-
-        newCustody = custodyRecordRepository.save(newCustody);
-        log.info("Created new custody record ID: {}", newCustody.getId());
-
-        assetInstance.setStatus(AssetInstance.AssetStatus.IN_USE);
-        assetInstanceRepository.save(assetInstance);
-
-        return mapToResponse(newCustody);
+    /**
+     * Get custody records by custody type
+     */
+    @Transactional(readOnly = true)
+    public List<CustodyRecord> getCustodyByType(String custodyType) {
+        return custodyRepository.findByCustodyType(custodyType);
     }
 
-    @Transactional
-    public void closeCustody(Long custodyRecordId, AssetInstance.AssetCondition returnCondition, String notes) {
-        log.info("Closing custody record ID: {}", custodyRecordId);
-
-        CustodyRecord custodyRecord = custodyRecordRepository.findById(custodyRecordId)
-            .orElseThrow(() -> new RuntimeException("Custody record not found with ID: " + custodyRecordId));
-
-        if (custodyRecord.getEndDate() != null) {
-            throw new RuntimeException("Custody record is already closed");
-        }
-
-        custodyRecord.setEndDate(LocalDateTime.now());
-        custodyRecord.setReturnCondition(returnCondition);
-        if (notes != null) {
-            custodyRecord.setNotes(custodyRecord.getNotes() != null ?
-                custodyRecord.getNotes() + "; " + notes : notes);
-        }
-
-        custodyRecordRepository.save(custodyRecord);
-
-        AssetInstance assetInstance = custodyRecord.getAssetInstance();
-        assetInstance.setStatus(AssetInstance.AssetStatus.AVAILABLE);
-        assetInstance.setCondition(returnCondition);
-        assetInstanceRepository.save(assetInstance);
-
-        log.info("Custody record closed successfully: {}", custodyRecordId);
+    /**
+     * Get all active custody records
+     */
+    @Transactional(readOnly = true)
+    public List<CustodyRecord> getActiveCustodyRecords() {
+        return custodyRepository.findActiveCustodyRecords();
     }
 
-    private CustodyRecordResponse mapToResponse(CustodyRecord custodyRecord) {
-        return CustodyRecordResponse.builder()
-            .id(custodyRecord.getId())
-            .assetInstanceId(custodyRecord.getAssetInstance().getId())
-            .assetTag(custodyRecord.getAssetInstance().getAssetTag())
-            .custodianDeptId(custodyRecord.getCustodianDeptId())
-            .custodianUserId(custodyRecord.getCustodianUserId())
-            .physicalLocation(custodyRecord.getPhysicalLocation())
-            .custodyType(custodyRecord.getCustodyType())
-            .startDate(custodyRecord.getStartDate())
-            .endDate(custodyRecord.getEndDate())
-            .assignedByUserId(custodyRecord.getAssignedByUserId())
-            .returnCondition(custodyRecord.getReturnCondition() != null ? custodyRecord.getReturnCondition().name() : null)
-            .notes(custodyRecord.getNotes())
-            .createdAt(custodyRecord.getCreatedAt())
-            .build();
+    /**
+     * Get overdue temporary custody records
+     */
+    @Transactional(readOnly = true)
+    public List<CustodyRecord> getOverdueTemporaryCustody() {
+        return custodyRepository.findOverdueTemporaryCustody(LocalDateTime.now());
+    }
+
+    /**
+     * End custody (return asset)
+     */
+    public CustodyRecord endCustody(Long id, String returnCondition) {
+        log.info("Ending custody record with id: {}", id);
+
+        CustodyRecord record = getCustodyRecordById(id);
+        record.setEndDate(LocalDateTime.now());
+        record.setReturnCondition(returnCondition);
+
+        return custodyRepository.save(record);
+    }
+
+    /**
+     * Update custody record
+     */
+    public CustodyRecord updateCustodyRecord(Long id, CustodyRecord recordDetails) {
+        log.info("Updating custody record with id: {}", id);
+
+        CustodyRecord record = getCustodyRecordById(id);
+
+        record.setPhysicalLocation(recordDetails.getPhysicalLocation());
+        record.setCustodyType(recordDetails.getCustodyType());
+        record.setNotes(recordDetails.getNotes());
+
+        return custodyRepository.save(record);
+    }
+
+    /**
+     * Get all custody records
+     */
+    @Transactional(readOnly = true)
+    public List<CustodyRecord> getAllCustodyRecords() {
+        return custodyRepository.findAll();
     }
 }

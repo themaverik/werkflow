@@ -1,38 +1,69 @@
 package com.werkflow.inventory.repository;
 
+import com.werkflow.inventory.entity.AssetCategory;
 import com.werkflow.inventory.entity.AssetDefinition;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repository for AssetDefinition entity
+ */
 @Repository
 public interface AssetDefinitionRepository extends JpaRepository<AssetDefinition, Long> {
 
-    List<AssetDefinition> findByCategoryId(Long categoryId);
-
+    /**
+     * Find asset definition by SKU
+     */
     Optional<AssetDefinition> findBySku(String sku);
 
-    boolean existsBySku(String sku);
+    /**
+     * Find asset definitions by category
+     */
+    List<AssetDefinition> findByCategory(AssetCategory category);
 
-    @Query("SELECT d FROM AssetDefinition d WHERE d.active = :active")
-    List<AssetDefinition> findByActive(@Param("active") Boolean active);
+    /**
+     * Find asset definitions by category ID
+     */
+    List<AssetDefinition> findByCategoryIdAndActiveTrue(Long categoryId);
 
-    @Query("SELECT d FROM AssetDefinition d WHERE d.category.id = :categoryId AND d.active = :active")
-    List<AssetDefinition> findByCategoryIdAndActive(
-        @Param("categoryId") Long categoryId,
-        @Param("active") Boolean active
-    );
+    /**
+     * Find all active asset definitions
+     */
+    List<AssetDefinition> findByActiveTrue();
 
-    @Query("SELECT d FROM AssetDefinition d WHERE " +
-           "LOWER(d.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-           "LOWER(d.manufacturer) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-           "LOWER(d.model) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
-    List<AssetDefinition> searchByNameOrManufacturerOrModel(@Param("searchTerm") String searchTerm);
+    /**
+     * Find asset definitions requiring maintenance
+     */
+    List<AssetDefinition> findByRequiresMaintenanceTrueAndActiveTrue();
 
-    @Query("SELECT d FROM AssetDefinition d WHERE d.requiresMaintenance = true AND d.active = true")
-    List<AssetDefinition> findAllRequiringMaintenance();
+    /**
+     * Find asset definitions by manufacturer
+     */
+    List<AssetDefinition> findByManufacturerAndActiveTrue(String manufacturer);
+
+    /**
+     * Find asset definitions by price range
+     */
+    @Query("SELECT a FROM AssetDefinition a WHERE a.unitCost >= :minPrice AND a.unitCost <= :maxPrice AND a.active = true")
+    List<AssetDefinition> findByPriceRange(@Param("minPrice") BigDecimal minPrice, @Param("maxPrice") BigDecimal maxPrice);
+
+    /**
+     * Search asset definitions by name or SKU
+     */
+    @Query("SELECT a FROM AssetDefinition a WHERE " +
+           "(LOWER(a.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
+           "OR LOWER(a.sku) LIKE LOWER(CONCAT('%', :searchTerm, '%'))) " +
+           "AND a.active = true")
+    List<AssetDefinition> searchDefinitions(@Param("searchTerm") String searchTerm);
+
+    /**
+     * Count assets by category
+     */
+    long countByCategory(AssetCategory category);
 }

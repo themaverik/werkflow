@@ -9,25 +9,59 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repository for AssetCategory entity
+ */
 @Repository
 public interface AssetCategoryRepository extends JpaRepository<AssetCategory, Long> {
 
-    List<AssetCategory> findByParentCategoryId(Long parentCategoryId);
-
-    List<AssetCategory> findByParentCategoryIsNull();
-
-    List<AssetCategory> findByPrimaryCustodianDeptId(Long deptId);
-
+    /**
+     * Find category by code
+     */
     Optional<AssetCategory> findByCode(String code);
 
-    boolean existsByCode(String code);
+    /**
+     * Find category by name
+     */
+    Optional<AssetCategory> findByName(String name);
 
-    @Query("SELECT c FROM AssetCategory c WHERE c.active = :active")
-    List<AssetCategory> findByActive(@Param("active") Boolean active);
+    /**
+     * Find all active categories
+     */
+    List<AssetCategory> findByActiveTrue();
 
-    @Query("SELECT c FROM AssetCategory c WHERE c.primaryCustodianDeptId = :deptId AND c.active = :active")
-    List<AssetCategory> findByPrimaryCustodianDeptIdAndActive(
-        @Param("deptId") Long deptId,
-        @Param("active") Boolean active
-    );
+    /**
+     * Find all inactive categories
+     */
+    List<AssetCategory> findByActiveFalse();
+
+    /**
+     * Find root categories (no parent)
+     */
+    @Query("SELECT c FROM AssetCategory c WHERE c.parentCategory IS NULL AND c.active = true")
+    List<AssetCategory> findRootCategories();
+
+    /**
+     * Find child categories by parent ID
+     */
+    List<AssetCategory> findByParentCategoryIdAndActiveTrue(Long parentCategoryId);
+
+    /**
+     * Find categories by custodian department
+     */
+    List<AssetCategory> findByPrimaryCustodianDeptIdAndActiveTrue(Long deptId);
+
+    /**
+     * Find categories requiring approval
+     */
+    List<AssetCategory> findByRequiresApprovalTrueAndActiveTrue();
+
+    /**
+     * Search categories by name or code
+     */
+    @Query("SELECT c FROM AssetCategory c WHERE " +
+           "(LOWER(c.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
+           "OR LOWER(c.code) LIKE LOWER(CONCAT('%', :searchTerm, '%'))) " +
+           "AND c.active = true")
+    List<AssetCategory> searchCategories(@Param("searchTerm") String searchTerm);
 }

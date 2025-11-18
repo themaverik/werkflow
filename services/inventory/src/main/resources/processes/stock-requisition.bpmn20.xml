@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://werkflow.com/inventory">
+
+  <process id="stockRequisition" name="Stock Requisition Process" isExecutable="true">
+
+    <!-- Start Event -->
+    <startEvent id="startEvent" name="Stock Requisition Submitted" />
+
+    <!-- Validate Requisition -->
+    <serviceTask id="validateRequisition" name="Validate Requisition"
+                 flowable:delegateExpression="${requisitionValidationDelegate}">
+      <documentation>Validate requisition details and requester authorization</documentation>
+    </serviceTask>
+
+    <!-- Decision: Valid Requisition? -->
+    <exclusiveGateway id="validationDecision" name="Valid Requisition?" />
+
+    <!-- Invalid Requisition -->
+    <serviceTask id="notifyInvalidRequisition" name="Notify Invalid Requisition"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[REQUISITION_INVALID]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Invalid -->
+    <endEvent id="endInvalid" name="Requisition Invalid" />
+
+    <!-- Check Stock Availability -->
+    <serviceTask id="checkAvailability" name="Check Stock Availability"
+                 flowable:delegateExpression="${stockAvailabilityDelegate}">
+      <documentation>Check if requested items are available in source warehouse</documentation>
+    </serviceTask>
+
+    <!-- Decision: Stock Available? -->
+    <exclusiveGateway id="availabilityDecision" name="Stock Available?" />
+
+    <!-- Stock Not Available - Trigger Procurement -->
+    <serviceTask id="triggerProcurement" name="Trigger Procurement Process"
+                 flowable:delegateExpression="${procurementTriggerDelegate}">
+      <documentation>Create purchase requisition for out-of-stock items</documentation>
+    </serviceTask>
+
+    <!-- Notify Out of Stock -->
+    <serviceTask id="notifyOutOfStock" name="Notify Out of Stock"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[STOCK_UNAVAILABLE]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Out of Stock -->
+    <endEvent id="endOutOfStock" name="Out of Stock - Procurement Initiated" />
+
+    <!-- Manager Approval (for high-value items) -->
+    <exclusiveGateway id="approvalRequiredDecision" name="Approval Required?" />
+
+    <userTask id="managerApproval" name="Manager Approval"
+              flowable:candidateGroups="WAREHOUSE_MANAGER"
+              flowable:formKey="stock-requisition-approval">
+      <documentation>Manager approval required for high-value or critical items</documentation>
+    </userTask>
+
+    <!-- Decision: Manager Approved? -->
+    <exclusiveGateway id="approvalDecision" name="Approved?" />
+
+    <!-- Rejected by Manager -->
+    <serviceTask id="notifyRejection" name="Notify Rejection"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[REQUISITION_REJECTED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Rejected -->
+    <endEvent id="endRejected" name="Requisition Rejected" />
+
+    <!-- Merge Gateway after approval -->
+    <exclusiveGateway id="approvalMerge" name="Merge Approval" />
+
+    <!-- Reserve Stock -->
+    <serviceTask id="reserveStock" name="Reserve Stock"
+                 flowable:delegateExpression="${stockReservationDelegate}">
+      <documentation>Reserve requested quantities from available stock</documentation>
+    </serviceTask>
+
+    <!-- Pick Items from Warehouse -->
+    <userTask id="pickItems" name="Pick Items from Warehouse"
+              flowable:candidateGroups="WAREHOUSE_STAFF"
+              flowable:formKey="stock-picking">
+      <documentation>Warehouse staff picks items from designated locations</documentation>
+    </userTask>
+
+    <!-- Verify Picked Items -->
+    <userTask id="verifyPicking" name="Verify Picked Items"
+              flowable:candidateGroups="WAREHOUSE_SUPERVISOR"
+              flowable:formKey="stock-picking-verification">
+      <documentation>Supervisor verifies picked items match requisition</documentation>
+    </userTask>
+
+    <!-- Decision: Verification Passed? -->
+    <exclusiveGateway id="verificationDecision" name="Verification Passed?" />
+
+    <!-- Verification Failed - Re-pick -->
+    <serviceTask id="notifyRepick" name="Request Re-picking"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[REPICK_REQUIRED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- Update Inventory Records -->
+    <serviceTask id="updateInventory" name="Update Inventory Records"
+                 flowable:delegateExpression="${inventoryUpdateDelegate}">
+      <documentation>Update inventory system with stock movement</documentation>
+    </serviceTask>
+
+    <!-- Generate Stock Issue Note -->
+    <serviceTask id="generateIssueNote" name="Generate Stock Issue Note"
+                 flowable:delegateExpression="${issueNoteDelegate}">
+      <documentation>Generate stock issue note for documentation</documentation>
+    </serviceTask>
+
+    <!-- Handover to Requester -->
+    <userTask id="handoverToRequester" name="Handover to Requester"
+              flowable:candidateGroups="WAREHOUSE_STAFF"
+              flowable:formKey="stock-handover">
+      <documentation>Hand over items to requester with signature</documentation>
+    </userTask>
+
+    <!-- Notify Completion -->
+    <serviceTask id="notifyCompletion" name="Notify Requisition Completed"
+                 flowable:delegateExpression="${notificationDelegate}">
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[REQUISITION_COMPLETED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- End Event: Success -->
+    <endEvent id="endSuccess" name="Requisition Completed" />
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="validateRequisition" />
+    <sequenceFlow id="flow2" sourceRef="validateRequisition" targetRef="validationDecision" />
+
+    <!-- Validation Decision -->
+    <sequenceFlow id="validRequisition" name="Valid" sourceRef="validationDecision" targetRef="checkAvailability">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${requisitionValid == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="invalidRequisition" name="Invalid" sourceRef="validationDecision" targetRef="notifyInvalidRequisition">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${requisitionValid == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow3" sourceRef="notifyInvalidRequisition" targetRef="endInvalid" />
+
+    <!-- Availability Check -->
+    <sequenceFlow id="flow4" sourceRef="checkAvailability" targetRef="availabilityDecision" />
+
+    <sequenceFlow id="stockAvailable" name="Available" sourceRef="availabilityDecision" targetRef="approvalRequiredDecision">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${stockAvailable == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="stockNotAvailable" name="Not Available" sourceRef="availabilityDecision" targetRef="triggerProcurement">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${stockAvailable == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <!-- Out of Stock Path -->
+    <sequenceFlow id="flow5" sourceRef="triggerProcurement" targetRef="notifyOutOfStock" />
+    <sequenceFlow id="flow6" sourceRef="notifyOutOfStock" targetRef="endOutOfStock" />
+
+    <!-- Approval Required Decision -->
+    <sequenceFlow id="approvalRequired" name="Required" sourceRef="approvalRequiredDecision" targetRef="managerApproval">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${approvalRequired == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="noApprovalRequired" name="Not Required" sourceRef="approvalRequiredDecision" targetRef="approvalMerge">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${approvalRequired == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <!-- Manager Approval -->
+    <sequenceFlow id="flow7" sourceRef="managerApproval" targetRef="approvalDecision" />
+
+    <sequenceFlow id="approved" name="Approved" sourceRef="approvalDecision" targetRef="approvalMerge">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${managerApproved == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="rejected" name="Rejected" sourceRef="approvalDecision" targetRef="notifyRejection">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${managerApproved == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow8" sourceRef="notifyRejection" targetRef="endRejected" />
+
+    <!-- Stock Picking Flow -->
+    <sequenceFlow id="flow9" sourceRef="approvalMerge" targetRef="reserveStock" />
+    <sequenceFlow id="flow10" sourceRef="reserveStock" targetRef="pickItems" />
+    <sequenceFlow id="flow11" sourceRef="pickItems" targetRef="verifyPicking" />
+    <sequenceFlow id="flow12" sourceRef="verifyPicking" targetRef="verificationDecision" />
+
+    <!-- Verification Decision -->
+    <sequenceFlow id="verificationPassed" name="Passed" sourceRef="verificationDecision" targetRef="updateInventory">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${verificationPassed == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="verificationFailed" name="Failed" sourceRef="verificationDecision" targetRef="notifyRepick">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${verificationPassed == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow13" sourceRef="notifyRepick" targetRef="pickItems" />
+
+    <!-- Completion Flow -->
+    <sequenceFlow id="flow14" sourceRef="updateInventory" targetRef="generateIssueNote" />
+    <sequenceFlow id="flow15" sourceRef="generateIssueNote" targetRef="handoverToRequester" />
+    <sequenceFlow id="flow16" sourceRef="handoverToRequester" targetRef="notifyCompletion" />
+    <sequenceFlow id="flow17" sourceRef="notifyCompletion" targetRef="endSuccess" />
+
+  </process>
+
+</definitions>

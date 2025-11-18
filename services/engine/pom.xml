@@ -167,7 +167,7 @@
 
         <dependency>
             <groupId>org.flowable</groupId>
-            <artifactId>flowable-spring-boot-starter-test</artifactId>
+            <artifactId>flowable-engine-test</artifactId>
             <version>${flowable.version}</version>
             <scope>test</scope>
         </dependency>

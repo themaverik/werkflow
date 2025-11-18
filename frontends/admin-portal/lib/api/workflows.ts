@@ -312,3 +312,68 @@ export async function getAllWorkflowInstances(
   })
   return response.data
 }
+
+// ================================================================
+// TASK MANAGEMENT APIs (Enhanced)
+// ================================================================
+
+export interface TaskInfo {
+  taskId: string
+  taskName: string
+  taskDefinitionKey: string
+  processInstanceId: string
+  processDefinitionId: string
+  processDefinitionKey: string
+  processDefinitionName: string
+  assignee?: string
+  owner?: string
+  candidateGroups?: string[]
+  createTime: string
+  dueDate?: string
+  priority: number
+  suspended: boolean
+  description?: string
+  formKey?: string
+  businessKey?: string
+  processVariables?: Record<string, any>
+}
+
+// Get tasks assigned to current user (My Tasks)
+export async function getMyTasks(): Promise<TaskInfo[]> {
+  const response = await apiClient.get('/workflows/tasks/my-tasks')
+  return response.data
+}
+
+// Get tasks available to current user's groups (Group Tasks)
+export async function getGroupTasks(): Promise<TaskInfo[]> {
+  const response = await apiClient.get('/workflows/tasks/group-tasks')
+  return response.data
+}
+
+// Get task details by ID with full information
+export async function getTaskDetails(taskId: string): Promise<TaskInfo> {
+  const response = await apiClient.get(`/workflows/tasks/${taskId}/details`)
+  return response.data
+}
+
+// Claim a task (assign to current user)
+export async function claimTaskForCurrentUser(taskId: string): Promise<void> {
+  await apiClient.post(`/workflows/tasks/${taskId}/claim`)
+}
+
+// Unclaim a task (release assignment)
+export async function unclaimTask(taskId: string): Promise<void> {
+  await apiClient.post(`/workflows/tasks/${taskId}/unclaim`)
+}
+
+// Complete task with variables (enhanced)
+export async function completeTaskWithVariables(
+  taskId: string,
+  variables: Record<string, any>,
+  comment?: string
+): Promise<void> {
+  await apiClient.post(`/workflows/tasks/${taskId}/complete`, {
+    variables,
+    comment
+  })
+}

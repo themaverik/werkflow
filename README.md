@@ -20,12 +20,13 @@ Werkflow is an enterprise workflow platform that enables departments to create a
 ```
 werkflow/
 ├── services/                    # Backend microservices
-│   ├── engine/                  # Flowable BPM orchestration (8081) [Phase 1]
+│   ├── engine/                  # Flowable BPM orchestration (8081) ✅
 │   ├── hr/                      # HR domain service (8082) ✅
 │   ├── admin/                   # User/org/dept management (8083) [Phase 1]
-│   ├── finance/                 # Finance service (8084) [Phase 3]
-│   ├── procurement/             # Procurement service (8085) [Phase 3]
-│   └── ...                      # Additional services
+│   ├── finance/                 # Finance service (8084) ✅
+│   ├── procurement/             # Procurement service (8085) ✅
+│   ├── inventory/               # Inventory service (8086) ✅
+│   └── ...                      # Additional services (Legal, etc.)
 ├── frontends/                   # Frontend applications
 │   ├── admin-portal/            # Workflow designer (4000) ✅
 │   ├── hr-portal/               # HR portal (4001) [Phase 2]
@@ -42,37 +43,54 @@ werkflow/
 │   ├── KEYCLOAK_SETUP.md
 │   ├── QUICK_START.md
 │   ├── TESTING.md
-│   └── WORKFLOW_GUIDE.md
+│   └── WORKFLOW_GUIDE.md        # Workflow integration guide ✅
 ├── ROADMAP-DRAFT.md             # Enterprise platform roadmap
-├── ROADMAP.md                   # Development tracking
+├── ROADMAP.md                   # Development tracking ✅
 ├── CLAUDE.md                    # Development guidelines
 └── README.md                    # This file
 ```
 
 ## 🚀 Current Features
 
-### ✅ Implemented
+### ✅ Implemented (Phase 3)
+
+**Department Services:**
 - **HR Management**: Complete employee lifecycle, leave, attendance, performance reviews, payroll
-- **BPMN Workflows**: Leave approval, employee onboarding, performance review processes
-- **Visual Designer**: BPMN process designer with bpmn-js
-- **Form Builder**: Dynamic form creation with Form.io
-- **Authentication**: Keycloak OAuth2/JWT with role-based access control
+- **Finance Service**: CapEx request management, budget tracking, multi-level approvals
+- **Procurement Service**: Purchase requests, vendor management, purchase order generation
+- **Inventory Service**: Asset management, custody tracking, transfer workflows
+
+**Workflow Engine:**
+- **Engine Service**: Centralized Flowable BPM orchestration (port 8081)
+- **BPMN Workflows**:
+  - Leave approval, employee onboarding, performance review (HR)
+  - CapEx approval with budget verification (Finance)
+  - Procurement approval with vendor selection (Procurement)
+  - Asset transfer with custody tracking (Inventory)
+
+**Admin Portal:**
+- **Visual BPMN Designer**: Create workflows with bpmn-js (no code required)
+- **Dynamic Form Builder**: Form.io integration for workflow forms
+- **Workflow Dashboard**: Centralized view of all workflows across departments
 - **Process Management**: Deploy, version, and manage workflows via UI
 
-### 🚧 In Progress (Phase 0-1)
-- Monorepo restructuring ✅
-- Environment configuration ✅
-- Flowable Engine Service (Week 3-4)
-- Generic Delegates Library (Week 5-6)
-- Admin Service (Week 7-8)
+**Platform Features:**
+- **Authentication**: Keycloak OAuth2/JWT with role-based access control
+- **90%+ No-Code**: Generic delegates enable workflow creation without coding
+- **Multi-Department**: HR, Finance, Procurement, Inventory with more planned
+- **Microservices Architecture**: Schema-separated PostgreSQL, independent services
 
-### 📋 Planned (Phase 2-3)
+### 🚧 In Progress
+- Admin Service (User/Org/Dept Management)
+- Generic Delegates Library (REST, Email, Notification, Approval)
 - HR Portal (employee-facing)
-- Additional department services (Finance, Procurement, Legal)
+
+### 📋 Planned (Future Phases)
+- Legal service (Contract review, compliance workflows)
 - Event-driven architecture (Kafka)
-- CQRS pattern
+- CQRS pattern implementation
 - Real-time notifications
-- Advanced analytics
+- Advanced analytics and reporting
 
 ## 🛠️ Technology Stack
 
@@ -200,30 +218,54 @@ See [docs/KEYCLOAK_SETUP.md](./docs/KEYCLOAK_SETUP.md) for configuration.
 
 ## 🏢 Multi-Department Support
 
-Werkflow supports multiple departments out of the box:
+Werkflow supports multiple departments with centralized orchestration:
 
-### Current: HR (✅ Implemented)
-- Employee management
-- Leave management
-- Performance reviews
-- Onboarding workflows
+### ✅ HR Department (Implemented)
+**Service Port**: 8082
+- Employee lifecycle management
+- Leave approval workflows
+- Performance review processes
+- Employee onboarding workflows
+- Attendance and payroll integration
 
-### Planned: Finance (Phase 3)
-- Invoice approval
-- Budget requests
-- Expense management
+### ✅ Finance Department (Phase 3 - Implemented)
+**Service Port**: 8084
+- **CapEx Approval Workflow**: Multi-level approval based on amount thresholds
+  - Manager approval ($0-50k)
+  - VP approval ($50k-250k)
+  - CFO approval ($250k+)
+- Budget verification and reservation
+- ROI and payback period tracking
+- Supporting documents management
 
-### Planned: Procurement (Phase 3)
-- Purchase requests
-- Vendor management
-- Contract workflows
+### ✅ Procurement Department (Phase 3 - Implemented)
+**Service Port**: 8085
+- **Purchase Request Workflow**: Vendor selection and approval
+  - Supervisor approval (all requests)
+  - Manager approval (>$10k)
+  - Director approval (>$50k)
+- Vendor master data management
+- Quotation comparison
+- Purchase order generation
 
-### Planned: Legal (Phase 3)
-- Contract review
-- Compliance workflows
-- Document approvals
+### ✅ Inventory Department (Phase 3 - Implemented)
+**Service Port**: 8086
+- **Asset Transfer Workflow**: Custody tracking and approval
+  - Current custodian release
+  - Manager approval for high-value assets (>$5k)
+  - New custodian acceptance
+- Asset category and definition management
+- Inter-department custody model
+- Maintenance record tracking
 
-Each department maintains autonomy while using shared infrastructure and generic delegates.
+### 📋 Legal Department (Planned)
+**Service Port**: 8087
+- Contract review workflows
+- Compliance approval processes
+- Document approval workflows
+- Legal risk assessment
+
+**Architecture**: Each department maintains autonomy while using shared Engine Service for workflow orchestration and generic delegates for cross-service communication.
 
 ## 🔄 Generic Delegates (Phase 1)
 
@@ -305,56 +347,81 @@ See ROADMAP-DRAFT.md for production deployment strategy (Phase 3):
 
 ## 🛣️ Development Roadmap
 
-### ✅ Phase 0: Foundation (Week 1-2)
+### ✅ Phase 0: Foundation (Completed)
 - [x] Rename whrkflow → werkflow
 - [x] Restructure to monorepo
 - [x] Environment configuration
 - [x] Git repository setup
-- [ ] Docker multi-stage build
-- [ ] Updated docker-compose
+- [x] Docker Compose setup
+- [x] PostgreSQL schema separation
 
-### 🚧 Phase 1: Core Platform (Week 3-8)
-- [ ] Flowable Engine Service (Week 3-4)
-- [ ] Generic Delegates Library (Week 5-6)
-- [ ] Admin Service (Week 7-8)
-- [ ] HR Service migration
+### 🚧 Phase 1: Core Platform (In Progress)
+- [x] Flowable Engine Service ✅
+- [ ] Generic Delegates Library (REST, Email, Notification)
+- [ ] Admin Service (User/Org/Dept Management)
+- [x] HR Service integration ✅
 
-### 📋 Phase 2: Department Portals (Week 9-12)
+### ✅ Phase 3: Finance, Procurement & Inventory (Completed)
+- [x] **Finance Service** with CapEx workflow ✅
+  - Multi-level approval (Manager/VP/CFO)
+  - Budget verification and reservation
+  - Form.io template for CapEx requests
+- [x] **Procurement Service** with purchase workflow ✅
+  - Vendor selection and quotation
+  - Multi-level approval (Supervisor/Manager/Director)
+  - Purchase order generation
+- [x] **Inventory Service** with asset transfer workflow ✅
+  - Custody tracking model
+  - Current custodian release approval
+  - Manager approval for high-value assets
+- [x] **BPMN Processes** in Engine Service ✅
+  - capex-approval-process.bpmn20.xml
+  - procurement-approval-process.bpmn20.xml
+  - asset-transfer-approval-process.bpmn20.xml
+- [x] **Infrastructure Updates** ✅
+  - Docker Compose with all services
+  - Database schemas (finance_service, procurement_service, inventory_service)
+  - Admin Portal workflow dashboard
+
+### 📋 Phase 2: Department Portals (Planned)
 - [ ] HR Portal (employee-facing)
-- [ ] Department-specific workflows
+- [ ] Department-specific dashboards
 - [ ] Enhanced monitoring
 
-### 📋 Phase 3: Future Enhancements
-- [ ] Finance, Procurement, Legal services
+### 📋 Phase 4: Future Enhancements
+- [ ] Legal service (Contract review, compliance)
 - [ ] Event-driven architecture (Kafka)
 - [ ] CQRS implementation
 - [ ] Kubernetes deployment
 - [ ] CI/CD automation
 - [ ] Advanced analytics
 
-See [ROADMAP-DRAFT.md](./ROADMAP-DRAFT.md) for detailed implementation plan.
+See [ROADMAP.md](./ROADMAP.md) for development tracking and [ROADMAP-DRAFT.md](./ROADMAP-DRAFT.md) for detailed implementation plan.
 
 ## 🔧 Configuration
 
 ### Port Allocation
 
 **Backend Services:**
-- Engine Service: 8081
-- HR Service: 8082
-- Admin Service: 8083
-- Finance Service: 8084 (future)
-- Procurement Service: 8085 (future)
+- Engine Service: 8081 ✅
+- HR Service: 8082 ✅
+- Admin Service: 8083 (in progress)
+- Finance Service: 8084 ✅
+- Procurement Service: 8085 ✅
+- Inventory Service: 8086 ✅
+- Legal Service: 8087 (planned)
 
 **Frontend Applications:**
-- Admin Portal: 4000
-- HR Portal: 4001 (future)
-- Finance Portal: 4002 (future)
+- Admin Portal: 4000 ✅
+- HR Portal: 4001 (in progress)
+- Finance Portal: 4002 (planned)
 
 **Infrastructure:**
-- PostgreSQL: 5433
-- Keycloak: 8090
-- Kafka: 9092 (future)
-- Redis: 6379 (future)
+- PostgreSQL: 5433 ✅
+- Keycloak: 8090 ✅
+- pgAdmin: 5050 ✅
+- Kafka: 9092 (planned)
+- Redis: 6379 (planned)
 
 ### Environment Configuration
 
@@ -377,8 +444,12 @@ Proprietary - All rights reserved
 
 ---
 
-**Status**: Phase 0 in progress - Transforming from HR-only platform to enterprise workflow platform
+**Status**: Phase 3 completed - Multi-department workflow platform with Finance, Procurement, and Inventory services
 
-**Architecture**: Microservices with centralized BPM orchestration
+**Architecture**: Microservices with centralized BPM orchestration via Engine Service
 
-**Approach**: 90%+ no-code through generic delegates and visual designers
+**Approach**: 90%+ no-code through BPMN workflows, generic delegates, and visual designers
+
+**Key Achievement**: Workflows can be added with minimal code changes - only BPMN XML files required, department services remain unchanged
+
+**Latest Update**: 2025-11-17 - Phase 3 implementation with CapEx, Procurement, and Asset Transfer workflows

@@ -89,6 +89,7 @@ public class Expense {
 
     public enum ExpenseStatus {
         PENDING,
+        SUBMITTED,
         APPROVED,
         REJECTED,
         PAID,

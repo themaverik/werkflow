@@ -32,10 +32,17 @@ public class ApprovalThreshold {
     private BigDecimal maxAmount;
 
     @Column(name = "approver_role", nullable = false, length = 100)
-    private String approverRole;
+    private String requiredRole;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private BudgetCategory category;
 
     @Column(name = "department_id")
     private Long departmentId;
+
+    @Column(length = 500)
+    private String description;
 
     @Builder.Default
     @Column(name = "approval_order", nullable = false)

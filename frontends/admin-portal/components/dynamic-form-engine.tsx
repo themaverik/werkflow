@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Form } from '@formio/react';
-import { toast } from 'sonner';
 
 interface DynamicFormEngineProps {
   formDefinition?: any; // Form.io JSON schema
@@ -69,7 +68,7 @@ export function DynamicFormEngine({
         setLoading(false);
       } catch (error) {
         console.error('Error loading form:', error);
-        toast.error('Failed to load form');
+        alert('Failed to load form');
         setLoading(false);
       }
     };
@@ -95,7 +94,7 @@ export function DynamicFormEngine({
           throw new Error('Failed to complete task');
         }
 
-        toast.success('Task completed successfully');
+        alert('Task completed successfully');
       }
 
       // If processInstanceId is provided, update process variables
@@ -115,7 +114,7 @@ export function DynamicFormEngine({
           throw new Error('Failed to update process variables');
         }
 
-        toast.success('Process variables updated');
+        alert('Process variables updated');
       }
 
       // Call custom onSubmit handler if provided
@@ -124,7 +123,7 @@ export function DynamicFormEngine({
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-      toast.error('Failed to submit form');
+      alert('Failed to submit form');
     }
   };
 
@@ -158,9 +157,6 @@ export function DynamicFormEngine({
         onSubmit={handleSubmit}
         options={{
           readOnly: readOnly,
-          buttonSettings: {
-            showCancel: !!onCancel,
-          },
         }}
       />
       {onCancel && (

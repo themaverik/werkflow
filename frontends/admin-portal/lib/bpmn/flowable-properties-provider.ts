@@ -15,24 +15,25 @@ import { is } from 'bpmn-js/lib/util/ModelUtil'
 /**
  * Flowable properties provider for user tasks
  */
-export default function FlowablePropertiesProvider(
-  propertiesPanel: any,
-  injector: any
-) {
-  this._propertiesPanel = propertiesPanel
-  this._injector = injector
+class FlowablePropertiesProvider {
+  static $inject = ['propertiesPanel', 'injector'];
 
-  // Register Flowable-specific groups
-  propertiesPanel.registerProvider(500, this)
-}
+  private _propertiesPanel: any;
+  private _injector: any;
 
-FlowablePropertiesProvider.$inject = ['propertiesPanel', 'injector']
+  constructor(propertiesPanel: any, injector: any) {
+    this._propertiesPanel = propertiesPanel;
+    this._injector = injector;
 
-/**
- * Get Flowable-specific property groups
- */
-FlowablePropertiesProvider.prototype.getGroups = function (element: any) {
-  return (groups: any[]) => {
+    // Register Flowable-specific groups
+    propertiesPanel.registerProvider(500, this);
+  }
+
+  /**
+   * Get Flowable-specific property groups
+   */
+  getGroups(element: any) {
+    return (groups: any[]) => {
     const generalIdx = groups.findIndex((g: any) => g.id === 'general')
 
     // Add Flowable properties for User Tasks
@@ -135,9 +136,12 @@ FlowablePropertiesProvider.prototype.getGroups = function (element: any) {
       })
     }
 
-    return groups
+    return groups;
+    };
   }
 }
+
+export default FlowablePropertiesProvider;
 
 /**
  * Entry components for Flowable properties

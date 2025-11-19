@@ -1,7 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import dynamicImport from 'next/dynamic'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+
+export const dynamic = 'force-dynamic'
+
 import {
   getMyTasks,
   getGroupTasks,
@@ -22,7 +26,6 @@ import {
   XCircle,
 } from 'lucide-react'
 import Link from 'next/link'
-import FormRenderer from '@/components/forms/FormRenderer'
 import {
   Dialog,
   DialogContent,
@@ -32,6 +35,12 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+
+// Dynamically import FormRenderer to avoid SSR issues with formiojs
+const FormRenderer = dynamicImport(() => import('@/components/forms/FormRenderer'), {
+  ssr: false,
+  loading: () => <div className="text-center py-8">Loading form...</div>
+})
 
 export default function TasksPage() {
   const queryClient = useQueryClient()

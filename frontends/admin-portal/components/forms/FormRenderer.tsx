@@ -144,10 +144,6 @@ export default function FormRenderer({
           options={{
             readOnly,
             noAlerts: true,
-            buttonSettings: {
-              showCancel: !!onCancel,
-              showSubmit: !readOnly
-            }
           }}
         />
 

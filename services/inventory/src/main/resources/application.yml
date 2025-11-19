@@ -48,12 +48,18 @@ server:
     include-message: always
     include-stacktrace: on_param
 
-# External Service URLs
+# External Service URLs for cross-service communication
 services:
   admin:
     url: ${ADMIN_SERVICE_URL:http://localhost:8083}
   engine:
     url: ${ENGINE_SERVICE_URL:http://localhost:8081}
+  finance:
+    url: ${FINANCE_SERVICE_URL:http://localhost:8084/api}
+  procurement:
+    url: ${PROCUREMENT_SERVICE_URL:http://localhost:8085/api}
+  hr:
+    url: ${HR_SERVICE_URL:http://localhost:8083/api}
 
 # Business Rules
 inventory:

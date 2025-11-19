@@ -142,3 +142,14 @@ keycloak:
     secret: your-client-secret-will-be-generated
   use-resource-role-mappings: true
   bearer-only: true
+
+# External Service URLs for cross-service communication
+services:
+  finance:
+    url: ${FINANCE_SERVICE_URL:http://localhost:8084/api}
+  inventory:
+    url: ${INVENTORY_SERVICE_URL:http://localhost:8086/api}
+  hr:
+    url: ${HR_SERVICE_URL:http://localhost:8083/api}
+  engine:
+    url: ${ENGINE_SERVICE_URL:http://localhost:8081/api}

@@ -1,5 +1,8 @@
 package com.werkflow.finance.delegate;
 
+import com.werkflow.finance.dto.BudgetCheckRequest;
+import com.werkflow.finance.dto.BudgetCheckResponse;
+import com.werkflow.finance.service.BudgetCheckService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.flowable.engine.delegate.DelegateExecution;
@@ -10,11 +13,15 @@ import java.math.BigDecimal;
 
 /**
  * Delegate for checking budget availability in CapEx approval workflow
+ * This delegate is for LOCAL budget checks within the Finance service.
+ * For cross-service budget checks, use RestServiceDelegate in BPMN.
  */
 @Slf4j
 @Component("budgetAvailabilityDelegate")
 @RequiredArgsConstructor
 public class BudgetAvailabilityDelegate implements JavaDelegate {
+
+    private final BudgetCheckService budgetCheckService;
 
     @Override
     public void execute(DelegateExecution execution) {
@@ -22,7 +29,6 @@ public class BudgetAvailabilityDelegate implements JavaDelegate {
                  execution.getProcessInstanceId());
 
         try {
-            // Get request parameters from process variables
             Long departmentId = (Long) execution.getVariable("departmentId");
             BigDecimal requestedAmount = (BigDecimal) execution.getVariable("amount");
             String costCenter = (String) execution.getVariable("costCenter");
@@ -31,23 +37,25 @@ public class BudgetAvailabilityDelegate implements JavaDelegate {
             log.info("Checking budget availability - Department: {}, Amount: {}, Cost Center: {}, Fiscal Year: {}",
                      departmentId, requestedAmount, costCenter, fiscalYear);
 
-            // TODO: Implement actual budget check logic
-            // 1. Fetch budget plan for department and fiscal year
-            // 2. Check if cost center exists in budget
-            // 3. Calculate available budget = allocated - (spent + committed)
-            // 4. Verify requested amount <= available budget
+            BudgetCheckRequest request = BudgetCheckRequest.builder()
+                    .departmentId(departmentId)
+                    .amount(requestedAmount)
+                    .costCenter(costCenter)
+                    .fiscalYear(fiscalYear)
+                    .build();
 
-            // For now, simulate budget check
-            boolean budgetAvailable = checkBudgetAvailability(departmentId, requestedAmount, costCenter, fiscalYear);
+            BudgetCheckResponse response = budgetCheckService.checkBudgetAvailability(request);
 
-            // Set result as process variable
-            execution.setVariable("budgetAvailable", budgetAvailable);
+            execution.setVariable("budgetAvailable", response.isAvailable());
+            execution.setVariable("budgetAvailableAmount", response.getAvailableAmount());
+            execution.setVariable("budgetAllocatedAmount", response.getAllocatedAmount());
+            execution.setVariable("budgetUtilizedAmount", response.getUtilizedAmount());
 
-            if (budgetAvailable) {
-                log.info("Budget check PASSED - Sufficient budget available");
+            if (response.isAvailable()) {
+                log.info("Budget check PASSED - {}", response.getReason());
             } else {
-                log.warn("Budget check FAILED - Insufficient budget");
-                execution.setVariable("budgetShortfallReason", "Insufficient budget allocation for cost center");
+                log.warn("Budget check FAILED - {}", response.getReason());
+                execution.setVariable("budgetShortfallReason", response.getReason());
             }
 
         } catch (Exception e) {
@@ -55,17 +63,5 @@ public class BudgetAvailabilityDelegate implements JavaDelegate {
             execution.setVariable("budgetAvailable", false);
             execution.setVariable("budgetShortfallReason", "Error during budget check: " + e.getMessage());
         }
-    }
-
-    private boolean checkBudgetAvailability(Long departmentId, BigDecimal requestedAmount,
-                                           String costCenter, Integer fiscalYear) {
-        // Placeholder implementation
-        // In real implementation, this would:
-        // 1. Query BudgetPlan and BudgetLineItem entities
-        // 2. Calculate spent amount from Expense records
-        // 3. Calculate committed amount from pending CapEx requests
-        // 4. Return true if: allocated - (spent + committed) >= requestedAmount
-
-        return requestedAmount.compareTo(BigDecimal.valueOf(1000000)) <= 0;
     }
 }

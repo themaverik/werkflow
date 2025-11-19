@@ -12,12 +12,33 @@
   <process id="prToPo" name="Purchase Requisition to Purchase Order" isExecutable="true">
 
     <!-- Start Event -->
-    <startEvent id="startEvent" name="PR Created" />
+    <startEvent id="startEvent" name="PR Created">
+      <extensionElements>
+        <flowable:executionListener event="start" delegateExpression="${processVariableInjector}" />
+      </extensionElements>
+    </startEvent>
 
-    <!-- Budget Check via Finance Service -->
+    <!-- Budget Check via Finance Service using RestServiceDelegate -->
     <serviceTask id="budgetCheck" name="Check Budget Availability"
-                 flowable:delegateExpression="${financeBudgetCheckDelegate}">
-      <documentation>Verify budget availability via Finance Service API</documentation>
+                 flowable:delegateExpression="${restServiceDelegate}">
+      <documentation>Verify budget availability via Finance Service REST API</documentation>
+      <extensionElements>
+        <flowable:field name="url">
+          <flowable:expression>${financeServiceUrl}/budget/check</flowable:expression>
+        </flowable:field>
+        <flowable:field name="method">
+          <flowable:string>POST</flowable:string>
+        </flowable:field>
+        <flowable:field name="body">
+          <flowable:expression>#{{'departmentId': departmentId, 'amount': totalAmount, 'costCenter': costCenter, 'fiscalYear': fiscalYear}}</flowable:expression>
+        </flowable:field>
+        <flowable:field name="responseVariable">
+          <flowable:string>budgetCheckResponse</flowable:string>
+        </flowable:field>
+        <flowable:field name="timeoutSeconds">
+          <flowable:string>15</flowable:string>
+        </flowable:field>
+      </extensionElements>
     </serviceTask>
 
     <!-- Decision: Budget Available? -->
@@ -150,12 +171,12 @@
     <!-- Budget Decision Flows -->
     <sequenceFlow id="budgetAvailable" name="Yes" sourceRef="budgetDecision" targetRef="managerApproval">
       <conditionExpression xsi:type="tFormalExpression">
-        <![CDATA[${budgetAvailable == true}]]>
+        <![CDATA[${budgetCheckResponse != null && budgetCheckResponse['available'] == true}]]>
       </conditionExpression>
     </sequenceFlow>
     <sequenceFlow id="budgetNotAvailable" name="No" sourceRef="budgetDecision" targetRef="notifyBudgetShortfall">
       <conditionExpression xsi:type="tFormalExpression">
-        <![CDATA[${budgetAvailable == false}]]>
+        <![CDATA[${budgetCheckResponse == null || budgetCheckResponse['available'] == false}]]>
       </conditionExpression>
     </sequenceFlow>
     <sequenceFlow id="flow3" sourceRef="notifyBudgetShortfall" targetRef="endRejectedBudget" />

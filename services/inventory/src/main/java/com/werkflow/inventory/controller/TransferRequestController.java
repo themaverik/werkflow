@@ -46,7 +46,7 @@ public class TransferRequestController {
             .expectedReturnDate(requestDto.getExpectedReturnDate())
             .initiatedByUserId(requestDto.getInitiatedByUserId())
             .initiatedDate(LocalDateTime.now())
-            .status(TransferRequest.TransferStatus.PENDING.toString())
+            .status(TransferRequest.TransferStatus.PENDING)
             .build();
 
         TransferRequest created = transferService.createTransferRequest(request);
@@ -186,7 +186,7 @@ public class TransferRequestController {
             .approvedByUserId(request.getApprovedByUserId())
             .approvedDate(request.getApprovedDate())
             .completedDate(request.getCompletedDate())
-            .status(request.getStatus())
+            .status(request.getStatus().toString())
             .processInstanceId(request.getProcessInstanceId())
             .rejectionReason(request.getRejectionReason())
             .createdAt(request.getCreatedAt())

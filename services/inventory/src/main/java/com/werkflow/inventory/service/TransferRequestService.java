@@ -131,11 +131,11 @@ public class TransferRequestService {
 
         TransferRequest request = getTransferRequestById(id);
 
-        if (!request.getStatus().equals("PENDING")) {
+        if (!request.getStatus().equals(TransferRequest.TransferStatus.PENDING)) {
             throw new IllegalStateException("Transfer request cannot be approved in status: " + request.getStatus());
         }
 
-        request.setStatus("APPROVED");
+        request.setStatus(TransferRequest.TransferStatus.APPROVED);
         request.setApprovedByUserId(approverUserId);
         request.setApprovedDate(LocalDateTime.now());
 
@@ -150,11 +150,11 @@ public class TransferRequestService {
 
         TransferRequest request = getTransferRequestById(id);
 
-        if (!request.getStatus().equals("PENDING")) {
+        if (!request.getStatus().equals(TransferRequest.TransferStatus.PENDING)) {
             throw new IllegalStateException("Transfer request cannot be rejected in status: " + request.getStatus());
         }
 
-        request.setStatus("REJECTED");
+        request.setStatus(TransferRequest.TransferStatus.REJECTED);
         request.setRejectionReason(rejectionReason);
 
         return transferRepository.save(request);
@@ -168,11 +168,11 @@ public class TransferRequestService {
 
         TransferRequest request = getTransferRequestById(id);
 
-        if (!request.getStatus().equals("APPROVED")) {
+        if (!request.getStatus().equals(TransferRequest.TransferStatus.APPROVED)) {
             throw new IllegalStateException("Only approved transfers can be completed");
         }
 
-        request.setStatus("COMPLETED");
+        request.setStatus(TransferRequest.TransferStatus.COMPLETED);
         request.setCompletedDate(LocalDateTime.now());
 
         return transferRepository.save(request);
@@ -186,13 +186,15 @@ public class TransferRequestService {
 
         TransferRequest request = getTransferRequestById(id);
 
-        if (!request.getStatus().equals("PENDING")) {
+        if (!request.getStatus().equals(TransferRequest.TransferStatus.PENDING)) {
             throw new IllegalStateException("Only pending transfers can be updated");
         }
 
         request.setTransferReason(requestDetails.getTransferReason());
         request.setExpectedReturnDate(requestDetails.getExpectedReturnDate());
-        request.setNotes(requestDetails.getNotes());
+        if (requestDetails.getRejectionReason() != null) {
+            request.setRejectionReason(requestDetails.getRejectionReason());
+        }
 
         return transferRepository.save(request);
     }

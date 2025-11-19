@@ -159,7 +159,7 @@ public class AssetInstanceService {
         log.info("Updating asset instance status to: {}", status);
 
         AssetInstance instance = getInstanceById(id);
-        instance.setStatus(status);
+        instance.setStatus(AssetInstance.AssetStatus.valueOf(status));
 
         return instanceRepository.save(instance);
     }

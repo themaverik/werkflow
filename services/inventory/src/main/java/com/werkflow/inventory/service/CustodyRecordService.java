@@ -120,7 +120,7 @@ public class CustodyRecordService {
 
         CustodyRecord record = getCustodyRecordById(id);
         record.setEndDate(LocalDateTime.now());
-        record.setReturnCondition(returnCondition);
+        record.setReturnCondition(AssetInstance.AssetCondition.valueOf(returnCondition));
 
         return custodyRepository.save(record);
     }

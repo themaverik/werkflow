@@ -6,14 +6,20 @@
 # ================================================================
 
 # ================================================================
-# STAGE 1: Backend Base - Common Maven dependencies
+# STAGE 1: Backend Base - Build werkflow-delegates first
 # ================================================================
 FROM maven:3.9-eclipse-temurin-17 AS backend-base
 
 WORKDIR /build
 
-# Copy poms for shared libraries and services
+# Copy and build werkflow-delegates first (required by other services)
 COPY shared/delegates/pom.xml shared/delegates/pom.xml
+COPY shared/delegates/src shared/delegates/src
+
+# Build and install werkflow-delegates to local maven repo
+RUN cd shared/delegates && mvn clean install -DskipTests -B
+
+# Now copy service poms
 COPY services/hr/pom.xml services/hr/pom.xml
 COPY services/engine/pom.xml services/engine/pom.xml
 COPY services/admin/pom.xml services/admin/pom.xml
@@ -21,10 +27,7 @@ COPY services/inventory/pom.xml services/inventory/pom.xml
 COPY services/finance/pom.xml services/finance/pom.xml
 COPY services/procurement/pom.xml services/procurement/pom.xml
 
-# Download dependencies for shared libraries
-RUN cd shared/delegates && mvn dependency:go-offline -B
-
-# Download dependencies for all services
+# Download dependencies for all services (werkflow-delegates now available locally)
 RUN cd services/hr && mvn dependency:go-offline -B
 RUN cd services/engine && mvn dependency:go-offline -B
 RUN cd services/admin && mvn dependency:go-offline -B
@@ -33,20 +36,7 @@ RUN cd services/finance && mvn dependency:go-offline -B
 RUN cd services/procurement && mvn dependency:go-offline -B
 
 # ================================================================
-# STAGE 2: Delegates Library Build
-# ================================================================
-FROM backend-base AS delegates-build
-
-WORKDIR /build/shared/delegates
-
-# Copy source code
-COPY shared/delegates/src ./src
-
-# Build and install to local maven repo
-RUN mvn clean install -DskipTests -B
-
-# ================================================================
-# STAGE 3: HR Service Build
+# STAGE 2: HR Service Build
 # ================================================================
 FROM backend-base AS hr-service-build
 
@@ -59,12 +49,9 @@ COPY services/hr/src ./src
 RUN mvn clean package -DskipTests -B
 
 # ================================================================
-# STAGE 4: Engine Service Build
+# STAGE 3: Engine Service Build
 # ================================================================
 FROM backend-base AS engine-service-build
-
-# Copy delegates library from delegates-build stage
-COPY --from=delegates-build /root/.m2/repository/com/werkflow/werkflow-delegates /root/.m2/repository/com/werkflow/werkflow-delegates
 
 WORKDIR /build/services/engine
 
@@ -75,7 +62,7 @@ COPY services/engine/src ./src
 RUN mvn clean package -DskipTests -B
 
 # ================================================================
-# STAGE 5: Admin Service Build
+# STAGE 4: Admin Service Build
 # ================================================================
 FROM backend-base AS admin-service-build
 
@@ -88,7 +75,7 @@ COPY services/admin/src ./src
 RUN mvn clean package -DskipTests -B
 
 # ================================================================
-# STAGE 6: Frontend Base - Node.js dependencies
+# STAGE 5: Frontend Base - Node.js dependencies
 # ================================================================
 FROM node:20-alpine AS frontend-base
 
@@ -98,7 +85,7 @@ WORKDIR /build
 RUN npm install -g pnpm
 
 # ================================================================
-# STAGE 7: Admin Portal Build
+# STAGE 6: Admin Portal Build
 # ================================================================
 FROM frontend-base AS admin-portal-build
 
@@ -117,7 +104,7 @@ COPY frontends/admin-portal/ ./
 RUN npm run build
 
 # ================================================================
-# STAGE 8: HR Portal Build
+# STAGE 7: HR Portal Build
 # ================================================================
 FROM frontend-base AS hr-portal-build
 
@@ -136,7 +123,7 @@ COPY frontends/hr-portal/ ./
 RUN npm run build
 
 # ================================================================
-# STAGE 9: HR Service Runtime
+# STAGE 8: HR Service Runtime
 # ================================================================
 FROM eclipse-temurin:17-jre AS hr-service
 
@@ -168,7 +155,7 @@ ENTRYPOINT ["java", \
     "app.jar"]
 
 # ================================================================
-# STAGE 10: Engine Service Runtime
+# STAGE 9: Engine Service Runtime
 # ================================================================
 FROM eclipse-temurin:17-jre AS engine-service
 
@@ -200,7 +187,7 @@ ENTRYPOINT ["java", \
     "app.jar"]
 
 # ================================================================
-# STAGE 11: Admin Service Runtime
+# STAGE 10: Admin Service Runtime
 # ================================================================
 FROM eclipse-temurin:17-jre AS admin-service
 
@@ -232,7 +219,7 @@ ENTRYPOINT ["java", \
     "app.jar"]
 
 # ================================================================
-# STAGE 12: Inventory Service Build
+# STAGE 11: Inventory Service Build
 # ================================================================
 FROM backend-base AS inventory-service-build
 
@@ -245,7 +232,7 @@ COPY services/inventory/src ./src
 RUN mvn clean package -DskipTests -B
 
 # ================================================================
-# STAGE 13: Inventory Service Runtime
+# STAGE 12: Inventory Service Runtime
 # ================================================================
 FROM eclipse-temurin:17-jre AS inventory-service
 
@@ -277,7 +264,7 @@ ENTRYPOINT ["java", \
     "app.jar"]
 
 # ================================================================
-# STAGE 14: Finance Service Build
+# STAGE 13: Finance Service Build
 # ================================================================
 FROM backend-base AS finance-service-build
 
@@ -290,7 +277,7 @@ COPY services/finance/src ./src
 RUN mvn clean package -DskipTests -B
 
 # ================================================================
-# STAGE 15: Finance Service Runtime
+# STAGE 14: Finance Service Runtime
 # ================================================================
 FROM eclipse-temurin:17-jre AS finance-service
 
@@ -322,7 +309,7 @@ ENTRYPOINT ["java", \
     "app.jar"]
 
 # ================================================================
-# STAGE 16: Procurement Service Build
+# STAGE 15: Procurement Service Build
 # ================================================================
 FROM backend-base AS procurement-service-build
 
@@ -335,7 +322,7 @@ COPY services/procurement/src ./src
 RUN mvn clean package -DskipTests -B
 
 # ================================================================
-# STAGE 17: Procurement Service Runtime
+# STAGE 16: Procurement Service Runtime
 # ================================================================
 FROM eclipse-temurin:17-jre AS procurement-service
 
@@ -367,7 +354,7 @@ ENTRYPOINT ["java", \
     "app.jar"]
 
 # ================================================================
-# STAGE 18: Admin Portal Runtime
+# STAGE 17: Admin Portal Runtime
 # ================================================================
 FROM node:20-alpine AS admin-portal
 
@@ -395,7 +382,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
 CMD ["node", "server.js"]
 
 # ================================================================
-# STAGE 19: HR Portal Runtime
+# STAGE 18: HR Portal Runtime
 # ================================================================
 FROM node:20-alpine AS hr-portal
 

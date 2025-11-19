@@ -15,15 +15,15 @@ const nextConfig = {
     return [
       {
         source: '/api/hr/:path*',
-        destination: process.env.NEXT_PUBLIC_HR_API_URL + '/:path*',
+        destination: (process.env.NEXT_PUBLIC_HR_API_URL || 'http://localhost:8082/api') + '/:path*',
       },
       {
         source: '/api/engine/:path*',
-        destination: process.env.NEXT_PUBLIC_ENGINE_API_URL + '/:path*',
+        destination: (process.env.NEXT_PUBLIC_ENGINE_API_URL || 'http://localhost:8081/api') + '/:path*',
       },
       {
         source: '/api/admin/:path*',
-        destination: process.env.NEXT_PUBLIC_ADMIN_API_URL + '/:path*',
+        destination: (process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:8083/api') + '/:path*',
       },
     ];
   },

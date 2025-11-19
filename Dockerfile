@@ -95,7 +95,7 @@ WORKDIR /build/frontends/admin-portal
 COPY frontends/admin-portal/package.json frontends/admin-portal/package-lock.json* ./
 
 # Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --omit=dev && npm cache clean --force
 
 # Copy source code
 COPY frontends/admin-portal/ ./
@@ -114,7 +114,7 @@ WORKDIR /build/frontends/hr-portal
 COPY frontends/hr-portal/package.json frontends/hr-portal/package-lock.json* ./
 
 # Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --omit=dev && npm cache clean --force
 
 # Copy source code
 COPY frontends/hr-portal/ ./

@@ -8,7 +8,7 @@
 # ================================================================
 # STAGE 1: Backend Base - Build werkflow-delegates first
 # ================================================================
-FROM maven:3.9-eclipse-temurin-17 AS backend-base
+FROM maven:3.9-eclipse-temurin-21 AS backend-base
 
 WORKDIR /build
 
@@ -125,7 +125,7 @@ RUN npm run build
 # ================================================================
 # STAGE 8: HR Service Runtime
 # ================================================================
-FROM eclipse-temurin:17-jre AS hr-service
+FROM eclipse-temurin:21-jre AS hr-service
 
 # Add non-root user
 RUN groupadd -r werkflow && useradd -r -g werkflow werkflow
@@ -157,7 +157,7 @@ ENTRYPOINT ["java", \
 # ================================================================
 # STAGE 9: Engine Service Runtime
 # ================================================================
-FROM eclipse-temurin:17-jre AS engine-service
+FROM eclipse-temurin:21-jre AS engine-service
 
 # Add non-root user
 RUN groupadd -r werkflow && useradd -r -g werkflow werkflow
@@ -189,7 +189,7 @@ ENTRYPOINT ["java", \
 # ================================================================
 # STAGE 10: Admin Service Runtime
 # ================================================================
-FROM eclipse-temurin:17-jre AS admin-service
+FROM eclipse-temurin:21-jre AS admin-service
 
 # Add non-root user
 RUN groupadd -r werkflow && useradd -r -g werkflow werkflow
@@ -234,7 +234,7 @@ RUN mvn clean package -DskipTests -B
 # ================================================================
 # STAGE 12: Inventory Service Runtime
 # ================================================================
-FROM eclipse-temurin:17-jre AS inventory-service
+FROM eclipse-temurin:21-jre AS inventory-service
 
 # Add non-root user
 RUN groupadd -r werkflow && useradd -r -g werkflow werkflow
@@ -279,7 +279,7 @@ RUN mvn clean package -DskipTests -B
 # ================================================================
 # STAGE 14: Finance Service Runtime
 # ================================================================
-FROM eclipse-temurin:17-jre AS finance-service
+FROM eclipse-temurin:21-jre AS finance-service
 
 # Add non-root user
 RUN groupadd -r werkflow && useradd -r -g werkflow werkflow
@@ -324,7 +324,7 @@ RUN mvn clean package -DskipTests -B
 # ================================================================
 # STAGE 16: Procurement Service Runtime
 # ================================================================
-FROM eclipse-temurin:17-jre AS procurement-service
+FROM eclipse-temurin:21-jre AS procurement-service
 
 # Add non-root user
 RUN groupadd -r werkflow && useradd -r -g werkflow werkflow

@@ -3,7 +3,6 @@ package com.werkflow.finance.delegate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.flowable.engine.delegate.DelegateExecution;
-import org.flowable.engine.delegate.Expression;
 import org.flowable.engine.delegate.JavaDelegate;
 import org.springframework.stereotype.Component;
 
@@ -15,11 +14,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class NotificationDelegate implements JavaDelegate {
 
-    private Expression notificationType;
-
     @Override
     public void execute(DelegateExecution execution) {
-        String type = (String) notificationType.getValue(execution);
+        String type = (String) execution.getVariable("notificationType");
 
         log.info("Executing NotificationDelegate - Type: {}, Process Instance: {}",
                  type, execution.getProcessInstanceId());

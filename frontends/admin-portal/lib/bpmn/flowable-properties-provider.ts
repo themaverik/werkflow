@@ -33,11 +33,11 @@ FlowablePropertiesProvider.$inject = ['propertiesPanel', 'injector']
  */
 FlowablePropertiesProvider.prototype.getGroups = function (element: any) {
   return (groups: any[]) => {
-    // Only add Flowable properties for User Tasks
+    const generalIdx = groups.findIndex((g: any) => g.id === 'general')
+
+    // Add Flowable properties for User Tasks
     if (is(element, 'bpmn:UserTask')) {
       // Add Flowable assignment group after the general group
-      const generalIdx = groups.findIndex((g: any) => g.id === 'general')
-
       groups.splice(generalIdx + 1, 0, {
         id: 'flowable-assignment',
         label: 'Assignment',
@@ -93,6 +93,43 @@ FlowablePropertiesProvider.prototype.getGroups = function (element: any) {
             element,
             component: DueDateEntry,
             isEdited: isTextFieldEntryEdited
+          }
+        ]
+      })
+    }
+
+    // Add Flowable properties for Service Tasks
+    if (is(element, 'bpmn:ServiceTask')) {
+      // Add Service Task delegate configuration group
+      groups.splice(generalIdx + 1, 0, {
+        id: 'flowable-service-task',
+        label: 'Service Configuration',
+        entries: [
+          {
+            id: 'delegateExpression',
+            element,
+            component: DelegateExpressionEntry,
+            isEdited: isTextFieldEntryEdited
+          },
+          {
+            id: 'class',
+            element,
+            component: ClassEntry,
+            isEdited: isTextFieldEntryEdited
+          }
+        ]
+      })
+
+      // Add Extension Elements group for service task fields
+      groups.splice(generalIdx + 2, 0, {
+        id: 'flowable-extension-elements',
+        label: 'Extension Elements',
+        entries: [
+          {
+            id: 'extensionElements',
+            element,
+            component: ExtensionElementsEntry,
+            isEdited: () => false // Always show this section
           }
         ]
       })
@@ -265,6 +302,88 @@ function DueDateEntry(props: any) {
     getValue,
     setValue,
     debounce
+  }
+}
+
+/**
+ * ServiceTask entry components
+ */
+
+function DelegateExpressionEntry(props: any) {
+  const { element, id } = props
+  const modeling = props.modeling || props.injector.get('modeling')
+  const translate = props.translate || ((s: string) => s)
+  const debounce = props.debounce || ((fn: Function) => fn)
+
+  const getValue = () => {
+    return element.businessObject.get('flowable:delegateExpression') ||
+           element.businessObject.delegateExpression || ''
+  }
+
+  const setValue = (value: string) => {
+    modeling.updateProperties(element, {
+      'flowable:delegateExpression': value || undefined,
+      delegateExpression: value || undefined
+    })
+  }
+
+  return {
+    id,
+    element,
+    label: translate('Delegate Expression'),
+    description: translate('Spring bean expression (e.g., ${restServiceDelegate})'),
+    getValue,
+    setValue,
+    debounce
+  }
+}
+
+function ClassEntry(props: any) {
+  const { element, id } = props
+  const modeling = props.modeling || props.injector.get('modeling')
+  const translate = props.translate || ((s: string) => s)
+  const debounce = props.debounce || ((fn: Function) => fn)
+
+  const getValue = () => {
+    return element.businessObject.get('flowable:class') ||
+           element.businessObject.class || ''
+  }
+
+  const setValue = (value: string) => {
+    modeling.updateProperties(element, {
+      'flowable:class': value || undefined,
+      class: value || undefined
+    })
+  }
+
+  return {
+    id,
+    element,
+    label: translate('Java Class'),
+    description: translate('Fully qualified Java class name'),
+    getValue,
+    setValue,
+    debounce
+  }
+}
+
+function ExtensionElementsEntry(props: any) {
+  const { element, id } = props
+  const translate = props.translate || ((s: string) => s)
+
+  return {
+    id,
+    element,
+    label: translate('Extension Fields'),
+    description: translate('Configure delegate parameters (url, method, headers, body)'),
+    html: `<div id="extension-elements-editor-${element.id}"></div>`,
+    get: () => {
+      // This will be handled by the React component
+      return {}
+    },
+    set: () => {
+      // This will be handled by the React component
+    }
   }
 }
 

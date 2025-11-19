@@ -4,7 +4,100 @@ This document provides an overview of all implemented BPMN workflows in the Werk
 
 ## Overview
 
-The Werkflow platform uses Flowable BPM engine to orchestrate complex business processes across Finance, Procurement, and Inventory services. All workflows are defined in BPMN 2.0 XML format.
+The Werkflow platform uses Flowable BPM engine to orchestrate complex business processes across HR, Finance, Procurement, and Inventory services. All workflows are defined in BPMN 2.0 XML format.
+
+## HR Service Workflows
+
+### 1. Employee Onboarding Workflow
+
+**Process ID**: `employeeOnboarding`
+**File**: `services/hr/src/main/resources/processes/employee-onboarding-process.bpmn20.xml`
+**Form**: `Employee Onboarding Form`
+
+**Description**: Complete employee onboarding process from hire to system activation.
+
+**Process Flow**:
+1. Employee information validation
+2. Send welcome email to employee
+3. Notify HR for account creation
+4. HR creates employee account and assigns credentials
+5. Manager assignment verification
+6. Department orientation scheduling
+7. First-day setup completion
+8. New employee acknowledgment
+
+**Key Features**:
+- Automated welcome email notifications
+- HR system account creation trigger
+- Manager notification for orientation
+- Document package generation
+
+**Delegate Classes**:
+- `SendWelcomeEmailDelegate`: Sends welcome email to new employee
+- `NotifyHRDelegate`: Notifies HR team for account creation
+
+---
+
+### 2. Leave Approval Workflow
+
+**Process ID**: `leaveApproval`
+**File**: `services/hr/src/main/resources/processes/leave-approval-process.bpmn20.xml`
+**Form**: `Leave Request Form`
+
+**Description**: Leave request submission, manager approval, and tracking.
+
+**Process Flow**:
+1. Employee creates leave request
+2. Manager review and approval/rejection
+3. If approved: HR verification of leave balance
+4. Leave balance deduction
+5. Calendar event creation
+6. Notification to team and employee
+7. If rejected: Notify employee with reason
+
+**Key Features**:
+- Manager-level leave approval
+- Automatic leave balance validation
+- Team notification of absence
+- Approval/rejection tracking
+
+**Delegate Classes**:
+- `LeaveApprovalDelegate`: Handles manager approval logic
+- `NotifyEmployeeDelegate`: Sends approval/rejection notifications
+- `LeaveRejectionDelegate`: Handles rejection notifications
+
+---
+
+### 3. Performance Review Workflow
+
+**Process ID**: `performanceReview`
+**File**: `services/hr/src/main/resources/processes/performance-review-process.bpmn20.xml`
+**Form**: `Performance Review Form`
+
+**Description**: Annual performance review process with multi-level feedback.
+
+**Process Flow**:
+1. Manager initiates performance review for employee
+2. Employee self-assessment submission
+3. Manager assessment and rating
+4. HR review and compliance check
+5. If appeal requested: Review by HR Manager
+6. Final rating and feedback documentation
+7. Salary review calculation trigger
+8. Notification to employee and finance team
+
+**Key Features**:
+- Employee self-assessment capability
+- Manager and HR review routing
+- Appeal mechanism for disputed ratings
+- Integration with payroll for salary reviews
+- Multi-level feedback collection
+
+**Delegate Classes**:
+- `NotifyReviewStakeholdersDelegate`: Notifies all review participants
+- `UpdateReviewRecordDelegate`: Updates performance review records
+
+---
 
 ## Finance Service Workflows
 

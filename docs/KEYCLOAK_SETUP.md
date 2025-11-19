@@ -1,8 +1,8 @@
-# 🔐 Keycloak Setup Guide for werkflow
+# Keycloak Setup Guide for werkflow
 
 This guide walks you through setting up Keycloak for authentication and role-based access control in the werkflow HR platform.
 
-## 📋 Table of Contents
+## Table of Contents
 1. [Overview](#overview)
 2. [Start Keycloak](#start-keycloak)
 3. [Initial Keycloak Setup](#initial-keycloak-setup)
@@ -15,7 +15,7 @@ This guide walks you through setting up Keycloak for authentication and role-bas
 
 ---
 
-## 🎯 Overview
+## Overview
 
 ### HR Roles & Permissions
 
@@ -34,7 +34,7 @@ This guide walks you through setting up Keycloak for authentication and role-bas
 
 ---
 
-## 🚀 Start Keycloak
+## Start Keycloak
 
 ### Step 1: Start All Services
 
@@ -69,7 +69,7 @@ docker-compose ps
 
 ---
 
-## 🔧 Initial Keycloak Setup
+## Initial Keycloak Setup
 
 ### Step 1: Access Keycloak Admin Console
 
@@ -85,7 +85,7 @@ You should see the Keycloak admin dashboard with the "master" realm selected.
 
 ---
 
-## 🏢 Create Realm
+## Create Realm
 
 A realm manages a set of users, credentials, roles, and groups. We'll create a `werkflow` realm.
 
@@ -112,7 +112,7 @@ A realm manages a set of users, credentials, roles, and groups. We'll create a `
 
 ---
 
-## 🔌 Configure Client
+## Configure Client
 
 Clients are applications that can request authentication. We'll create a client for our Spring Boot API.
 
@@ -156,7 +156,7 @@ Clients are applications that can request authentication. We'll create a client 
 
 ---
 
-## 👥 Define Roles
+## Define Roles
 
 ### Step 1: Create Realm Roles
 
@@ -182,7 +182,7 @@ Clients are applications that can request authentication. We'll create a client 
 
 ---
 
-## 👤 Create Users
+## Create Users
 
 Let's create test users for each role.
 
@@ -239,7 +239,7 @@ Repeat the same process:
 
 ---
 
-## 🧪 Test Authentication
+## Test Authentication
 
 ### Step 1: Get Access Token (Using cURL)
 
@@ -292,7 +292,7 @@ curl -X GET http://localhost:8080/api/employees
 
 ---
 
-## 🔗 Integration with Application
+## Integration with Application
 
 ### Step 1: Restart Application
 
@@ -355,26 +355,26 @@ curl -X POST http://localhost:8080/api/employees \
 
 ---
 
-## 📊 Role Access Matrix
+## Role Access Matrix
 
 | Endpoint | HR_ADMIN | HR_MANAGER | MANAGER | EMPLOYEE |
 |----------|----------|------------|---------|----------|
-| GET /departments | ✅ | ✅ | ❌ | ❌ |
-| POST /departments | ✅ | ✅ | ❌ | ❌ |
-| GET /employees | ✅ | ✅ | ✅ | ✅ |
-| POST /employees | ✅ | ✅ | ❌ | ❌ |
-| DELETE /employees | ✅ | ❌ | ❌ | ❌ |
-| GET /leaves | ✅ | ✅ | ✅ | ✅ |
-| POST /leaves | ✅ | ✅ | ✅ | ✅ |
-| PUT /leaves/{id}/approve | ✅ | ✅ | ✅ | ❌ |
-| GET /payrolls | ✅ | ✅ | ❌ | ❌ |
-| POST /payrolls | ✅ | ✅ | ❌ | ❌ |
-| GET /performance-reviews | ✅ | ✅ | ✅ | ✅ |
-| POST /performance-reviews | ✅ | ✅ | ✅ | ❌ |
+| GET /departments | Allowed | Allowed | Denied | Denied |
+| POST /departments | Allowed | Allowed | Denied | Denied |
+| GET /employees | Allowed | Allowed | Allowed | Allowed |
+| POST /employees | Allowed | Allowed | Denied | Denied |
+| DELETE /employees | Allowed | Denied | Denied | Denied |
+| GET /leaves | Allowed | Allowed | Allowed | Allowed |
+| POST /leaves | Allowed | Allowed | Allowed | Allowed |
+| PUT /leaves/{id}/approve | Allowed | Allowed | Allowed | Denied |
+| GET /payrolls | Allowed | Allowed | Denied | Denied |
+| POST /payrolls | Allowed | Allowed | Denied | Denied |
+| GET /performance-reviews | Allowed | Allowed | Allowed | Allowed |
+| POST /performance-reviews | Allowed | Allowed | Allowed | Denied |
 
 ---
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 ### Issue: Cannot access Keycloak
 
@@ -419,7 +419,7 @@ docker-compose restart keycloak
 
 ---
 
-## 🔐 Security Best Practices
+## Security Best Practices
 
 1. **Change Default Passwords**: Change Keycloak admin password in production
 2. **Use HTTPS**: Enable SSL/TLS for production
@@ -432,7 +432,7 @@ docker-compose restart keycloak
 
 ---
 
-## 📚 Additional Resources
+## Additional Resources
 
 - [Keycloak Documentation](https://www.keycloak.org/documentation)
 - [Spring Security OAuth2](https://spring.io/guides/tutorials/spring-boot-oauth2/)
@@ -440,14 +440,14 @@ docker-compose restart keycloak
 
 ---
 
-## 🎉 Next Steps
+## Next Steps
 
 After Keycloak is set up:
 
-1. ✅ Test all endpoints with different user roles
-2. ✅ Implement method-level security with `@PreAuthorize`
-3. ✅ Add user context to audit fields
-4. 🚀 Proceed to Phase 3: Flowable BPM Workflows
+1. Test all endpoints with different user roles
+2. Implement method-level security with `@PreAuthorize`
+3. Add user context to audit fields
+4. Proceed to Phase 3: Flowable BPM Workflows
 
 ---
 

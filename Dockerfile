@@ -94,8 +94,17 @@ WORKDIR /build/frontends/admin-portal
 # Copy package files
 COPY frontends/admin-portal/package.json frontends/admin-portal/package-lock.json* ./
 
-# Install dependencies
-RUN npm install --omit=dev && npm cache clean --force
+# Install ALL dependencies (including devDependencies for build)
+RUN npm install && npm cache clean --force
+
+# Copy configuration files first (tsconfig, next.config, etc.)
+COPY frontends/admin-portal/tsconfig.json* ./
+COPY frontends/admin-portal/next.config.mjs* ./
+COPY frontends/admin-portal/next.config.js* ./
+COPY frontends/admin-portal/tailwind.config.ts* ./
+COPY frontends/admin-portal/tailwind.config.js* ./
+COPY frontends/admin-portal/postcss.config.js* ./
+COPY frontends/admin-portal/postcss.config.mjs* ./
 
 # Copy source code
 COPY frontends/admin-portal/ ./
@@ -113,8 +122,15 @@ WORKDIR /build/frontends/hr-portal
 # Copy package files
 COPY frontends/hr-portal/package.json frontends/hr-portal/package-lock.json* ./
 
-# Install dependencies
-RUN npm install --omit=dev && npm cache clean --force
+# Install ALL dependencies (including devDependencies for build)
+RUN npm install && npm cache clean --force
+
+# Copy configuration files first (tsconfig, next.config, etc.)
+COPY frontends/hr-portal/tsconfig.json ./
+COPY frontends/hr-portal/next.config.mjs ./
+COPY frontends/hr-portal/tailwind.config.ts* ./
+COPY frontends/hr-portal/postcss.config.js* ./
+COPY frontends/hr-portal/postcss.config.mjs* ./
 
 # Copy source code
 COPY frontends/hr-portal/ ./

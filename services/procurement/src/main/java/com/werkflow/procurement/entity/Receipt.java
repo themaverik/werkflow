@@ -37,10 +37,31 @@ public class Receipt {
     @Column(name = "received_by_user_id", nullable = false)
     private Long receivedByUserId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 50, nullable = false)
+    @Builder.Default
+    private ReceiptStatus status = ReceiptStatus.DRAFT;
+
     @Column(length = 2000)
     private String notes;
+
+    @Column(name = "discrepancy_notes", length = 2000)
+    private String discrepancyNotes;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    public enum ReceiptStatus {
+        DRAFT,
+        SUBMITTED,
+        APPROVED,
+        RECEIVED,
+        DISCREPANCY,
+        REJECTED,
+        CANCELLED
+    }
 }

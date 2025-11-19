@@ -1,13 +1,7 @@
 package com.werkflow.procurement.delegate;
 
-import com.werkflow.procurement.entity.PoLineItem;
-import com.werkflow.procurement.entity.PrLineItem;
-import com.werkflow.procurement.entity.PurchaseOrder;
-import com.werkflow.procurement.entity.PurchaseRequest;
-import com.werkflow.procurement.repository.PoLineItemRepository;
-import com.werkflow.procurement.repository.PrLineItemRepository;
-import com.werkflow.procurement.repository.PurchaseOrderRepository;
-import com.werkflow.procurement.repository.PurchaseRequestRepository;
+import com.werkflow.procurement.entity.*;
+import com.werkflow.procurement.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.flowable.engine.delegate.DelegateExecution;
@@ -30,6 +24,7 @@ public class PurchaseOrderCreationDelegate implements JavaDelegate {
     private final PurchaseRequestRepository purchaseRequestRepository;
     private final PrLineItemRepository prLineItemRepository;
     private final PoLineItemRepository poLineItemRepository;
+    private final VendorRepository vendorRepository;
 
     @Override
     public void execute(DelegateExecution execution) {
@@ -43,10 +38,14 @@ public class PurchaseOrderCreationDelegate implements JavaDelegate {
 
             log.info("Creating PO for PR: {}, Vendor: {}", prId, vendorId);
 
+            // Fetch vendor
+            Vendor vendor = vendorRepository.findById(vendorId)
+                    .orElseThrow(() -> new RuntimeException("Vendor not found: " + vendorId));
+
             // Create Purchase Order
             PurchaseOrder po = PurchaseOrder.builder()
                     .poNumber(generatePONumber())
-                    .vendorId(vendorId)
+                    .vendor(vendor)
                     .status(PurchaseOrder.PoStatus.DRAFT)
                     .orderDate(LocalDate.now())
                     .expectedDeliveryDate(calculateExpectedDelivery())
@@ -81,10 +80,12 @@ public class PurchaseOrderCreationDelegate implements JavaDelegate {
         log.debug("Copying line items from PR {} to PO {}", prId, poId);
 
         List<PrLineItem> prLineItems = prLineItemRepository.findByPurchaseRequestId(prId);
+        PurchaseOrder po = purchaseOrderRepository.findById(poId)
+                .orElseThrow(() -> new RuntimeException("Purchase Order not found: " + poId));
 
         for (PrLineItem prItem : prLineItems) {
             PoLineItem poItem = PoLineItem.builder()
-                    .purchaseOrderId(poId)
+                    .purchaseOrder(po)
                     .itemDescription(prItem.getItemDescription())
                     .quantity(prItem.getQuantity())
                     .unitPrice(prItem.getEstimatedUnitPrice())

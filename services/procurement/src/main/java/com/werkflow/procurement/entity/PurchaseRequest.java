@@ -26,23 +26,31 @@ public class PurchaseRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "request_number", unique = true, nullable = false, length = 50)
-    private String requestNumber;
+    @Column(name = "pr_number", unique = true, nullable = false, length = 50)
+    private String prNumber;
 
-    @Column(name = "department_id", nullable = false)
-    private Long departmentId;
+    @Column(name = "requesting_dept_id", nullable = false)
+    private Long requestingDeptId;
 
-    @Column(name = "requested_by_user_id", nullable = false)
-    private Long requestedByUserId;
+    @Column(name = "requester_user_id", nullable = false)
+    private Long requesterUserId;
 
-    @Column(name = "requested_date", nullable = false)
-    private LocalDateTime requestedDate;
+    @Column(name = "request_date", nullable = false)
+    private LocalDate requestDate;
 
     @Column(name = "required_by_date")
     private LocalDate requiredByDate;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 50, nullable = false)
+    @Builder.Default
+    private Priority priority = Priority.MEDIUM;
+
     @Column(nullable = false, length = 2000)
     private String justification;
+
+    @Column(length = 1000)
+    private String notes;
 
     @Column(name = "total_amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal totalAmount;
@@ -72,9 +80,18 @@ public class PurchaseRequest {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    public enum Priority {
+        LOW,
+        MEDIUM,
+        HIGH,
+        URGENT
+    }
+
     public enum PrStatus {
         DRAFT,
         PENDING,
+        SUBMITTED,
+        PENDING_APPROVAL,
         APPROVED,
         REJECTED,
         ORDERED,

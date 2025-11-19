@@ -32,12 +32,20 @@ public class ReceiptLineItem {
     private PoLineItem poLineItem;
 
     @Column(name = "quantity_received", nullable = false)
-    private Integer quantityReceived;
+    private Integer receivedQuantity;
+
+    @Column(name = "accepted_quantity", nullable = false)
+    @Builder.Default
+    private Integer acceptedQuantity = 0;
+
+    @Column(name = "rejected_quantity")
+    @Builder.Default
+    private Integer rejectedQuantity = 0;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 50, nullable = false)
     @Builder.Default
-    private ReceiptCondition condition = ReceiptCondition.GOOD;
+    private ItemCondition condition = ItemCondition.GOOD;
 
     @Column(length = 1000)
     private String notes;
@@ -46,8 +54,13 @@ public class ReceiptLineItem {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public enum ReceiptCondition {
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    public enum ItemCondition {
+        NEW,
         GOOD,
+        ACCEPTABLE,
         DAMAGED,
         DEFECTIVE
     }

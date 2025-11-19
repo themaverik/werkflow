@@ -61,6 +61,9 @@ public class PurchaseOrder {
     @Column(name = "payment_terms", length = 100)
     private String paymentTerms;
 
+    @Column(name = "delivery_address", length = 500)
+    private String deliveryAddress;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 50, nullable = false)
     @Builder.Default
@@ -69,7 +72,10 @@ public class PurchaseOrder {
     @Column(length = 2000)
     private String notes;
 
-    @Column(name = "created_by_user_id", nullable = false)
+    @Column(name = "process_instance_id", length = 255)
+    private String processInstanceId;
+
+    @Column(name = "created_by_user_id")
     private Long createdByUserId;
 
     @CreatedDate
@@ -81,6 +87,7 @@ public class PurchaseOrder {
     private LocalDateTime updatedAt;
 
     public enum PoStatus {
+        DRAFT,
         PENDING,
         CONFIRMED,
         SHIPPED,

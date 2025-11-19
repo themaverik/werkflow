@@ -31,8 +31,14 @@ public class PrLineItem {
     @JoinColumn(name = "purchase_request_id", nullable = false)
     private PurchaseRequest purchaseRequest;
 
+    @Column(name = "line_number", nullable = false)
+    private Integer lineNumber;
+
     @Column(name = "asset_definition_id")
     private Long assetDefinitionId;
+
+    @Column(name = "item_description", nullable = false, length = 500)
+    private String itemDescription;
 
     @Column(nullable = false, length = 500)
     private String description;
@@ -40,11 +46,20 @@ public class PrLineItem {
     @Column(nullable = false)
     private Integer quantity;
 
-    @Column(name = "unit_price", nullable = false, precision = 15, scale = 2)
-    private BigDecimal unitPrice;
+    @Column(name = "unit_of_measure", length = 50)
+    private String unitOfMeasure;
+
+    @Column(name = "estimated_unit_price", nullable = false, precision = 15, scale = 2)
+    private BigDecimal estimatedUnitPrice;
+
+    @Column(name = "estimated_total_amount", nullable = false, precision = 15, scale = 2)
+    private BigDecimal estimatedTotalAmount;
 
     @Column(name = "total_price", nullable = false, precision = 15, scale = 2)
     private BigDecimal totalPrice;
+
+    @Column(name = "budget_category_id")
+    private Long budgetCategoryId;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
@@ -56,4 +71,7 @@ public class PrLineItem {
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

@@ -334,10 +334,15 @@ services:
       NEXT_PUBLIC_PROCUREMENT_API_URL: http://procurement-service:8085/api
       NEXT_PUBLIC_INVENTORY_API_URL: http://inventory-service:8086/api
 
-      # NextAuth
+      # NextAuth Configuration
       NEXTAUTH_URL: http://localhost:4000
-      # Keycloak (external URL for browser)
-      KEYCLOAK_ISSUER: http://localhost:8090/realms/werkflow
+      NEXTAUTH_SECRET: xg7bVqYgFgTDwpVWe6gbyWwZVb8f0Yd1Wo+ZGuKdm/U=
+      AUTH_TRUST_HOST: true
+
+      # Keycloak OAuth2 Configuration
+      KEYCLOAK_ISSUER: http://keycloak:8080/realms/werkflow
+      KEYCLOAK_CLIENT_ID: werkflow-admin-portal
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_ADMIN_PORTAL_SECRET:-change-me-in-production}
     ports:
       - "4000:4000"
     networks:
@@ -369,13 +374,15 @@ services:
       NEXT_PUBLIC_PROCUREMENT_API_URL: http://procurement-service:8085/api
       NEXT_PUBLIC_INVENTORY_API_URL: http://inventory-service:8086/api
 
-      # NextAuth
+      # NextAuth Configuration
       NEXTAUTH_URL: http://localhost:4001
-      NEXTAUTH_SECRET: change-me-in-production
-      # Keycloak (external URL for browser)
+      NEXTAUTH_SECRET: xg7bVqYgFgTDwpVWe6gbyWwZVb8f0Yd1Wo+ZGuKdm/U=
+      AUTH_TRUST_HOST: true
+
+      # Keycloak OAuth2 Configuration
       KEYCLOAK_CLIENT_ID: werkflow-hr-portal
-      KEYCLOAK_CLIENT_SECRET: change-me-in-production
-      KEYCLOAK_ISSUER: http://localhost:8090/realms/werkflow
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_HR_PORTAL_SECRET:-change-me-in-production}
+      KEYCLOAK_ISSUER: http://keycloak:8080/realms/werkflow
     ports:
       - "4001:4001"
     networks:

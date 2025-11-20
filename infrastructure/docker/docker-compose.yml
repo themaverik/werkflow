@@ -62,8 +62,10 @@ services:
       KC_DB_URL: jdbc:postgresql://keycloak-postgres:5432/keycloak_db
       KC_DB_USERNAME: keycloak_user
       KC_DB_PASSWORD: keycloak_pass
-      KC_HOSTNAME: localhost
-      KC_HOSTNAME_PORT: 8090
+      KC_HOSTNAME: keycloak
+      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_PATH: /
+      KC_HOSTNAME_PROTOCOL: http
       KC_HOSTNAME_STRICT: false
       KC_HOSTNAME_STRICT_HTTPS: false
       KC_LOG_LEVEL: info
@@ -340,7 +342,7 @@ services:
       AUTH_TRUST_HOST: true
 
       # Keycloak OAuth2 Configuration
-      KEYCLOAK_ISSUER: http://localhost:8090/realms/werkflow
+      KEYCLOAK_ISSUER: http://keycloak:8080/realms/werkflow
       KEYCLOAK_CLIENT_ID: werkflow-admin-portal
       #KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_ADMIN_PORTAL_SECRET:-change-me-in-production}
       KEYCLOAK_CLIENT_SECRET: 4kwrHZC0rZMfmeazfxpXG9UXW0gXqmRR
@@ -383,7 +385,7 @@ services:
       # Keycloak OAuth2 Configuration
       KEYCLOAK_CLIENT_ID: werkflow-hr-portal
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_HR_PORTAL_SECRET:-change-me-in-production}
-      KEYCLOAK_ISSUER: http://localhost:8090/realms/werkflow
+      KEYCLOAK_ISSUER: http://keycloak:8080/realms/werkflow
     ports:
       - "4001:4001"
     networks:

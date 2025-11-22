@@ -62,18 +62,36 @@ services:
       KC_DB_URL: jdbc:postgresql://keycloak-postgres:5432/keycloak_db
       KC_DB_USERNAME: keycloak_user
       KC_DB_PASSWORD: keycloak_pass
-      KC_HOSTNAME: keycloak
-      KC_HOSTNAME_PORT: 8080
-      KC_HOSTNAME_PATH: /
-      KC_HOSTNAME_PROTOCOL: http
+
+      # Hostname Configuration for Docker Environment
+      # CRITICAL: Using 'start' (production mode) instead of 'start-dev' to enable hostname config
+      # Browser accesses Keycloak at localhost:8090 (port-mapped)
+      # Containers access Keycloak at keycloak:8080 (internal network)
+      # KC_HOSTNAME: Sets the frontend URL that browsers will use
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8090
       KC_HOSTNAME_STRICT: false
       KC_HOSTNAME_STRICT_HTTPS: false
+      KC_HOSTNAME_STRICT_BACKCHANNEL: false
+
+      # Enable HTTP (required for local development)
+      KC_HTTP_ENABLED: true
+
+      # Proxy mode: Tells Keycloak it's behind a reverse proxy
+      # This makes Keycloak respect X-Forwarded-* headers
+      KC_PROXY: edge
+
+      # Logging and Metrics
       KC_LOG_LEVEL: info
       KC_METRICS_ENABLED: true
       KC_HEALTH_ENABLED: true
+
+      # Admin Credentials
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin123
-    command: start-dev
+    command:
+      - start
+      - --http-relative-path=/
     ports:
       - "8090:8080"
     depends_on:
@@ -340,12 +358,24 @@ services:
       NEXTAUTH_URL: http://localhost:4000
       NEXTAUTH_SECRET: xg7bVqYgFgTDwpVWe6gbyWwZVb8f0Yd1Wo+ZGuKdm/U=
       AUTH_TRUST_HOST: true
+      
+      KEYCLOAK_ISSUER: http://localhost:8090/realms/werkflow
+      # Keycloak OAuth2 Configuration (Dual-URL Strategy for Docker)
+      # KEYCLOAK_ISSUER_INTERNAL: Used for server-side OIDC discovery and API calls
+      # Uses Docker internal network (keycloak:8080) - container-to-container communication
+      KEYCLOAK_ISSUER_INTERNAL: http://keycloak:8080/realms/werkflow
 
-      # Keycloak OAuth2 Configuration
-      KEYCLOAK_ISSUER: http://keycloak:8080/realms/werkflow
+      # KEYCLOAK_ISSUER_PUBLIC: The issuer that Keycloak advertises in tokens
+      # Must match what Keycloak returns (localhost:8090 via KC_HOSTNAME/KC_PROXY)
+      # Used for token validation - NextAuth checks this against token claims
+      KEYCLOAK_ISSUER_PUBLIC: http://localhost:8090/realms/werkflow
+
+      # KEYCLOAK_ISSUER_BROWSER: Used for browser redirects during OAuth flow
+      # Must be accessible from user's browser (localhost:8090 on host machine)
+      KEYCLOAK_ISSUER_BROWSER: http://localhost:8090/realms/werkflow
+
       KEYCLOAK_CLIENT_ID: werkflow-admin-portal
-      #KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_ADMIN_PORTAL_SECRET:-change-me-in-production}
-      KEYCLOAK_CLIENT_SECRET: 4kwrHZC0rZMfmeazfxpXG9UXW0gXqmRR
+      KEYCLOAK_CLIENT_SECRET: 4uohM7y1sGkOcR2gTR1APo4JDmkwRxSv
     ports:
       - "4000:4000"
     networks:
@@ -382,10 +412,22 @@ services:
       NEXTAUTH_SECRET: xg7bVqYgFgTDwpVWe6gbyWwZVb8f0Yd1Wo+ZGuKdm/U=
       AUTH_TRUST_HOST: true
 
-      # Keycloak OAuth2 Configuration
+      # Keycloak OAuth2 Configuration (Dual-URL Strategy for Docker)
+      # KEYCLOAK_ISSUER_INTERNAL: Used for server-side OIDC discovery and API calls
+      # Uses Docker internal network (keycloak:8080) - container-to-container communication
+      KEYCLOAK_ISSUER_INTERNAL: http://keycloak:8080/realms/werkflow
+
+      # KEYCLOAK_ISSUER_PUBLIC: The issuer that Keycloak advertises in tokens
+      # Must match what Keycloak returns (localhost:8090 via KC_HOSTNAME/KC_PROXY)
+      # Used for token validation - NextAuth checks this against token claims
+      KEYCLOAK_ISSUER_PUBLIC: http://localhost:8090/realms/werkflow
+
+      # KEYCLOAK_ISSUER_BROWSER: Used for browser redirects during OAuth flow
+      # Must be accessible from user's browser (localhost:8090 on host machine)
+      KEYCLOAK_ISSUER_BROWSER: http://localhost:8090/realms/werkflow
+
       KEYCLOAK_CLIENT_ID: werkflow-hr-portal
-      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_HR_PORTAL_SECRET:-change-me-in-production}
-      KEYCLOAK_ISSUER: http://keycloak:8080/realms/werkflow
+      KEYCLOAK_CLIENT_SECRET: HR_PORTAL_SECRET_2024_SECURE
     ports:
       - "4001:4001"
     networks:

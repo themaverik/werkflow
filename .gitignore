@@ -113,3 +113,6 @@ frontends/*/.env.local
 dist/
 build/
 out/
+
+# Documentation archive
+docs/Archive/

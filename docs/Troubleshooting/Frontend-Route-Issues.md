@@ -32,64 +32,66 @@ Troubleshooting guide for Next.js routing problems in Werkflow frontends.
 
 ### Root Cause Analysis
 
-**Issue**: Next.js App Router configuration problem, NOT an authentication issue.
+**Issue**: Next.js App Router route group design - NOT an authentication issue.
 
-The `/studio/` prefix is being used but not properly configured in the application routing structure.
+**Root Cause**: Routes are organized in a `(studio)` route group directory. In Next.js App Router, parentheses denote route groups which are for code organization only and do NOT create URL path segments.
 
-**Possible Causes**:
+**Actual Situation**:
+- Routes EXIST at: `app/(studio)/processes/page.tsx`, `app/(studio)/forms/page.tsx`
+- URLs RESOLVE to: `/processes`, `/forms`, `/workflows`, `/services` (without /studio/ prefix)
+- Requests to `/studio/processes` fail with 404 because that path doesn't exist
+- The middleware at `middleware.ts` line 9 checks for paths starting with `/studio`, but these paths don't actually exist
 
-1. **Missing Route Group Configuration**
-   - `/studio/` might be intended as a route group
-   - Route groups in Next.js App Router use parentheses: `(studio)`
-   - Not configured as actual path segment
+**Why This Happens**:
+- Next.js route groups `(parentheses)` are for organizing code, not creating URL segments
+- They don't affect routing or URL structure
+- `(studio)` is purely organizational and provides no `/studio/` URL prefix
+- The middleware was written to expect `/studio/` paths, but they don't exist
 
-2. **Incorrect App Directory Structure**
-   - Routes might be at `app/processes/page.tsx` (works without prefix)
-   - Should be at `app/studio/processes/page.tsx` (for /studio/ prefix)
-
-3. **Middleware Rewrite Issue**
-   - Middleware might be rewriting URLs incorrectly
-   - /studio/* not properly rewritten to actual route locations
-
-4. **Layout Hierarchy Problem**
-   - Missing or incorrect `app/studio/layout.tsx`
-   - Studio layout not wrapping child routes
+**Design Mismatch**:
+- The middleware expects routes at `/studio/*` URLs
+- The actual routes render at `/*` URLs
+- This is a design decision conflict: either make studio an actual directory or update middleware
 
 ### Diagnostic Steps
 
 **Step 1: Check File Structure**
 
 ```bash
-# Check if studio directory exists in app
-ls -la frontends/admin-portal/app/studio/
+# Check current structure (routes are in route group, not actual directory)
+find frontends/admin-portal/app -name "page.tsx" -type f | sort
 
-# Check current structure
-find frontends/admin-portal/app -name "page.tsx" -o -name "layout.tsx"
+# Check for (studio) route group
+ls -la frontends/admin-portal/app/ | grep studio
+# Output: drwxr-xr-x (studio)  <-- This is a route group, not a path segment
 ```
 
-Expected for /studio/ routes to work:
+**Current Structure (in Admin Portal)**:
 ```
 app/
-├── studio/
-│   ├── layout.tsx           # Studio wrapper layout
+├── (studio)/                        # Route group - doesn't create /studio/ path
 │   ├── processes/
-│   │   └── page.tsx         # /studio/processes
+│   │   ├── page.tsx                # Maps to /processes (NOT /studio/processes)
+│   │   ├── edit/[id]/page.tsx       # Maps to /processes/edit/[id]
+│   │   └── new/page.tsx             # Maps to /processes/new
 │   ├── forms/
-│   │   └── page.tsx         # /studio/forms
-│   └── workflows/
-│       └── page.tsx         # /studio/workflows
+│   │   ├── page.tsx                # Maps to /forms
+│   │   ├── edit/[key]/page.tsx      # Maps to /forms/edit/[key]
+│   │   ├── new/page.tsx             # Maps to /forms/new
+│   │   └── preview/[key]/page.tsx   # Maps to /forms/preview/[key]
+│   ├── workflows/
+│   │   └── page.tsx                # Maps to /workflows
+│   └── services/
+│       └── page.tsx                # Maps to /services
+├── (portal)/                        # Another route group
+│   ├── tasks/page.tsx              # Maps to /tasks
+│   ├── monitoring/page.tsx         # Maps to /monitoring
+│   └── analytics/page.tsx          # Maps to /analytics
+├── page.tsx                         # Maps to / (home)
+└── login/page.tsx                  # Maps to /login
 ```
 
-Current (if routes work without prefix):
-```
-app/
-├── processes/
-│   └── page.tsx             # /processes (no /studio/)
-├── forms/
-│   └── page.tsx             # /forms (no /studio/)
-└── workflows/
-    └── page.tsx             # /workflows (no /studio/)
-```
+**Note**: The `(studio)` and `(portal)` parts in parentheses are Route Groups used for code organization only. They do NOT affect the URL structure.
 
 **Step 2: Check Middleware Configuration**
 
@@ -128,80 +130,108 @@ curl -I http://localhost:4000/processes
 
 ### Resolution Options
 
-**Option 1: Move Routes to /studio/ Directory** (Recommended if /studio/ is intended)
+Choose based on your desired URL structure:
+
+**Option 1: Rename (studio) Route Group to Actual studio Directory** (Recommended for /studio/ URLs)
+
+This changes the route group into a real directory, making routes accessible at `/studio/processes`, `/studio/forms`, etc.
 
 ```bash
-# 1. Create studio directory
-mkdir -p frontends/admin-portal/app/studio
+# From project root
+cd frontends/admin-portal
 
-# 2. Move route directories
-mv frontends/admin-portal/app/processes frontends/admin-portal/app/studio/
-mv frontends/admin-portal/app/forms frontends/admin-portal/app/studio/
-mv frontends/admin-portal/app/workflows frontends/admin-portal/app/studio/
+# 1. Rename route group to actual directory
+mv app/\(studio\) app/studio
 
-# 3. Create studio layout
-cat > frontends/admin-portal/app/studio/layout.tsx << 'EOF'
-export default function StudioLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <div className="studio-layout">
-      {/* Studio-specific navigation/header */}
-      {children}
-    </div>
-  )
-}
-EOF
+# 2. Update auth.config.ts and middleware.ts to remove /studio check if not needed
+# (since all main routes will now be under /studio/)
 
-# 4. Rebuild and restart
-docker-compose restart admin-portal
+# 3. Rebuild and restart
+docker-compose up -d --build admin-portal
 ```
 
-**Option 2: Remove /studio/ Prefix from URLs** (If prefix not needed)
+**Option 2: Keep Route Groups, Remove /studio/ Prefix from Everywhere** (Current State)
 
-Update all internal links and navigation to use routes without /studio/:
+Accept that routes are at `/processes`, `/forms`, etc. (without /studio/) and update references:
 
 ```typescript
-// Update navigation components
-// Change: href="/studio/processes"
+// Update navigation links throughout the application
+// Change all: href="/studio/processes"
 // To: href="/processes"
 
-// Update middleware redirects
+// Update auth.config.ts redirection if needed
 // Change: redirect("/studio/processes")
 // To: redirect("/processes")
+
+// Update links in components
+// Example in navigation:
+{
+  label: 'Processes',
+  href: '/processes',  // Not /studio/processes
+}
 ```
 
-**Option 3: Add Middleware Rewrites** (If keeping current structure)
+**Option 3: Add Middleware Rewrites** (If you want both /studio/ and / to work)
+
+Make both `/studio/processes` and `/processes` work by rewriting requests:
 
 ```typescript
-// In middleware.ts
+// frontends/admin-portal/middleware.ts
+import { auth } from "@/auth"
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+export default auth((req) => {
+  const { pathname } = req.nextUrl
+  const isLoggedIn = !!req.auth
 
-  // Rewrite /studio/* to /* (remove prefix internally)
+  // Rewrite /studio/* to /* (if /studio/ is used externally)
   if (pathname.startsWith('/studio/')) {
-    const newPath = pathname.replace('/studio/', '/')
-    return NextResponse.rewrite(new URL(newPath, request.url))
+    const rewritePath = pathname.replace(/^\/studio/, '') || '/'
+    const rewriteUrl = new URL(rewritePath, req.url)
+
+    // Update protection check for rewritten path
+    const isProtectedRoute = rewritePath.startsWith('/processes') ||
+                            rewritePath.startsWith('/forms') ||
+                            rewritePath.startsWith('/workflows') ||
+                            rewritePath.startsWith('/services')
+
+    if (isProtectedRoute && !isLoggedIn) {
+      const loginUrl = new URL('/login', req.url)
+      loginUrl.searchParams.set('callbackUrl', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+
+    return NextResponse.rewrite(rewriteUrl)
   }
 
-  return NextResponse.next()
-}
+  // Existing protection for direct /processes, /forms, etc.
+  const isProtectedRoute = pathname.startsWith('/processes') ||
+                          pathname.startsWith('/forms') ||
+                          pathname.startsWith('/workflows') ||
+                          pathname.startsWith('/services')
+
+  if (isProtectedRoute && !isLoggedIn) {
+    const loginUrl = new URL('/login', req.url)
+    loginUrl.searchParams.set('callbackUrl', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  return undefined
+})
 
 export const config = {
-  matcher: ['/studio/:path*']
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)',
 }
 ```
 
-**Option 4: Add Redirect Rules in next.config.js**
+**Option 4: Use Next.js Rewrites in next.config.mjs** (If keeping route group structure)
 
 ```javascript
-// next.config.js
-module.exports = {
+// frontends/admin-portal/next.config.mjs
+const nextConfig = {
+  reactStrictMode: true,
+  swcMinify: true,
+  output: 'standalone',
   async rewrites() {
     return [
       {
@@ -216,9 +246,16 @@ module.exports = {
         source: '/studio/workflows',
         destination: '/workflows',
       },
+      {
+        source: '/studio/services',
+        destination: '/services',
+      },
     ]
   },
+  // ... rest of config
 }
+
+export default nextConfig
 ```
 
 ### Testing the Fix

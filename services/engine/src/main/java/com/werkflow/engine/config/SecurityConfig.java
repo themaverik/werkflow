@@ -11,6 +11,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -36,23 +37,28 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                // Public endpoints - use AntPathRequestMatcher for multiple servlet contexts
+                .requestMatchers(new AntPathRequestMatcher("/actuator/**")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/v3/api-docs/**")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/swagger-ui/**")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/swagger-ui.html")).permitAll()
 
                 // Process definition endpoints - require workflow designer role
-                .requestMatchers(HttpMethod.POST, "/api/process-definitions/**").hasAnyRole("WORKFLOW_DESIGNER", "SUPER_ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/process-definitions/**").hasAnyRole("WORKFLOW_DESIGNER", "SUPER_ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/process-definitions/**").authenticated()
+                .requestMatchers(new AntPathRequestMatcher("/api/process-definitions/**", HttpMethod.POST.name())).hasAnyRole("WORKFLOW_DESIGNER", "SUPER_ADMIN")
+                .requestMatchers(new AntPathRequestMatcher("/api/process-definitions/**", HttpMethod.DELETE.name())).hasAnyRole("WORKFLOW_DESIGNER", "SUPER_ADMIN")
+                .requestMatchers(new AntPathRequestMatcher("/api/process-definitions/**", HttpMethod.GET.name())).authenticated()
 
                 // Process instance endpoints - authenticated users
-                .requestMatchers("/api/process-instances/**").authenticated()
+                .requestMatchers(new AntPathRequestMatcher("/api/process-instances/**")).authenticated()
 
                 // Task endpoints - authenticated users (task assignment handles authorization)
-                .requestMatchers("/api/tasks/**").authenticated()
+                .requestMatchers(new AntPathRequestMatcher("/api/tasks/**")).authenticated()
 
                 // History endpoints - authenticated users
-                .requestMatchers("/api/history/**").authenticated()
+                .requestMatchers(new AntPathRequestMatcher("/api/history/**")).authenticated()
+
+                // Werkflow custom API endpoints - authenticated users
+                .requestMatchers(new AntPathRequestMatcher("/werkflow/api/**")).authenticated()
 
                 // All other requests require authentication
                 .anyRequest().authenticated()

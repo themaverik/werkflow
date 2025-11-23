@@ -74,6 +74,10 @@ flowable:
   # Process validation
   process-validation-enabled: true
 
+  # Diagram generation - disabled by default to prevent errors with BPMN files lacking graphic info
+  # Set to true only if all BPMN files have complete bpmndi:BPMNDiagram sections
+  create-diagram-on-deploy: ${FLOWABLE_CREATE_DIAGRAM_ON_DEPLOY:false}
+
   # Mail server configuration (if needed)
   mail-server-host: ${SMTP_HOST:smtp.example.com}
   mail-server-port: ${SMTP_PORT:587}
@@ -114,8 +118,10 @@ logging:
   level:
     root: ${LOG_LEVEL:INFO}
     com.werkflow.engine: ${LOG_LEVEL:INFO}
+    com.werkflow.engine.config.JwtDecoderConfig: DEBUG
     org.flowable: INFO
     org.springframework.security: INFO
+    org.springframework.security.oauth2: ${OAUTH2_LOG_LEVEL:DEBUG}
   file:
     path: ${LOG_FILE_PATH:./logs}
   pattern:

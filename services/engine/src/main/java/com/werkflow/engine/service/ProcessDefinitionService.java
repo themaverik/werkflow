@@ -157,6 +157,40 @@ public class ProcessDefinitionService {
     }
 
     /**
+     * Get BPMN XML of a process definition
+     */
+    public String getProcessDefinitionXml(String processDefinitionId) {
+        log.debug("Fetching BPMN XML for process definition: {}", processDefinitionId);
+
+        ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery()
+            .processDefinitionId(processDefinitionId)
+            .singleResult();
+
+        if (processDefinition == null) {
+            throw new RuntimeException("Process definition not found with ID: " + processDefinitionId);
+        }
+
+        try {
+            // Get the BPMN XML using the resource name from process definition
+            InputStream resourceStream = repositoryService.getResourceAsStream(
+                processDefinition.getDeploymentId(),
+                processDefinition.getResourceName()
+            );
+
+            if (resourceStream == null) {
+                throw new RuntimeException("Resource not found for process definition: " + processDefinitionId);
+            }
+
+            String xml = new String(resourceStream.readAllBytes());
+            log.debug("Successfully retrieved BPMN XML for process definition: {}", processDefinitionId);
+            return xml;
+        } catch (IOException e) {
+            log.error("Error retrieving BPMN XML for process definition: {}", processDefinitionId, e);
+            throw new RuntimeException("Failed to retrieve BPMN XML: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Map ProcessDefinition entity to response DTO
      */
     private ProcessDefinitionResponse mapToResponse(ProcessDefinition pd) {

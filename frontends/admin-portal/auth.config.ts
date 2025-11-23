@@ -100,8 +100,19 @@ export const authConfig = {
     },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user
-      const isOnDashboard = nextUrl.pathname.startsWith('/studio') ||
-                           nextUrl.pathname.startsWith('/portal')
+      const pathname = nextUrl.pathname
+
+      // Check for protected routes (with or without /studio/ or /portal/ prefix)
+      const isOnDashboard =
+        pathname.startsWith('/studio/') ||
+        pathname.startsWith('/portal/') ||
+        pathname.startsWith('/processes') ||
+        pathname.startsWith('/forms') ||
+        pathname.startsWith('/workflows') ||
+        pathname.startsWith('/services') ||
+        pathname.startsWith('/tasks') ||
+        pathname.startsWith('/monitoring') ||
+        pathname.startsWith('/analytics')
 
       if (isOnDashboard) {
         if (isLoggedIn) return true

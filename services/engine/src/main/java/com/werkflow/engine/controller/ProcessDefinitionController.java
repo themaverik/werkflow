@@ -102,4 +102,13 @@ public class ProcessDefinitionController {
         processDefinitionService.activateProcessDefinition(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{id}/xml")
+    @Operation(summary = "Get process definition BPMN XML", description = "Retrieve the BPMN XML representation of a process definition")
+    public ResponseEntity<String> getProcessDefinitionXml(
+        @Parameter(description = "Process definition ID") @PathVariable String id
+    ) {
+        String xml = processDefinitionService.getProcessDefinitionXml(id);
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_XML).body(xml);
+    }
 }

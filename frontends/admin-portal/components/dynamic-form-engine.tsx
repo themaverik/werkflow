@@ -42,7 +42,8 @@ export function DynamicFormEngine({
 
         // If formKey is provided, load from backend
         if (formKey) {
-          const response = await fetch(`/api/forms/${formKey}`);
+          const engineBaseUrl = process.env.NEXT_PUBLIC_ENGINE_API_URL || 'http://localhost:8081';
+          const response = await fetch(`${engineBaseUrl}/werkflow/api/forms/${formKey}`);
           if (!response.ok) {
             throw new Error('Failed to load form');
           }
@@ -54,7 +55,8 @@ export function DynamicFormEngine({
 
         // If taskId is provided, load task form
         if (taskId) {
-          const response = await fetch(`/api/tasks/${taskId}/form`);
+          const engineBaseUrl = process.env.NEXT_PUBLIC_ENGINE_API_URL || 'http://localhost:8081';
+          const response = await fetch(`${engineBaseUrl}/api/tasks/${taskId}/form`);
           if (!response.ok) {
             throw new Error('Failed to load task form');
           }
@@ -78,9 +80,11 @@ export function DynamicFormEngine({
 
   const handleSubmit = async (formSubmission: any) => {
     try {
+      const engineBaseUrl = process.env.NEXT_PUBLIC_ENGINE_API_URL || 'http://localhost:8081';
+
       // If taskId is provided, complete the task
       if (taskId) {
-        const response = await fetch(`/api/tasks/${taskId}/complete`, {
+        const response = await fetch(`${engineBaseUrl}/api/tasks/${taskId}/complete`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -100,7 +104,7 @@ export function DynamicFormEngine({
       // If processInstanceId is provided, update process variables
       if (processInstanceId && !taskId) {
         const response = await fetch(
-          `/api/process-instances/${processInstanceId}/variables`,
+          `${engineBaseUrl}/api/process-instances/${processInstanceId}/variables`,
           {
             method: 'PUT',
             headers: {

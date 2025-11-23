@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'
+// Engine service base URL - supports both Werkflow custom APIs (/werkflow/api/*) and Flowable APIs (/api/*)
+const API_BASE_URL = process.env.NEXT_PUBLIC_ENGINE_API_URL || 'http://localhost:8081'
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -10,15 +11,28 @@ export const apiClient = axios.create({
   timeout: 30000, // 30 seconds
 })
 
+// Token storage for the interceptor
+let tokenGetter: (() => Promise<string | null>) | null = null
+
+// Function to set the token getter (called from client components)
+export function setApiClientToken(getter: () => Promise<string | null>) {
+  tokenGetter = getter
+}
+
 // Request interceptor to add authentication token
 apiClient.interceptors.request.use(
   async (config) => {
-    // Note: In client components, you'll need to pass the token manually
-    // In server components, you can use auth() from next-auth
-    // For client-side requests, token should be added via context/provider
-
-    // Token will be added from the calling component/page
-    // This is just the base configuration
+    // Get token from the registered token getter
+    if (tokenGetter) {
+      try {
+        const token = await tokenGetter()
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`
+        }
+      } catch (error) {
+        console.error('Error getting auth token:', error)
+      }
+    }
     return config
   },
   (error) => {

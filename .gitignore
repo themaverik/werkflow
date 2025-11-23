@@ -65,6 +65,8 @@ logs/
 *.bak
 *.swp
 *~
+.specstory/
+.claude/
 
 # Database
 *.db

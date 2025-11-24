@@ -117,11 +117,15 @@ springdoc:
 logging:
   level:
     root: ${LOG_LEVEL:INFO}
-    com.werkflow.engine: ${LOG_LEVEL:INFO}
+    com.werkflow.engine: DEBUG
+    com.werkflow.engine.controller: DEBUG
+    com.werkflow.engine.service: DEBUG
     com.werkflow.engine.config.JwtDecoderConfig: DEBUG
     org.flowable: INFO
-    org.springframework.security: INFO
-    org.springframework.security.oauth2: ${OAUTH2_LOG_LEVEL:DEBUG}
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.security.web: DEBUG
+    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: DEBUG
   file:
     path: ${LOG_FILE_PATH:./logs}
   pattern:

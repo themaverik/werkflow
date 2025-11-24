@@ -1,663 +1,730 @@
-# Werkflow Enterprise Platform - Master Roadmap
+# Werkflow Implementation Roadmap
 
-Project: Enterprise Workflow Automation Platform
-Duration: Phased approach (12+ months)
-Approach: Centralized Flowable Engine with Department Microservices
-Status: Phase 3.5 Complete with Phase 3.6 and 3.7 Corrections Required
-Last Updated: 2025-11-19
+**Project**: Enterprise Workflow Automation Platform
+**Last Updated**: 2025-11-24
+**Status**: Phase 4-6 In Progress
 
 ---
 
-## Executive Summary
+## Overview
 
-Transform Werkflow into a comprehensive enterprise workflow automation platform enabling:
-
-- Self-service workflow creation for intra-department processes
-- Governed workflow management for inter-department orchestration
-- Department autonomy with centralized visibility
-- Dynamic form generation and custom components
-- Multi-department workflows (HR, Finance, Procurement, Inventory)
-
-Core Objectives:
-1. Extend existing HR workflow foundation
-2. Support multiple departments with minimal code changes (90%+ no-code philosophy)
-3. Enable department POCs to manage workflows autonomously
-4. Provide enterprise-wide visibility and governance
-5. Minimize infrastructure complexity for initial deployment
+Werkflow is a multi-department workflow automation platform enabling self-service workflow creation with centralized governance. This roadmap tracks implementation progress across all phases.
 
 ---
 
-## Architecture Overview
+## Current Status
 
-System Architecture:
-Workflow Admin Portal (Port 4000) - Governance and Inter-Department Workflows
-  ↓
-Flowable Engine Service (Port 8081) - Centralized Workflow Orchestration
-  ↓
-HR Service, Finance Service, Procurement Service, Inventory Service, Admin Service
-
-Technology Stack:
-- Backend: Java 17, Spring Boot 3.3.x, Flowable 7.0.x, PostgreSQL 15
-- Frontend: Next.js 14 with TypeScript, shadcn/ui, React Query, Form.io, bpmn-js
-- Infrastructure: Docker, Docker Compose (initial), Keycloak for authentication
+**Active Phase**: Phases 4, 5, 6 (Weeks 1-5)
+**Completion**: Phase 3.7 - 70% complete, Phase 4-6 - Starting
+**Next Milestone**: Service Registry Backend (Week 1)
 
 ---
 
-## Port Allocation
+## Phase 0: Foundation & Planning (COMPLETE)
 
-Backend Services:
-- 8081: Flowable Engine Service
-- 8082: HR Service
-- 8083: Admin Service
-- 8084: Finance Service
-- 8085: Procurement Service
-- 8086: Inventory Service
+**Duration**: Month 1
+**Status**: Complete
+**Completion Date**: 2024-10
 
-Frontend Applications:
-- 4000: Workflow Admin Portal
-- 4001: HR Portal
-
-Infrastructure:
-- 5433: PostgreSQL
-- 8090: Keycloak
+### Deliverables
+- [x] Architecture decision records (ADRs)
+- [x] Mono repo structure finalized
+- [x] Technology stack selected (Flowable, Spring Boot, React)
+- [x] Development environment setup
+- [x] Docker Compose infrastructure
+- [x] CI/CD pipelines (GitHub Actions)
 
 ---
 
-## Database Strategy
+## Phase 1: Core Platform Foundation (COMPLETE)
 
-Single PostgreSQL Instance with Schema Separation:
-- flowable: Flowable engine tables
-- admin_service: Users, organizations, departments, roles
-- hr_service: HR domain tables
-- finance_service: Budgets, CapEx, transactions
-- procurement_service: Vendors, purchase orders, RFQs
-- inventory_service: Warehouses, stock, asset management
+**Duration**: Months 2-4
+**Status**: Complete
+**Completion Date**: 2025-01
 
-Benefits: Simple deployment, ACID transactions, easy backup/restore, cost-effective
+### Month 2: Flowable Engine Service
+- [x] Flowable engine service deployed
+- [x] PostgreSQL integration
+- [x] OAuth2/JWT authentication
+- [x] Flowable Admin UI
+- [x] Flowable Modeler UI
+- [x] API Gateway integration
 
----
+### Month 3: Shared Libraries
+- [x] Form engine (Form.io integration)
+- [x] Shared UI component library (React)
+- [x] RestServiceDelegate (generic HTTP delegate)
+- [x] Common utilities
 
-## Implementation Roadmap
-
-### Phase 0: Foundation and Restructuring (Completed)
-
-Status: Completed with all services containerized
-
-Deliverables:
-- Monorepo structure established
-- Multi-stage Dockerfile for all services
-- docker-compose.yml with all 12 services
-- Database initialization scripts
-- Keycloak integration for authentication
-- Environment configuration files (.env.shared, .env.engine, .env.hr, etc.)
+### Month 4: HR Service Migration
+- [x] Migrated from werkflow base
+- [x] HR workflows (leave, expense, training requests)
+- [x] Integration with Flowable engine
+- [x] HR portal frontend
 
 ---
 
-### Phase 1: Core Platform Foundation (Weeks 3-8) - Status: Completed
+## Phase 2: Department Services Development (COMPLETE)
 
-Week 3-4: Flowable Engine Service
-Status: Completed
+**Duration**: Months 5-8
+**Status**: Complete
+**Completion Date**: 2025-05
 
-Deliverables:
-- Centralized Flowable engine service
-- REST APIs for workflow operations
-- Authentication integration with Keycloak
-- Health check endpoints
-- API endpoints for process management, task handling, deployments
+### Month 5: Finance Service
+- [x] Finance microservice core
+- [x] Budget management
+- [x] Chart of Accounts (COA)
+- [x] CapEx workflow (BROKEN - needs migration)
 
-Database Schema: flowable (auto-managed by Flowable)
+### Month 6: Procurement Service
+- [x] Procurement microservice core
+- [x] Vendor management
+- [x] Purchase Requisition (PR) system
+- [x] Purchase Order (PO) management
+- [x] PR-to-PO workflow (WORKING - uses RestServiceDelegate)
 
-Week 5-6: Generic Delegates Library
-Status: Completed
+### Month 7: Inventory Service
+- [x] Inventory microservice core
+- [x] Multi-warehouse management
+- [x] Stock tracking
+- [x] Asset transfer workflow (BROKEN - needs migration)
 
-Implemented Delegates:
-- RestServiceDelegate: Generic HTTP calls to microservices
-- EmailDelegate: Email notifications via templates
-- NotificationDelegate: Multi-channel notifications
-- ValidationDelegate: Generic form validation
-- ApprovalDelegate: Standard approval logic
-- FormRequestDelegate: Generic form-based requests to any department
-
-Week 7-8: HR Service Migration and Admin Service
-Status: Completed
-
-HR Service:
-- Migrated to services/hr/ folder
-- Database schema: hr_service
-- Integrated with Flowable engine
-- Updated authentication system
-
-Admin Service:
-- User management APIs
-- Organization and department management
-- Role-based access control (RBAC)
-- Integration with Keycloak
+### Month 8: Cross-Department Integration
+- [x] Kafka topics defined
+- [x] Event schemas documented
+- [x] Service communication patterns
 
 ---
 
-### Phase 2: Workflow Builder and Forms (Weeks 9-12) - Status: Completed
+## Phase 3: Admin Portal & Governance (IN PROGRESS)
 
-Week 9-10: Shared Components and Form Engine
-Status: Completed
+**Duration**: Months 9-10
+**Status**: 70% Complete
+**Target Completion**: 2025-11
 
-Deliverables:
-- Shared React component library
-- Dynamic form generation engine
-- Form builder UI component (Form.io integration)
-- Form renderer component
-- Validation engine with client and server support
+### Phase 3.1-3.5: Core Admin Features (COMPLETE)
+- [x] Admin Portal React application
+- [x] BPMN designer integration (bpmn-js)
+- [x] Form builder interface (Form.io)
+- [x] User and role management UI
+- [x] Department management
 
-Week 11-12: Admin Portal and HR Portal
-Status: Completed
+### Phase 3.6: Backend Service Delegate Implementation (COMPLETE)
+- [x] RestServiceDelegate implementation
+- [x] Shared delegates module
+- [x] ProcessVariableInjector (uses hardcoded URLs)
+- [x] Working example: pr-to-po.bpmn20.xml
 
-Admin Portal (Port 4000):
-- Dashboard with enterprise-wide metrics
-- BPMN Designer with visual workflow design
-- Form Builder for dynamic form creation
-- Deployment management interface
-- User and role management
-- Department management interface
-- Monitoring dashboard with process instances and task tracking
+**Issues Identified**:
+- Three workflows broken (use non-existent beans):
+  - capex-approval-process.bpmn20.xml (7 broken tasks)
+  - procurement-approval-process.bpmn20.xml (10 broken tasks)
+  - asset-transfer-approval-process.bpmn20.xml (10 broken tasks)
+- Service URLs hardcoded in application.yml
+- No service registry backend
 
-HR Portal (Port 4001):
-- Dashboard with HR-specific metrics
-- Workflow list and management
-- Task management interface
-- Workflow builder for POC self-service
+### Phase 3.7: Frontend No-Code Enhancement (70% COMPLETE)
+**Target**: 90%+ no-code compliance
+**Current Score**: 70%
 
----
+#### Completed Components
+- [x] ExtensionElementsEditor.tsx (100%)
+- [x] ServiceTaskPropertiesPanel.tsx (90%)
+- [x] ExpressionBuilder.tsx (90%)
+- [x] Service Registry API client with mock data (100%)
+- [x] Service Registry UI page (95%)
+- [x] React hooks (useServiceRegistry) (100%)
+- [x] UI components (shadcn/ui) (100%)
 
-### Phase 3: Expansion and Advanced Features - Status: Partially Complete (Phase 3.5 Done)
+#### Remaining Work
+- [ ] BpmnDesigner integration (ServiceTaskPropertiesPanel not embedded)
+- [ ] Process Variable Manager (not started)
+- [ ] Gateway condition integration (not started)
+- [ ] End-to-end integration testing (not started)
+- [ ] User documentation (not started)
 
-#### Phase 3.1-3.5: Department Services Implementation
-Status: Completed
-
-Finance Service (Port 8084):
-- Complete entity models for CapEx, budgets
-- REST API controllers for CapEx management
-- BPMN workflow for CapEx Approval Process
-- Integration with Engine Service
-
-Procurement Service (Port 8085):
-- Complete entity models for purchase requests, vendors, purchase orders
-- REST API controllers for procurement and vendor management
-- BPMN workflow for Procurement Approval Process
-- Integration with Engine Service and Finance Service
-
-Inventory Service (Port 8086):
-- Complete entity models for asset management, custody tracking
-- REST API controllers for asset and custody management
-- BPMN workflow for Asset Transfer Approval Process
-- Inter-department custody tracking
-
-#### Phase 3.6: Backend Architectural Correction (NEW - Required)
-
-Status: Pending
-Timeline: 1-2 weeks
-Priority: Critical - Blocks workflow execution
-
-Problem Identified:
-Current implementation uses custom service-specific HTTP delegates instead of generic RestServiceDelegate pattern, violating 90%+ no-code philosophy.
-
-Current State (Wrong):
-- Procurement service uses FinanceBudgetCheckDelegate for cross-service calls
-- Services make hardcoded HTTP calls instead of using shared RestServiceDelegate
-- New integrations require Java code changes
-
-Should Be (Correct):
-- All cross-service communication via generic RestServiceDelegate
-- Service URLs externalized to configuration
-- BPMN workflows configured entirely through UI, no code required
-
-Correction Tasks:
-
-Task 1: Refactor Cross-Service Delegates
-- Remove FinanceBudgetCheckDelegate from Procurement service
-- Keep only service-specific delegates for LOCAL business logic
-- Ensure all delegates access only local databases, no HTTP calls
-
-Task 2: Ensure All Services Expose REST APIs
-- Finance Service: POST /api/budget/check endpoint for budget validation
-- Procurement Service: POST /api/purchase-orders/create endpoint for order creation
-- Inventory Service: POST /api/inventory/check endpoint for stock validation
-- All controllers call LOCAL services only
-
-Task 3: Update BPMN Workflows
-- pr-to-po.bpmn20.xml: Replace custom delegate with RestServiceDelegate
-- procurement-approval-process.bpmn20.xml: Update to use RestServiceDelegate
-- asset-transfer-approval-process.bpmn20.xml: Update all service calls
-- capex-approval-process.bpmn20.xml: Update to use RestServiceDelegate
-
-Task 4: Externalize Service URLs
-Environment Variables (.env.shared):
-- FINANCE_SERVICE_URL=http://finance-service:8084
-- PROCUREMENT_SERVICE_URL=http://procurement-service:8085
-- INVENTORY_SERVICE_URL=http://inventory-service:8086
-- ENGINE_SERVICE_URL=http://engine-service:8081
-
-Task 5: Complete Delegate Implementations
-- RestServiceDelegate: Add error handling, logging, retry logic, response type handling
-- NotificationDelegate: Add SMS, push notifications, in-app storage, audit trail
-- ApprovalDelegate: Add escalation handling, threshold-based routing
-
-Task 6: Testing and Validation
-- Unit tests for RestServiceDelegate
-- Integration tests for all workflows
-- End-to-end workflow execution
-- Cross-service data propagation verification
-
-Success Criteria Phase 3.6:
-- All cross-service communication uses RestServiceDelegate
-- Services expose required REST APIs
-- Service URLs externalized to configuration
-- All workflows execute without errors
-- No custom HTTP delegates in service code
-
-#### Phase 3.7: Frontend No-Code Enhancement (NEW - Required)
-
-Status: Pending
-Timeline: 3-5 weeks
-Priority: High - Completes no-code platform promise
-
-Problem Identified:
-Admin Portal frontend lacks UI for ServiceTask delegate configuration, service URL management, and expression building. Users must manually edit BPMN XML or Java code.
-
-Current No-Code Compliance:
-- BPMN Designer: 95% complete
-- Form Builder: 100% complete
-- Form Renderer: 100% complete
-- Deployment: 90% complete
-- ServiceTask Configuration: 0% (requires XML editing)
-- Service URL Management: 20% (hardcoded in Java)
-- Overall: 65-70% (Target: 90%+)
-
-Enhancement Tasks:
-
-Task 1: ServiceTask Configuration UI (2 weeks)
-Components to Build:
-- ServiceTask Properties Panel with delegate selector
-- Extension Elements Editor for field configuration
-- Type selector for string/expression values
-- Real-time BPMN XML preview
-
-Task 2: Service Registry UI (1.5 weeks)
-Components to Build:
-- Service management page at /studio/services
-- List available services with status monitoring
-- Configure URLs per environment
-- Test connectivity to services
-- View API documentation
-- Auto-complete for service URLs in delegate config
-
-Task 3: Process Variables UI (1 week)
-Components to Build:
-- Process variable manager
-- Define variables and set default values
-- Map form fields to process variables
-- Visual expression builder for conditions
-- Variable dropdown selector and operator picker
-
-Task 4: Testing and Documentation (1 week)
-- Integration testing for complete workflow cycle
-- Variable mapping verification
-- Expression evaluation in gateways
-- Multi-environment deployment testing
-- User documentation and guides
-
-Success Criteria Phase 3.7:
-- Users can configure RestServiceDelegate in UI without XML editing
-- Service URLs managed in service registry UI
-- Process variables defined and mapped visually
-- Expressions built using visual builder
-- 90%+ no-code compliance achieved
-- No architectural violations
+**Blockers**:
+- Service Registry backend missing (Phase 4)
+- Integration testing needs working backend APIs
 
 ---
 
-### Phase 4: Testing, Quality Assurance, and Optimization
+## Phase 4: Service Registry Backend (WEEK 1-2)
 
-Status: Pending
-Timeline: 4-6 weeks
-Focus Areas:
+**Duration**: 2 weeks
+**Status**: NOT STARTED
+**Priority**: CRITICAL - Unblocks all frontend work
+**Owner**: Backend Team
 
-Integration Testing:
-- All workflows execute end-to-end
-- Cross-service communication works
-- Data propagation is correct
-- Variable mapping is accurate
+### Week 1
 
-Performance Testing:
-- API response times (target p95: <500ms)
-- Workflow start time (target: <2 seconds)
-- Concurrent user support (target: 500+)
-- Process throughput (target: 50+ processes/second)
+#### Backend Track (Days 1-6)
+- [ ] **Day 1-2**: Database schema & core service
+  - [ ] Create service_registry migrations
+  - [ ] Create JPA entities (Service, ServiceEndpoint, ServiceHealthCheck)
+  - [ ] Create repositories and service layer
+  - [ ] Unit tests
 
-User Acceptance Testing:
-- Department POCs validate workflows
-- Stakeholder sign-off on functionality
-- User training and documentation
+- [ ] **Day 3-4**: REST API implementation
+  - [ ] ServiceRegistryController (CRUD endpoints)
+  - [ ] Request/Response DTOs
+  - [ ] Validation and error handling
+  - [ ] Swagger documentation
+  - [ ] Postman tests
 
-Quality Metrics:
-- Test coverage: 80%+
-- Critical bug resolution: 100%
-- Performance benchmarks: Met
-- Documentation completeness: 100%
+- [ ] **Day 5**: ProcessVariableInjector integration
+  - [ ] Update ServiceUrlConfiguration to read from registry
+  - [ ] Add 30-second caching
+  - [ ] Add fallback to application.yml
+  - [ ] Feature flag for enable/disable
+  - [ ] Integration tests
 
----
+- [ ] **Day 6**: Health check service
+  - [ ] ServiceHealthCheckService with @Scheduled
+  - [ ] Health check logic (HTTP GET /actuator/health)
+  - [ ] Update health check table every 30 seconds
+  - [ ] Health status API endpoint
 
-### Phase 5: Production Readiness and Infrastructure
+#### Frontend Track (Days 4-6)
+- [ ] **Day 4-5**: Switch from mock to real API
+  - [ ] Update /lib/api/services.ts (remove mock fallback)
+  - [ ] Update useServiceRegistry hooks
+  - [ ] Test CRUD operations in UI
+  - [ ] Verify service selector integration
 
-Status: Pending
-Timeline: 4-8 weeks
-Components:
+- [ ] **Day 6**: Integration testing
+  - [ ] Register all 5 services (HR, Finance, Procurement, Inventory, Admin)
+  - [ ] Configure dev/staging/prod endpoints
+  - [ ] Test dynamic URL injection
+  - [ ] Verify URL changes don't break workflows
 
-Infrastructure Enhancements:
-- Kafka for event-driven architecture
-- Redis for caching and sessions
-- Elasticsearch for search and analytics
-- CI/CD pipeline (GitHub Actions)
-- Kubernetes deployment preparation
-- Terraform infrastructure as code
-
-Monitoring and Observability:
-- Prometheus for metrics collection
-- Grafana for visualization
-- ELK Stack for logging and analytics
-- Jaeger for distributed tracing
-- Health checks and alerting
-
-Advanced Features:
-- CQRS implementation (read/write separation)
-- Event sourcing for complete audit trail
-- Process mining and optimization
-- Business rules engine (DMN)
-- Advanced analytics and reporting
+### Completion Criteria
+- [ ] All API endpoints functional and documented
+- [ ] Frontend UI connected to real backend
+- [ ] ProcessVariableInjector reads from registry
+- [ ] Health checks running automatically
+- [ ] At least one workflow uses dynamic URLs
+- [ ] Zero regression in existing workflows
 
 ---
 
-## Frontend Development Progress
+## Phase 5: RBAC Integration & CapEx Migration (WEEK 2-4)
 
-Admin Portal Implementation Status:
-Overall Status: 70% complete (Core features implemented, orchestration and task portal gaps identified)
+**Duration**: 3 weeks
+**Status**: NOT STARTED
+**Priority**: HIGH
+**Owner**: Backend + Frontend Teams
 
-Completed Features:
-1. BPMN Designer (bpmn-js Integration) - 95% complete
-   - Visual BPMN 2.0 editor with properties panel
-   - Drag-drop elements (tasks, gateways, events)
-   - Zoom and pan controls
-   - File operations (load, save, download)
-   - One-click deployment to Engine Service
+### Phase 5A: Keycloak RBAC (Week 2-3)
 
-2. Form.io Integration - 100% complete
-   - Form Builder with visual designer
-   - Form Renderer for dynamic form display
-   - 8 form templates for various workflows
-   - Form-to-task linking via form keys
-   - Complete field types with validation
+#### Week 2: Core RBAC (Days 1-6)
 
-3. Process Management Dashboard - 70% complete
-   - Process definition list
-   - Create/edit/deploy workflows
-   - Version management (needs enhancement)
+**Backend Track**:
+- [ ] **Day 1-2**: Keycloak realm import & Spring Security
+  - [ ] Import keycloak-realm-export.json
+  - [ ] Create test users (employee, manager, head per department)
+  - [ ] Configure SecurityConfig.java (JwtAuthenticationConverter)
+  - [ ] Create JwtClaimsExtractor
+  - [ ] Update application.yml with Keycloak URLs
+  - [ ] Test JWT token validation
 
-Critical Gaps Identified:
-1. Monitoring Dashboard Uses Mock Data (needs real API integration)
-2. Analytics Dashboard Uses Mock Data (needs real Flowable data)
-3. No Multi-Department Workflow Dashboard (missing /studio/workflows page)
-4. Task Portal Not Implemented (only stub exists at /portal/tasks)
-5. No Process Timeline Visualization (missing visual workflow progress)
+- [ ] **Day 3-4**: Task Router implementation
+  - [ ] Create WorkflowTaskRouter service
+  - [ ] Implement routing logic per workflow type
+  - [ ] Create TaskService wrapper
+  - [ ] Add @PreAuthorize annotations
+  - [ ] Audit logging for task assignments
+  - [ ] Integration tests
 
-Phase 3.5 Completion Status:
-- Dashboard API integration: In progress
-- Multi-department workflow dashboard: In progress
-- Task portal with claiming/completion: In progress
-- Real-time task updates: In progress
+- [ ] **Day 5-6**: DOA approval logic
+  - [ ] Update CapEx BPMN with DOA gateway
+  - [ ] Create DOAApprovalService
+  - [ ] Implement getApproverByAmount()
+  - [ ] Keycloak user search by doa_level
+  - [ ] Update TaskRouter for DOA logic
+  - [ ] Test all 4 DOA levels
+
+**Frontend Track** (starts Day 3):
+- [ ] **Day 3-4**: Keycloak login integration
+  - [ ] Install keycloak-js library
+  - [ ] Create KeycloakProvider wrapper
+  - [ ] Add login/logout buttons
+  - [ ] Token storage and refresh
+  - [ ] Test authentication flow
+
+- [ ] **Day 5-6**: Role-based UI rendering
+  - [ ] Create useAuth() hook
+  - [ ] Create ProtectedRoute component
+  - [ ] Add role-based navigation
+  - [ ] Add role badges in header
+  - [ ] Hide/show features by role
+  - [ ] Test with different user roles
+
+#### Week 3: Advanced RBAC (Days 7-10)
+
+**Backend Track**:
+- [ ] **Day 7-8**: Manager delegation
+  - [ ] Add delegation endpoints (delegate, claim)
+  - [ ] Validate delegation permissions
+  - [ ] Delegation audit trail
+  - [ ] Update TaskService for Flowable delegation APIs
+  - [ ] Integration tests
+
+- [ ] **Day 9-10**: Integration with all services
+  - [ ] Copy SecurityConfig to all services
+  - [ ] Add @PreAuthorize to service endpoints
+  - [ ] Test cross-service JWT propagation
+  - [ ] Optional: Spring Cloud Gateway for centralized auth
+
+**Frontend Track**:
+- [ ] **Day 7-8**: Task List with filters
+  - [ ] Update /api/tasks API client
+  - [ ] Create TaskList component
+  - [ ] Add filters (My Tasks, Team Tasks, Completed)
+  - [ ] Add task actions (View, Approve, Delegate)
+  - [ ] Real-time updates (polling every 10s)
+  - [ ] Task count badges
+
+- [ ] **Day 9-10**: Delegation UI
+  - [ ] Add "Delegate" button to task details
+  - [ ] Create DelegateTaskModal
+  - [ ] Manager selector (query Keycloak)
+  - [ ] Delegation confirmation
+  - [ ] Show delegation history
+
+### Phase 5B: CapEx Workflow Migration (Week 3-4)
+
+#### Backend Track (Days 1-6)
+
+- [ ] **Day 1-2**: Finance Service REST APIs
+  - [ ] Create CapExWorkflowController
+  - [ ] Implement workflow endpoints (create, check budget, reserve, update status)
+  - [ ] Add CapExService business logic
+  - [ ] Add CapExRepository
+  - [ ] Validation and error handling
+  - [ ] Postman tests
+
+- [ ] **Day 3-4**: Migrate CapEx BPMN to RestServiceDelegate
+  - [ ] Create capex-approval-process-v2.bpmn20.xml
+  - [ ] Replace all ${capexService} with RestServiceDelegate
+  - [ ] Add ServiceUrlConfiguration (if missing)
+  - [ ] Add ProcessVariableInjector to start event
+  - [ ] Test each service task individually
+  - [ ] Deploy and test end-to-end
+
+- [ ] **Day 5-6**: Migrate remaining workflows
+  - [ ] Create Procurement REST APIs
+  - [ ] Migrate procurement-approval-process-v2.bpmn20.xml
+  - [ ] Create Inventory REST APIs
+  - [ ] Migrate asset-transfer-approval-process-v2.bpmn20.xml
+  - [ ] Test all three workflows end-to-end
+  - [ ] Archive old broken BPMN files
+
+#### Frontend Track (Days 3-6)
+
+- [ ] **Day 3-4**: CapEx Request Form
+  - [ ] Create CapExRequestForm component
+  - [ ] Add form fields (description, amount, justification, etc.)
+  - [ ] Form validation (react-hook-form + zod)
+  - [ ] Connect to Finance API
+  - [ ] Show success message with request ID
+  - [ ] Test form submission
+
+- [ ] **Day 5-6**: CapEx Approval UI
+  - [ ] Create CapExApprovalTask component
+  - [ ] Show request details (readonly)
+  - [ ] Add approval decision form (approve/reject + comments)
+  - [ ] Show DOA level indicator
+  - [ ] Submit to task completion endpoint
+  - [ ] Show success/error messages
+
+### Completion Criteria
+
+**RBAC**:
+- [ ] Users authenticate via Keycloak
+- [ ] Tasks automatically route to correct users
+- [ ] DOA approvals work for all 4 levels
+- [ ] Managers can delegate tasks
+- [ ] Frontend shows/hides features based on roles
+
+**CapEx Migration**:
+- [ ] Old broken workflows archived (not deployed)
+- [ ] New workflows use RestServiceDelegate pattern
+- [ ] All three workflows work end-to-end
+- [ ] No NoSuchBeanDefinitionException errors
+- [ ] Service URLs read from registry
 
 ---
 
-## Backend Services Progress
+## Phase 6: Task UI & Integration Testing (WEEK 4-5)
 
-Phase 3 Services Implementation:
-Status: Completed (Finance, Procurement, Inventory services fully implemented)
+**Duration**: 2 weeks
+**Status**: NOT STARTED
+**Priority**: HIGH
+**Owner**: All Teams
 
-Finance Service (Port 8084):
-- Complete entity models for CapEx requests, approvals, budgets
-- REST API controllers for CapEx management
-- BPMN workflow: CapEx Approval Process with multi-level approval
-- Database schema: finance_service
+### Week 4: Task UI Development
 
-Procurement Service (Port 8085):
-- Complete entity models for purchase requests, vendors, orders
-- REST API controllers for procurement and vendor management
-- BPMN workflow: Procurement Approval Process
-- Database schema: procurement_service
+#### Backend Track (Days 1-5)
 
-Inventory Service (Port 8086):
-- Complete entity models for asset management, custody tracking
-- REST API controllers for asset and custody management
-- BPMN workflow: Asset Transfer Approval Process
-- Inter-department custody tracking capabilities
-- Database schema: inventory_service
+- [ ] **Day 1-2**: Task API enhancements
+  - [ ] Add claim/unclaim endpoints
+  - [ ] Add task history endpoint
+  - [ ] Add task variables endpoint
+  - [ ] Add comment endpoint
+  - [ ] Add filtering (status, assignee, processDefinitionKey)
+  - [ ] Add pagination (page, size, sort)
+  - [ ] Create rich task DTOs
 
-All services include:
-- Flyway database migrations
-- Integration with Engine Service via REST
-- Keycloak authentication support
-- Health check endpoints
+- [ ] **Day 3-4**: Notification service
+  - [ ] Create NotificationService
+  - [ ] Implement email notifications (Task Assigned, Completed, Delegated)
+  - [ ] Email templates (Thymeleaf)
+  - [ ] @Async for non-blocking
+  - [ ] Retry logic (3 attempts)
+  - [ ] Test email delivery
 
----
+- [ ] **Day 5**: Process monitoring APIs
+  - [ ] Create ProcessMonitoringController
+  - [ ] Add process details endpoint
+  - [ ] Add process tasks endpoint
+  - [ ] Add process history endpoint
+  - [ ] Query by business key
+  - [ ] ProcessInstanceDTO with rich details
 
-## Current Sprint Status
+#### Frontend Track (Days 1-8)
 
-Overall Platform Status:
-- Phase 0: Completed
-- Phase 1: Completed
-- Phase 2: Completed
-- Phase 3.1-3.5: Completed (with architectural issues identified)
-- Phase 3.6: Pending (1-2 weeks)
-- Phase 3.7: Pending (3-5 weeks)
-- Phase 4: Pending
-- Phase 5: Pending
+- [ ] **Day 1-2**: Task Details Page
+  - [ ] Create TaskDetailsPage component
+  - [ ] Show task info (name, description, requester, details)
+  - [ ] Show process timeline
+  - [ ] Add action buttons (Claim, Complete, Delegate, Comment)
+  - [ ] Real-time updates (refresh every 10s)
+  - [ ] Test all actions
 
-Current Focus:
-Phase 3.6 Backend Architectural Correction and Phase 3.7 Frontend No-Code Enhancement are critical blockers for workflow execution and true no-code platform realization.
+- [ ] **Day 3-4**: Task Forms (Dynamic rendering)
+  - [ ] Create DynamicTaskForm component
+  - [ ] Map workflow types to forms
+  - [ ] Load form schema from API
+  - [ ] Render fields dynamically
+  - [ ] Validate inputs
+  - [ ] Submit to task completion endpoint
 
-Active Tasks This Week:
-- Dashboard API integration (real data instead of mock)
-- Multi-department workflow dashboard creation
-- Task portal implementation
-- Real-time task updates via React Query polling
+- [ ] **Day 5-6**: Request Tracking Page
+  - [ ] Create MyRequestsPage component
+  - [ ] Show all user's submitted requests
+  - [ ] Add filters (status, type, date range)
+  - [ ] Add search (request ID, amount, description)
+  - [ ] Show process diagram with current task
+  - [ ] Real-time status updates
 
----
+- [ ] **Day 7-8**: Dashboard & Analytics
+  - [ ] Create DashboardPage component
+  - [ ] Add dashboard widgets (Pending Tasks, Team Tasks, etc.)
+  - [ ] Add charts (Requests by Type, Approvals by Week, Top Requesters)
+  - [ ] Add quick actions
+  - [ ] Test dashboard performance
 
-## Critical Issues and Resolutions
+### Week 5: Integration Testing
 
-### Issue 1: Backend Delegate Architecture Misalignment
+#### All Team (Days 1-5)
 
-Problem:
-Custom service-specific HTTP delegates (FinanceBudgetCheckDelegate) instead of generic RestServiceDelegate pattern violates no-code philosophy. Services make hardcoded HTTP calls and require Java code changes for new integrations.
+- [ ] **Day 1**: End-to-end test cases
+  - [ ] Test CapEx approval flow ($500 request)
+  - [ ] Test delegation flow ($5K request)
+  - [ ] Test rejection flow ($100K request)
+  - [ ] Test Service Registry URL update
+  - [ ] Document all test results
 
-Impact:
-- 15+ TODO/FIXME markers in delegate code
-- Cross-service workflows cannot execute (missing Spring beans)
-- New integrations require code changes (not truly no-code)
-- Service-to-service communication is inflexible
+- [ ] **Day 2-3**: Regression testing
+  - [ ] Test HR leave approval workflow
+  - [ ] Test Procurement PR-to-PO workflow
+  - [ ] Test Inventory asset transfer workflow
+  - [ ] Test form submissions
+  - [ ] Test process monitoring APIs
+  - [ ] Test health checks
 
-Resolution:
-Phase 3.6: Remove custom delegates, use RestServiceDelegate for all cross-service communication, externalize service URLs to configuration.
+- [ ] **Day 4-5**: Bug fixes & performance tuning
+  - [ ] Fix all bugs found in testing
+  - [ ] Optimize slow queries (add indexes)
+  - [ ] Add caching where needed
+  - [ ] Reduce API response times (<500ms)
+  - [ ] Add loading states to frontend
+  - [ ] Add error boundaries
+  - [ ] Add monitoring dashboards
+  - [ ] Document known issues
 
-### Issue 2: Frontend No-Code Gap
+### Completion Criteria
 
-Problem:
-Users cannot configure ServiceTask delegates, service URLs, or build expressions without manually editing BPMN XML. This requires technical knowledge incompatible with 90%+ no-code promise.
+**Task UI**:
+- [ ] Users can view all assigned tasks
+- [ ] Users can complete tasks with approval decisions
+- [ ] Users can track their submitted requests
+- [ ] Managers have dashboard with team metrics
+- [ ] Email notifications work for all events
 
-Impact:
-- No-code compliance: 65-70% (target: 90%+)
-- Users must edit XML for ServiceTask configuration
-- Service URLs hardcoded in Java code
-- Expressions typed manually without visual builder
-
-Resolution:
-Phase 3.7: Build ServiceTask properties UI, service registry management, process variable manager, and expression builder in Admin Portal.
+**Integration**:
+- [ ] All workflows work end-to-end
+- [ ] Service Registry provides dynamic URLs
+- [ ] Keycloak RBAC routes tasks correctly
+- [ ] Task UI integrates with Flowable APIs
+- [ ] No regression in existing functionality
 
 ---
 
 ## Success Metrics
 
-Technical Metrics:
-Performance:
-- API response time (p95): <500ms
-- Workflow start time: <2 seconds
-- Database query time (p95): <100ms
-- System uptime: >99.5%
-- Failed workflow rate: <2%
+### Technical Metrics (Targets)
+- API Response Time (p95): <500ms
+- Page Load Time (p95): <3s
+- Workflow Success Rate: >98%
+- Task Completion Time: <5 minutes
+- Email Delivery Rate: >95%
+- Service Health Check Success: >99%
 
-Scalability:
-- Concurrent users: 500+ (Phase 1), 1000+ (Phase 2)
-- Workflows per day: 1000+ (Phase 1), 5000+ (Phase 2)
-- Processes per second: >50
+### Business Metrics (Targets)
+- User Adoption: >80% of employees
+- Approval Turnaround Time: <24 hours
+- Requests Per Day: >100
+- Manager Satisfaction: >4/5
+- Error Rate: <2%
 
-Business Metrics:
-Adoption:
-- Active workflows: 20+ across departments
-- User adoption rate: >80% of employees
-- Department coverage: 5/5 departments
-- Daily active users: >200
-
-Efficiency:
-- Approval turnaround time: Reduce by 30-40%
-- Manual process elimination: 40-50%
-- Time saved per employee: 1-2 hours/week
+### No-Code Compliance
+- **Current**: 70%
+- **Target**: 90%+
+- **Gap Analysis**: Service Registry + RBAC + BPMN Editor = 90%+
 
 ---
 
-## Key Features Delivered
+## Known Issues
 
-Completed Features:
-- Visual BPMN Designer (no XML knowledge required)
-- Dynamic Form Builder (drag-drop form creation)
-- Form-Task Linking (automatic form rendering in tasks)
-- Process Deployment (one-click from UI)
-- Version Management (track process versions)
-- Role-Based Access (HR_ADMIN designs, others use)
-- Production-Ready Architecture (tested, documented, deployable)
+### Critical Issues (P0)
+1. **Three Broken BPMN Workflows** (Phase 5B will fix):
+   - capex-approval-process.bpmn20.xml
+   - procurement-approval-process.bpmn20.xml
+   - asset-transfer-approval-process.bpmn20.xml
+   - Impact: Will crash at runtime with NoSuchBeanDefinitionException
+   - Mitigation: Don't start these workflows until migration complete
 
-In Progress:
-- Task Portal (claiming and completion)
-- Multi-Department Orchestration Dashboard
-- Real-Time Monitoring and Analytics
+### High Priority Issues (P1)
+2. **Service Registry Backend Missing** (Phase 4 will fix):
+   - Service URLs hardcoded in application.yml
+   - Cannot change URLs without restart
+   - No health monitoring
+   - Mitigation: Use existing hardcoded URLs until Phase 4 complete
 
-Planned:
-- Process Timeline Visualization
-- Advanced Process Mining
-- AI-Assisted Workflow Suggestions
-- Business Rules Engine (DMN)
-- Complete Event-Driven Architecture
+3. **Frontend No-Code Gaps** (Phase 4-6 will fix):
+   - ServiceTaskPropertiesPanel not embedded in BpmnDesigner
+   - Process Variable Manager not implemented
+   - Gateway condition integration missing
+   - Mitigation: Complete Phase 3.7 integration work in parallel with Phase 4
 
----
+### Medium Priority Issues (P2)
+4. **Keycloak RBAC Not Integrated** (Phase 5A will fix):
+   - Task routing uses basic role checks
+   - No DOA-based approvals
+   - No delegation support
+   - Mitigation: Temporary manual task assignment
 
-## Development Guidelines
-
-Code Style and Organization:
-- TypeScript for all frontend components
-- Next.js App Router conventions
-- Server components by default, client components only when needed
-- RESTful API design for backend services
-- Spring Boot best practices for Java services
-- No-code first approach for all workflows
-
-Component Organization:
-- Shared components in frontends/shared/
-- BPMN-related components in components/bpmn/
-- Form components in components/forms/
-- Layout components in components/layout/
-- Reusable utilities in lib/
-
-API Client Pattern:
-- React Query for all data fetching
-- Axios for HTTP requests
-- Proper error handling and user feedback
-- React Query for server state management
+5. **Task UI Incomplete** (Phase 6 will fix):
+   - Users cannot approve via UI (must use Flowable UI)
+   - No request tracking
+   - No email notifications
+   - Mitigation: Use Flowable Admin UI temporarily
 
 ---
 
-## Migration Plan
+## Risk Register
 
-Approach: Parallel Run and Gradual Cutover
+### High Risks
+1. **Service Registry breaks existing workflows**
+   - Probability: Low
+   - Impact: High
+   - Mitigation: Feature flag, fallback to application.yml, test old workflows
 
-Week 7 (Phase 1): Parallel Setup
-- Deploy new platform alongside existing
-- Migrate 2-3 simple workflows
-- Test with pilot group (10-20 users)
+2. **Keycloak JWT propagation fails**
+   - Probability: Medium
+   - Impact: High
+   - Mitigation: Use Spring Cloud Gateway, add RestTemplate interceptor, test early
 
-Week 8 (Phase 1): Expanded Testing
-- Migrate all HR workflows
-- Expand to 50% of HR users
-- Monitor performance and stability
+3. **Migrated workflows have bugs**
+   - Probability: Medium
+   - Impact: Medium
+   - Mitigation: Test each task individually, version workflows (-v2), run parallel testing
 
-Week 12 (Phase 2): Full Cutover
-- Switch all users to new platform
-- Set legacy system to read-only
-- Monitor for 2 weeks
-- Archive and decommission
+### Medium Risks
+4. **Task UI performance issues**
+   - Probability: Medium
+   - Impact: Medium
+   - Mitigation: Pagination, database indexes, caching, lazy loading
 
----
+5. **DOA logic doesn't match business requirements**
+   - Probability: Low
+   - Impact: Medium
+   - Mitigation: Review with Finance team, make thresholds configurable
 
-## Risk Mitigation
-
-Risk Assessment:
-
-Flowable Learning Curve (High Probability, Medium Impact):
-- Mitigation: Team training, POC implementation, expert consultation, comprehensive documentation
-
-User Adoption Resistance (Medium Probability, High Impact):
-- Mitigation: Change management, training programs, phased rollout, champion users program
-
-Performance Issues (Medium Probability, High Impact):
-- Mitigation: Early load testing, database optimization, monitoring setup, capacity planning
-
-Data Migration Issues (Medium Probability, Medium Impact):
-- Mitigation: Thorough testing, parallel run period, rollback plan, validation scripts
-
-Scope Creep (High Probability, Medium Impact):
-- Mitigation: Strict change control, MVP focus, phased approach, requirements management
+6. **Email notifications fail**
+   - Probability: Medium
+   - Impact: Low
+   - Mitigation: Use reliable service (SendGrid), retry logic, in-app fallback
 
 ---
 
-## Next Steps and Timeline
+## Team Structure
 
-Immediate Actions (This Week):
-- Begin Phase 3.6 Backend Architectural Correction
-- Start Phase 3.7 Frontend Enhancement UI design
-- Resolve authentication configuration issues
-- Complete dashboard API integration
+### Active Roles
+- **Backend Developer** (1): Phases 4, 5, 6 backend work
+- **Frontend Developer** (1): Phases 4, 5, 6 frontend work
+- **QA Engineer** (0.5): Integration testing, bug tracking
+- **Tech Lead** (0.25): Architecture decisions, code reviews, coordination
 
-Week by Week:
-Week 1: Phase 3.6 delegate refactoring
-Week 2: Phase 3.6 BPMN workflow updates and API exposure
-Week 3-4: Phase 3.7 ServiceTask configuration UI
-Week 5: Phase 3.7 service registry and process variables UI
-Week 6-7: Phase 3.7 testing and documentation
-Week 8-10: Phase 4 comprehensive testing and QA
+### Responsibilities
+
+**Backend Developer**:
+- Service Registry backend implementation
+- Keycloak Spring Security integration
+- Task Router and DOA logic
+- REST APIs for workflow operations
+- BPMN workflow migrations
+- Notification service
+
+**Frontend Developer**:
+- Service Registry UI integration
+- Keycloak login integration
+- Role-based UI rendering
+- Task List and Task Details pages
+- CapEx Request and Approval forms
+- Dashboard and Analytics
+
+**QA Engineer**:
+- Write test cases
+- Execute integration tests
+- Track bugs
+- Verify fixes
+- Sign off on testing
+
+**Tech Lead**:
+- Review architecture decisions
+- Code reviews (PR approvals)
+- Resolve blockers
+- Coordinate team
+- Update roadmap
 
 ---
 
-## Status Summary Table
+## Communication & Coordination
 
-| Phase | Component | Status | Completion |
-|-------|-----------|--------|------------|
-| 0 | Foundation | Completed | 100% |
-| 1 | Core Platform | Completed | 100% |
-| 2 | Workflow Builder | Completed | 100% |
-| 3.1-3.5 | Department Services | Completed | 100% |
-| 3.6 | Backend Correction | Pending | 0% |
-| 3.7 | Frontend Enhancement | Pending | 0% |
-| 4 | Testing and QA | Pending | 0% |
-| 5 | Production Ready | Pending | 0% |
+### Daily Standup
+- Time: 9:00 AM daily
+- Duration: 15 minutes
+- Format: Yesterday, Today, Blockers
+
+### Weekly Planning
+- Time: Monday 10:00 AM
+- Duration: 1 hour
+- Review progress, plan week, assign tasks
+
+### Integration Sync
+- Time: Wednesday 3:00 PM
+- Duration: 30 minutes
+- Frontend/Backend integration check
+
+### Retrospective
+- Time: Friday 4:00 PM (Week 5)
+- Duration: 1 hour
+- Reflect and improve
+
+### Status Updates
+- **Daily**: Update task status in Roadmap.md
+- **Weekly**: Email status report (Fridays 5:00 PM)
+- **Blockers**: Slack #werkflow-blockers immediately
 
 ---
 
-Document Status: Active Development
-Last Updated: 2025-11-19
-Version: 2.0 (Consolidated Master Roadmap)
-Next Review: 2025-11-26
+## Documentation Status
+
+### Architecture Documents
+- [x] Architecture Overview (docs/Architecture/)
+- [x] RBAC Design (Keycloak-RBAC-Role-Matrix-Design.md)
+- [x] BPMN Editor Feasibility (BPMN-Visual-Delegate-Editor-*.md)
+- [x] Phase 4-5-6 Coordination Plan (Phase-4-5-6-Implementation-Coordination-Plan.md)
+- [x] Workflow Architecture (Workflow_Architecture_Design.md)
+- [x] Critical BPMN Issues (CRITICAL-BPMN-Workflow-Issues.md)
+- [x] Forensic Analysis (Forensic-Analysis-Broken-BPMN-Workflows.md)
+- [x] BPMN Comparison Matrix (BPMN-Workflow-Comparison-Matrix.md)
+
+### User Documentation (TODO)
+- [ ] Service Registry User Guide
+- [ ] BPMN Designer User Guide
+- [ ] Task Approval User Guide
+- [ ] Admin Portal User Guide
+
+### Developer Documentation
+- [x] API Documentation (Swagger/OpenAPI)
+- [x] Keycloak Implementation Quick Start
+- [ ] RestServiceDelegate Usage Guide
+- [ ] Testing Strategy Document
+
+---
+
+## Next Actions
+
+### This Week (Week 1)
+1. **Monday**:
+   - [ ] Review coordination plan with team
+   - [ ] Create Jira/GitHub issues
+   - [ ] Assign owners
+   - [ ] Backend: Start Service Registry DB schema
+
+2. **Tuesday**:
+   - [ ] Backend: Complete DB migrations
+   - [ ] Backend: Start REST API
+   - [ ] Frontend: Review API contract
+
+3. **Wednesday**:
+   - [ ] Backend: Complete REST API
+   - [ ] Backend: Deploy to dev
+   - [ ] Integration Sync meeting
+
+4. **Thursday**:
+   - [ ] Frontend: Start API integration
+   - [ ] Backend: ProcessVariableInjector
+   - [ ] Backend: Health check service
+
+5. **Friday**:
+   - [ ] Integration testing
+   - [ ] Weekly status report
+   - [ ] Plan Week 2
+
+---
+
+## Changelog
+
+### 2025-11-24
+- Created comprehensive Phase 4-5-6 coordination plan
+- Updated Roadmap with detailed task breakdown
+- Added 5-week timeline with daily tasks
+- Added risk register and mitigation strategies
+- Identified critical blockers and dependencies
+
+### 2025-11-19
+- Completed Phase 3.7 core components (70%)
+- Documented broken BPMN workflows
+- Created RBAC design documents
+- Completed BPMN Editor feasibility study
+
+### 2025-11-15
+- Fixed broken workflows analysis
+- Created forensic analysis documents
+- Updated architecture documentation
+
+### 2025-10
+- Completed Phases 1-2
+- Deployed Finance, Procurement, Inventory services
+- Integrated Flowable engine
+
+---
+
+**Document Maintained By**: Tech Lead
+**Update Frequency**: Daily during active phases
+**Review Frequency**: Weekly (Monday planning)

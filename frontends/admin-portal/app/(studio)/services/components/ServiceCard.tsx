@@ -40,13 +40,18 @@ export default function ServiceCard({ service, onEdit, onViewEndpoints }: Servic
   }
 
   const getEnvironmentBadge = () => {
-    const colors = {
+    if (!service.environment) return null
+
+    const colors: Record<string, string> = {
       development: 'bg-blue-500',
       staging: 'bg-yellow-500',
       production: 'bg-green-500'
     }
+
+    const colorClass = colors[service.environment] || 'bg-gray-500'
+
     return (
-      <Badge variant="outline" className={colors[service.environment]}>
+      <Badge variant="outline" className={colorClass}>
         {service.environment}
       </Badge>
     )

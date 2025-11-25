@@ -53,17 +53,19 @@ export default function ServiceEditModal({
   }, [service, open])
 
   const handleTestConnection = async () => {
+    if (!baseUrl) return
     setTestResult(null)
     const result = await testConnectivityMutation.mutateAsync(baseUrl)
     setTestResult(result)
   }
 
   const handleSave = async () => {
+    if (!baseUrl) return
     try {
       await updateUrlMutation.mutateAsync({
         serviceId: service.id,
         baseUrl,
-        environment
+        environment: environment || 'development'
       })
       onOpenChange(false)
     } catch (error) {

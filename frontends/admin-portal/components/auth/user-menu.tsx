@@ -27,8 +27,8 @@ export async function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+        <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
+          <div className="flex h-full w-full items-center justify-center rounded-full bg-primary text-primary-foreground">
             {userInitials}
           </div>
         </Button>

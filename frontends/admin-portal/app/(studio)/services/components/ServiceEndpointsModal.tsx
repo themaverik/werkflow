@@ -26,7 +26,7 @@ export default function ServiceEndpointsModal({
   open,
   onOpenChange
 }: ServiceEndpointsModalProps) {
-  const { data: endpoints, isLoading } = useServiceEndpoints(service.name)
+  const { data: endpoints, isLoading } = useServiceEndpoints(service.id)
   const [copiedEndpoint, setCopiedEndpoint] = useState<string | null>(null)
 
   const copyToClipboard = async (text: string, endpointPath: string) => {
@@ -79,11 +79,11 @@ export default function ServiceEndpointsModal({
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Badge className={getMethodColor(endpoint.method)}>
-                        {endpoint.method}
+                      <Badge className={getMethodColor(endpoint.httpMethod)}>
+                        {endpoint.httpMethod}
                       </Badge>
                       <code className="text-sm font-mono">
-                        {endpoint.path}
+                        {endpoint.endpointPath}
                       </code>
                     </div>
                     <Button
@@ -91,12 +91,12 @@ export default function ServiceEndpointsModal({
                       size="sm"
                       onClick={() =>
                         copyToClipboard(
-                          `${service.baseUrl}${endpoint.path}`,
-                          endpoint.path
+                          `${service.baseUrl || ''}${endpoint.endpointPath}`,
+                          endpoint.endpointPath
                         )
                       }
                     >
-                      {copiedEndpoint === endpoint.path ? (
+                      {copiedEndpoint === endpoint.endpointPath ? (
                         <CheckCircle2 className="h-4 w-4 text-green-500" />
                       ) : (
                         <Copy className="h-4 w-4" />
@@ -113,7 +113,7 @@ export default function ServiceEndpointsModal({
                       Full URL
                     </p>
                     <code className="text-xs bg-muted px-2 py-1 rounded block">
-                      {service.baseUrl}{endpoint.path}
+                      {service.baseUrl || ''}{endpoint.endpointPath}
                     </code>
                   </div>
 

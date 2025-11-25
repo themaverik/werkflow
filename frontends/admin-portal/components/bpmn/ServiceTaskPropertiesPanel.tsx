@@ -66,15 +66,15 @@ export default function ServiceTaskPropertiesPanel({
     setSelectedEndpoint(endpointPath)
 
     // Auto-fill URL field in extension elements
-    const service = services?.find(s => s.name === selectedService)
+    const service = services?.find(s => s.serviceName === selectedService)
     if (service) {
-      const fullUrl = `${service.baseUrl}${endpointPath}`
+      const fullUrl = `${service.baseUrl || ''}${endpointPath}`
       // This will be handled by ExtensionElementsEditor
       // We can emit a custom event or use a callback
     }
   }
 
-  const selectedServiceData = services?.find(s => s.name === selectedService)
+  const selectedServiceData = services?.find(s => s.serviceName === selectedService)
   const availableEndpoints = selectedServiceData?.endpoints || []
 
   return (
@@ -126,7 +126,7 @@ export default function ServiceTaskPropertiesPanel({
                 </SelectTrigger>
                 <SelectContent>
                   {services?.map((service) => (
-                    <SelectItem key={service.id} value={service.name}>
+                    <SelectItem key={service.id} value={service.serviceName}>
                       {service.displayName}
                     </SelectItem>
                   ))}
@@ -143,10 +143,10 @@ export default function ServiceTaskPropertiesPanel({
                   </SelectTrigger>
                   <SelectContent>
                     {availableEndpoints.map((endpoint, index) => (
-                      <SelectItem key={index} value={endpoint.path}>
+                      <SelectItem key={index} value={endpoint.endpointPath}>
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs">{endpoint.method}</span>
-                          <span>{endpoint.path}</span>
+                          <span className="font-mono text-xs">{endpoint.httpMethod}</span>
+                          <span>{endpoint.endpointPath}</span>
                         </div>
                       </SelectItem>
                     ))}

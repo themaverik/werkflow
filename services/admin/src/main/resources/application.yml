@@ -99,9 +99,9 @@ app:
     max-age: 3600
 
   routes:
-    /studio: HR_ADMIN,ADMIN,SUPER_ADMIN
-    /studio/**: HR_ADMIN,ADMIN,SUPER_ADMIN
-    /services: SERVICE_ADMIN,ADMIN,SUPER_ADMIN
-    /services/**: SERVICE_ADMIN,ADMIN,SUPER_ADMIN
-    /admin: ADMIN,SUPER_ADMIN
-    /admin/**: ADMIN,SUPER_ADMIN
+    /studio: finance_head,finance_manager,hr_head,hr_manager,hub_manager,hub_request_approver,inventory_manager,it_head,it_manager,leave_request_approver,logistics_manager,procurement_approver,procurement_head,procurement_manager,super_admin
+    /studio/**: finance_head,finance_manager,hr_head,hr_manager,hub_manager,hub_request_approver,inventory_manager,it_head,it_manager,leave_request_approver,logistics_manager,procurement_approver,procurement_head,procurement_manager,super_admin
+    /services: finance_head,finance_manager,hr_head,hr_manager,hub_manager,hub_request_approver,inventory_manager,it_head,it_manager,leave_request_approver,logistics_manager,procurement_approver,procurement_head,procurement_manager,super_admin
+    /services/**: finance_head,finance_manager,hr_head,hr_manager,hub_manager,hub_request_approver,inventory_manager,it_head,it_manager,leave_request_approver,logistics_manager,procurement_approver,procurement_head,procurement_manager,super_admin
+    /admin: super_admin
+    /admin/**: super_admin

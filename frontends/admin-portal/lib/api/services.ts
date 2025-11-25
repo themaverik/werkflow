@@ -3,31 +3,41 @@ import { apiClient } from './client'
 /**
  * Service Registry API Client
  *
+ * Phase 4 Frontend Integration - Real API Only (Mock Fallback Removed)
+ *
  * Manages service discovery, URL configuration, and endpoint documentation
  * for cross-service workflow integration.
  */
 
+// ==================== TYPE DEFINITIONS ====================
+
 export interface Service {
   id: string
-  name: string
+  serviceName: string
   displayName: string
   description: string
-  baseUrl: string
-  endpoints: ServiceEndpoint[]
-  environment: 'development' | 'staging' | 'production'
-  status: 'active' | 'inactive' | 'maintenance'
+  serviceType: string
+  healthStatus: 'HEALTHY' | 'UNHEALTHY' | 'UNKNOWN'
+  baseUrl?: string
+  environment?: 'development' | 'staging' | 'production'
+  status?: 'active' | 'inactive' | 'maintenance'
   lastChecked?: Date
   responseTime?: number
   version?: string
   tags?: string[]
+  endpoints?: ServiceEndpoint[]
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 export interface ServiceEndpoint {
-  path: string
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+  id?: string
+  serviceName: string
+  endpointPath: string
+  httpMethod: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
   description: string
-  requestSchema?: Record<string, any>
-  responseSchema?: Record<string, any>
+  requestSchema?: string
+  responseSchema?: string
   parameters?: ServiceParameter[]
   exampleRequest?: string
   exampleResponse?: string
@@ -41,6 +51,24 @@ export interface ServiceParameter {
   defaultValue?: any
 }
 
+export interface ServiceEnvironmentUrl {
+  id?: string
+  serviceName: string
+  environment: string
+  baseUrl: string
+  priority: number
+  isActive: boolean
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+export interface HealthCheckResult {
+  status: 'HEALTHY' | 'UNHEALTHY' | 'UNKNOWN'
+  responseTime: number
+  errorMessage?: string
+  timestamp: Date
+}
+
 export interface ServiceConnectivityTestResult {
   online: boolean
   responseTime: number
@@ -49,10 +77,11 @@ export interface ServiceConnectivityTestResult {
 }
 
 export interface CreateServiceRequest {
-  name: string
+  serviceName: string
   displayName: string
   description: string
-  baseUrl: string
+  serviceType: string
+  baseUrl?: string
   environment?: string
   tags?: string[]
 }
@@ -60,90 +89,254 @@ export interface CreateServiceRequest {
 export interface UpdateServiceRequest {
   displayName?: string
   description?: string
+  serviceType?: string
   baseUrl?: string
   environment?: string
   status?: string
   tags?: string[]
 }
 
+// ==================== API ERROR CLASSES ====================
+
+export class ServiceRegistryError extends Error {
+  constructor(
+    message: string,
+    public statusCode?: number,
+    public details?: any
+  ) {
+    super(message)
+    this.name = 'ServiceRegistryError'
+  }
+}
+
+export class ServiceNotFoundError extends ServiceRegistryError {
+  constructor(identifier: string) {
+    super(`Service '${identifier}' not found`, 404)
+    this.name = 'ServiceNotFoundError'
+  }
+}
+
+export class ServiceAlreadyExistsError extends ServiceRegistryError {
+  constructor(serviceName: string) {
+    super(`Service '${serviceName}' already exists`, 409)
+    this.name = 'ServiceAlreadyExistsError'
+  }
+}
+
+export class ValidationError extends ServiceRegistryError {
+  constructor(message: string, details?: any) {
+    super(message, 400, details)
+    this.name = 'ValidationError'
+  }
+}
+
+export class NetworkError extends ServiceRegistryError {
+  constructor(message: string = 'Network connection failed. Please check if the backend service is running.') {
+    super(message, 0)
+    this.name = 'NetworkError'
+  }
+}
+
+// ==================== ERROR HANDLER ====================
+
+function handleApiError(error: any, context: string): never {
+  if (!error.response && !error.request) {
+    // Network error (no response, no request sent)
+    throw new NetworkError()
+  }
+
+  if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+    throw new NetworkError('Cannot connect to Service Registry API. Please ensure the backend service is running.')
+  }
+
+  if (error.response) {
+    const status = error.response.status
+    const data = error.response.data
+
+    switch (status) {
+      case 404:
+        throw new ServiceNotFoundError(context)
+      case 409:
+        throw new ServiceAlreadyExistsError(context)
+      case 400:
+        throw new ValidationError(
+          data.message || 'Invalid request data',
+          data.errors || data
+        )
+      case 401:
+        throw new ServiceRegistryError('Authentication required', 401)
+      case 403:
+        throw new ServiceRegistryError('Access denied', 403)
+      case 500:
+        throw new ServiceRegistryError(
+          'Internal server error. Please try again later.',
+          500,
+          data
+        )
+      default:
+        throw new ServiceRegistryError(
+          data.message || `Service Registry API error (${status})`,
+          status,
+          data
+        )
+    }
+  }
+
+  // Request made but no response
+  if (error.request) {
+    throw new NetworkError('No response from Service Registry API. Please check your network connection.')
+  }
+
+  // Unknown error
+  throw new ServiceRegistryError(error.message || 'Unknown error occurred')
+}
+
+// ==================== API FUNCTIONS ====================
+
 /**
  * Get all registered services
+ *
+ * @throws {NetworkError} If backend service is not accessible
+ * @throws {ServiceRegistryError} If API returns an error
  */
 export async function getServices(): Promise<Service[]> {
   try {
-    const response = await apiClient.get('/services')
+    const response = await apiClient.get('/api/services')
     return response.data.map((service: any) => ({
       ...service,
-      lastChecked: service.lastChecked ? new Date(service.lastChecked) : undefined
+      lastChecked: service.lastChecked ? new Date(service.lastChecked) : undefined,
+      createdAt: service.createdAt ? new Date(service.createdAt) : undefined,
+      updatedAt: service.updatedAt ? new Date(service.updatedAt) : undefined
     }))
-  } catch (error) {
-    console.error('Error fetching services:', error)
-    // Return mock data for development
-    return getMockServices()
+  } catch (error: any) {
+    handleApiError(error, 'services list')
   }
 }
 
 /**
- * Get a specific service by name or ID
+ * Get a specific service by ID
+ *
+ * @throws {ServiceNotFoundError} If service doesn't exist
+ * @throws {NetworkError} If backend service is not accessible
  */
-export async function getServiceByName(nameOrId: string): Promise<Service> {
+export async function getServiceById(serviceId: string): Promise<Service> {
   try {
-    const response = await apiClient.get(`/services/${nameOrId}`)
+    const response = await apiClient.get(`/api/services/${serviceId}`)
     return {
       ...response.data,
-      lastChecked: response.data.lastChecked ? new Date(response.data.lastChecked) : undefined
+      lastChecked: response.data.lastChecked ? new Date(response.data.lastChecked) : undefined,
+      createdAt: response.data.createdAt ? new Date(response.data.createdAt) : undefined,
+      updatedAt: response.data.updatedAt ? new Date(response.data.updatedAt) : undefined
     }
-  } catch (error) {
-    console.error(`Error fetching service ${nameOrId}:`, error)
-    // Return mock data for development
-    const mockServices = getMockServices()
-    const service = mockServices.find(s => s.name === nameOrId || s.id === nameOrId)
-    if (service) return service
-    throw new Error(`Service ${nameOrId} not found`)
+  } catch (error: any) {
+    handleApiError(error, serviceId)
+  }
+}
+
+/**
+ * Get a specific service by name
+ *
+ * @throws {ServiceNotFoundError} If service doesn't exist
+ * @throws {NetworkError} If backend service is not accessible
+ */
+export async function getServiceByName(serviceName: string): Promise<Service> {
+  try {
+    const response = await apiClient.get(`/api/services/by-name/${serviceName}`)
+    return {
+      ...response.data,
+      lastChecked: response.data.lastChecked ? new Date(response.data.lastChecked) : undefined,
+      createdAt: response.data.createdAt ? new Date(response.data.createdAt) : undefined,
+      updatedAt: response.data.updatedAt ? new Date(response.data.updatedAt) : undefined
+    }
+  } catch (error: any) {
+    handleApiError(error, serviceName)
   }
 }
 
 /**
  * Create a new service registration
+ *
+ * @throws {ServiceAlreadyExistsError} If service name already exists
+ * @throws {ValidationError} If request data is invalid
+ * @throws {NetworkError} If backend service is not accessible
  */
 export async function createService(data: CreateServiceRequest): Promise<Service> {
-  const response = await apiClient.post('/services', data)
-  return response.data
+  try {
+    const response = await apiClient.post('/api/services', data)
+    return {
+      ...response.data,
+      createdAt: response.data.createdAt ? new Date(response.data.createdAt) : undefined,
+      updatedAt: response.data.updatedAt ? new Date(response.data.updatedAt) : undefined
+    }
+  } catch (error: any) {
+    handleApiError(error, data.serviceName)
+  }
 }
 
 /**
  * Update service configuration
+ *
+ * @throws {ServiceNotFoundError} If service doesn't exist
+ * @throws {ValidationError} If request data is invalid
+ * @throws {NetworkError} If backend service is not accessible
  */
 export async function updateService(serviceId: string, data: UpdateServiceRequest): Promise<Service> {
-  const response = await apiClient.put(`/services/${serviceId}`, data)
-  return response.data
+  try {
+    const response = await apiClient.put(`/api/services/${serviceId}`, data)
+    return {
+      ...response.data,
+      lastChecked: response.data.lastChecked ? new Date(response.data.lastChecked) : undefined,
+      createdAt: response.data.createdAt ? new Date(response.data.createdAt) : undefined,
+      updatedAt: response.data.updatedAt ? new Date(response.data.updatedAt) : undefined
+    }
+  } catch (error: any) {
+    handleApiError(error, serviceId)
+  }
 }
 
 /**
- * Update service base URL
+ * Update service base URL (deprecated - use updateServiceEnvironmentUrl instead)
+ *
+ * @deprecated Use updateServiceEnvironmentUrl for environment-specific URLs
  */
 export async function updateServiceUrl(serviceId: string, baseUrl: string, environment?: string): Promise<Service> {
-  const response = await apiClient.patch(`/services/${serviceId}/url`, {
-    baseUrl,
-    environment: environment || 'development'
-  })
-  return response.data
+  try {
+    const response = await apiClient.patch(`/api/services/${serviceId}/url`, {
+      baseUrl,
+      environment: environment || 'development'
+    })
+    return {
+      ...response.data,
+      lastChecked: response.data.lastChecked ? new Date(response.data.lastChecked) : undefined
+    }
+  } catch (error: any) {
+    handleApiError(error, serviceId)
+  }
 }
 
 /**
  * Delete a service registration
+ *
+ * @throws {ServiceNotFoundError} If service doesn't exist
+ * @throws {NetworkError} If backend service is not accessible
  */
 export async function deleteService(serviceId: string): Promise<void> {
-  await apiClient.delete(`/services/${serviceId}`)
+  try {
+    await apiClient.delete(`/api/services/${serviceId}`)
+  } catch (error: any) {
+    handleApiError(error, serviceId)
+  }
 }
 
 /**
  * Test service connectivity
+ *
+ * @throws {NetworkError} If backend service is not accessible
  */
 export async function testServiceConnectivity(serviceUrl: string): Promise<ServiceConnectivityTestResult> {
   try {
     const startTime = Date.now()
-    const response = await apiClient.post('/services/test-connectivity', {
+    const response = await apiClient.post('/api/services/test-connectivity', {
       url: serviceUrl
     })
     const responseTime = Date.now() - startTime
@@ -151,277 +344,126 @@ export async function testServiceConnectivity(serviceUrl: string): Promise<Servi
     return {
       online: response.data.online || true,
       responseTime,
+      error: response.data.error,
       timestamp: new Date()
     }
   } catch (error: any) {
-    return {
-      online: false,
-      responseTime: 0,
-      error: error.message || 'Connection failed',
-      timestamp: new Date()
-    }
+    handleApiError(error, 'connectivity test')
   }
 }
 
 /**
  * Get service endpoints
+ *
+ * @throws {ServiceNotFoundError} If service doesn't exist
+ * @throws {NetworkError} If backend service is not accessible
  */
-export async function getServiceEndpoints(serviceName: string): Promise<ServiceEndpoint[]> {
+export async function getServiceEndpoints(serviceId: string): Promise<ServiceEndpoint[]> {
   try {
-    const response = await apiClient.get(`/services/${serviceName}/endpoints`)
+    const response = await apiClient.get(`/api/services/${serviceId}/endpoints`)
     return response.data
-  } catch (error) {
-    console.error(`Error fetching endpoints for ${serviceName}:`, error)
-    // Return mock data for development
-    const service = await getServiceByName(serviceName)
-    return service.endpoints
+  } catch (error: any) {
+    handleApiError(error, serviceId)
+  }
+}
+
+/**
+ * Get service URLs for all environments
+ *
+ * @throws {ServiceNotFoundError} If service doesn't exist
+ * @throws {NetworkError} If backend service is not accessible
+ */
+export async function getServiceUrls(serviceId: string): Promise<ServiceEnvironmentUrl[]> {
+  try {
+    const response = await apiClient.get(`/api/services/${serviceId}/urls`)
+    return response.data.map((url: any) => ({
+      ...url,
+      createdAt: url.createdAt ? new Date(url.createdAt) : undefined,
+      updatedAt: url.updatedAt ? new Date(url.updatedAt) : undefined
+    }))
+  } catch (error: any) {
+    handleApiError(error, serviceId)
+  }
+}
+
+/**
+ * Update or create environment URL for a service
+ *
+ * @throws {ServiceNotFoundError} If service doesn't exist
+ * @throws {ValidationError} If request data is invalid
+ */
+export async function updateServiceEnvironmentUrl(
+  serviceId: string,
+  environment: string,
+  baseUrl: string,
+  priority: number = 1,
+  isActive: boolean = true
+): Promise<ServiceEnvironmentUrl> {
+  try {
+    const response = await apiClient.post(`/api/services/${serviceId}/urls`, {
+      environment,
+      baseUrl,
+      priority,
+      isActive
+    })
+    return {
+      ...response.data,
+      createdAt: response.data.createdAt ? new Date(response.data.createdAt) : undefined,
+      updatedAt: response.data.updatedAt ? new Date(response.data.updatedAt) : undefined
+    }
+  } catch (error: any) {
+    handleApiError(error, `${serviceId}/${environment}`)
+  }
+}
+
+/**
+ * Resolve service URL by name and environment
+ *
+ * @throws {ServiceNotFoundError} If service doesn't exist or no URL for environment
+ * @throws {NetworkError} If backend service is not accessible
+ */
+export async function resolveServiceUrl(serviceName: string, environment: string = 'development'): Promise<string> {
+  try {
+    const response = await apiClient.get(`/api/services/resolve/${serviceName}`, {
+      params: { env: environment }
+    })
+    return response.data.url || response.data.baseUrl
+  } catch (error: any) {
+    handleApiError(error, `${serviceName}/${environment}`)
   }
 }
 
 /**
  * Get service health status
+ *
+ * @throws {ServiceNotFoundError} If service doesn't exist
+ * @throws {NetworkError} If backend service is not accessible
  */
-export async function getServiceHealth(serviceName: string): Promise<ServiceConnectivityTestResult> {
+export async function getServiceHealth(serviceId: string): Promise<HealthCheckResult> {
   try {
-    const response = await apiClient.get(`/services/${serviceName}/health`)
+    const response = await apiClient.get(`/api/services/${serviceId}/health`)
     return {
       ...response.data,
-      timestamp: new Date(response.data.timestamp)
+      timestamp: new Date(response.data.timestamp || Date.now())
     }
-  } catch (error) {
-    return {
-      online: false,
-      responseTime: 0,
-      error: 'Health check failed',
-      timestamp: new Date()
-    }
+  } catch (error: any) {
+    handleApiError(error, serviceId)
   }
 }
 
 /**
- * Mock services for development
- * This will be replaced with real API calls once backend is ready
+ * Trigger manual health check for a service
+ *
+ * @throws {ServiceNotFoundError} If service doesn't exist
  */
-function getMockServices(): Service[] {
-  return [
-    {
-      id: 'finance-service',
-      name: 'finance',
-      displayName: 'Finance Service',
-      description: 'Budget management and financial operations',
-      baseUrl: 'http://finance-service:8084/api',
-      environment: 'development',
-      status: 'active',
-      lastChecked: new Date(),
-      responseTime: 45,
-      version: '1.0.0',
-      tags: ['finance', 'budget', 'core'],
-      endpoints: [
-        {
-          path: '/budget/check',
-          method: 'POST',
-          description: 'Check if budget is available for a department',
-          parameters: [
-            {
-              name: 'departmentId',
-              type: 'string',
-              required: true,
-              description: 'Department identifier'
-            },
-            {
-              name: 'amount',
-              type: 'number',
-              required: true,
-              description: 'Budget amount to check'
-            }
-          ],
-          exampleRequest: JSON.stringify({ departmentId: 'HR', amount: 50000 }, null, 2),
-          exampleResponse: JSON.stringify({ approved: true, availableBudget: 100000 }, null, 2)
-        },
-        {
-          path: '/budget/allocate',
-          method: 'POST',
-          description: 'Allocate budget for a purchase order',
-          parameters: [
-            {
-              name: 'poId',
-              type: 'string',
-              required: true,
-              description: 'Purchase order ID'
-            },
-            {
-              name: 'amount',
-              type: 'number',
-              required: true,
-              description: 'Amount to allocate'
-            }
-          ]
-        }
-      ]
-    },
-    {
-      id: 'procurement-service',
-      name: 'procurement',
-      displayName: 'Procurement Service',
-      description: 'Purchase order and vendor management',
-      baseUrl: 'http://procurement-service:8085/api',
-      environment: 'development',
-      status: 'active',
-      lastChecked: new Date(),
-      responseTime: 62,
-      version: '1.0.0',
-      tags: ['procurement', 'purchase', 'vendor'],
-      endpoints: [
-        {
-          path: '/purchase-orders',
-          method: 'POST',
-          description: 'Create a new purchase order',
-          parameters: [
-            {
-              name: 'vendorId',
-              type: 'string',
-              required: true,
-              description: 'Vendor identifier'
-            },
-            {
-              name: 'items',
-              type: 'array',
-              required: true,
-              description: 'List of items to purchase'
-            },
-            {
-              name: 'totalAmount',
-              type: 'number',
-              required: true,
-              description: 'Total purchase amount'
-            }
-          ],
-          exampleRequest: JSON.stringify({
-            vendorId: 'V123',
-            items: [{ itemId: 'ITEM001', quantity: 10, price: 100 }],
-            totalAmount: 1000
-          }, null, 2)
-        },
-        {
-          path: '/purchase-orders/{id}',
-          method: 'GET',
-          description: 'Get purchase order details',
-          parameters: [
-            {
-              name: 'id',
-              type: 'string',
-              required: true,
-              description: 'Purchase order ID'
-            }
-          ]
-        }
-      ]
-    },
-    {
-      id: 'inventory-service',
-      name: 'inventory',
-      displayName: 'Inventory Service',
-      description: 'Inventory tracking and stock management',
-      baseUrl: 'http://inventory-service:8086/api',
-      environment: 'development',
-      status: 'active',
-      lastChecked: new Date(),
-      responseTime: 38,
-      version: '1.0.0',
-      tags: ['inventory', 'stock', 'warehouse'],
-      endpoints: [
-        {
-          path: '/stock/check',
-          method: 'GET',
-          description: 'Check stock availability',
-          parameters: [
-            {
-              name: 'itemId',
-              type: 'string',
-              required: true,
-              description: 'Item identifier'
-            }
-          ]
-        },
-        {
-          path: '/stock/reserve',
-          method: 'POST',
-          description: 'Reserve stock for a purchase order',
-          parameters: [
-            {
-              name: 'poId',
-              type: 'string',
-              required: true,
-              description: 'Purchase order ID'
-            },
-            {
-              name: 'items',
-              type: 'array',
-              required: true,
-              description: 'Items to reserve'
-            }
-          ]
-        }
-      ]
-    },
-    {
-      id: 'hr-service',
-      name: 'hr',
-      displayName: 'HR Service',
-      description: 'Employee management and HR operations',
-      baseUrl: 'http://hr-service:8082/api',
-      environment: 'development',
-      status: 'active',
-      lastChecked: new Date(),
-      responseTime: 51,
-      version: '1.0.0',
-      tags: ['hr', 'employee', 'leave'],
-      endpoints: [
-        {
-          path: '/employees/{id}',
-          method: 'GET',
-          description: 'Get employee details',
-          parameters: [
-            {
-              name: 'id',
-              type: 'string',
-              required: true,
-              description: 'Employee ID'
-            }
-          ]
-        },
-        {
-          path: '/leave/apply',
-          method: 'POST',
-          description: 'Apply for leave',
-          parameters: [
-            {
-              name: 'employeeId',
-              type: 'string',
-              required: true,
-              description: 'Employee ID'
-            },
-            {
-              name: 'startDate',
-              type: 'date',
-              required: true,
-              description: 'Leave start date'
-            },
-            {
-              name: 'endDate',
-              type: 'date',
-              required: true,
-              description: 'Leave end date'
-            },
-            {
-              name: 'reason',
-              type: 'string',
-              required: true,
-              description: 'Leave reason'
-            }
-          ]
-        }
-      ]
+export async function triggerHealthCheck(serviceId: string): Promise<HealthCheckResult> {
+  try {
+    const response = await apiClient.post(`/api/services/${serviceId}/health/check`)
+    return {
+      ...response.data,
+      timestamp: new Date(response.data.timestamp || Date.now())
     }
-  ]
+  } catch (error: any) {
+    handleApiError(error, serviceId)
+  }
 }

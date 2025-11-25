@@ -44,11 +44,11 @@ export default function ServicesPage() {
 
   const filteredServices = services?.filter(service =>
     service.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    service.serviceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     service.description.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const activeServicesCount = services?.filter(s => s.status === 'active').length || 0
+  const activeServicesCount = services?.filter(s => s.healthStatus === 'HEALTHY').length || 0
   const totalServicesCount = services?.length || 0
   const avgResponseTime = services?.length
     ? Math.round(services.reduce((sum, s) => sum + (s.responseTime || 0), 0) / services.length)
@@ -137,7 +137,27 @@ export default function ServicesPage() {
       {error && (
         <Card className="border-destructive">
           <CardContent className="pt-6">
-            <p className="text-destructive">Error loading services: {error.message}</p>
+            <div className="space-y-3">
+              <p className="text-destructive font-semibold">Error loading services</p>
+              <p className="text-sm text-muted-foreground">{error.message}</p>
+              {error.message.includes('backend service') && (
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Backend Service Not Available</strong>
+                    <br />
+                    Please ensure the Werkflow Engine service is running at http://localhost:8081
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => refetch()}
+                  >
+                    Retry Connection
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}

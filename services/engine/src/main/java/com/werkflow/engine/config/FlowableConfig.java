@@ -30,6 +30,10 @@ public class FlowableConfig {
      * Process definitions will still deploy successfully, and diagrams can be
      * generated on-demand later if proper graphic information is added to the BPMN files.
      *
+     * Event Listeners:
+     * Event listeners are registered programmatically by ProcessStartEventListener
+     * after the application context is fully initialized to avoid circular dependency issues.
+     *
      * @return EngineConfigurationConfigurer that customizes the process engine
      */
     @Bean
@@ -46,6 +50,9 @@ public class FlowableConfig {
             engineConfiguration.setActivityFontName("Arial");
             engineConfiguration.setLabelFontName("Arial");
             engineConfiguration.setAnnotationFontName("Arial");
+
+            // Event listeners are registered programmatically by ProcessStartEventListener
+            // after ApplicationReadyEvent to avoid circular dependencies
         };
     }
 }

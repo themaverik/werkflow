@@ -143,7 +143,12 @@ app:
     storage-path: ${BPMN_STORAGE_PATH:./process-definitions}
     max-file-size: ${BPMN_MAX_FILE_SIZE:5}  # MB
 
-  # Service URLs for delegates
+  # Service Registry Configuration
+  serviceRegistry:
+    enabled: ${SERVICE_REGISTRY_ENABLED:true}
+    url: ${SERVICE_REGISTRY_URL:http://localhost:8083/api/services}
+
+  # Service URLs for delegates (fallback URLs when service registry is unavailable)
   services:
     hr-url: ${HR_SERVICE_URL:http://localhost:8082}
     admin-url: ${ADMIN_SERVICE_URL:http://localhost:8083}

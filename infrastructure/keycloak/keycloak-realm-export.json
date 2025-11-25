@@ -8,14 +8,14 @@
   "accessCodeLifespan": 600,
   "accessCodeLifespanUserAction": 300,
   "refreshTokenMaxReuse": 0,
-  "offlineSessionIdleTimeout": 2592000,
-  "offlineSessionMaxLifespan": 5184000,
-  "refreshTokenMaxLifespan": 15552000,
   "clientSessionIdleTimeout": 0,
   "clientSessionMaxLifespan": 0,
   "eventsEnabled": true,
   "eventsExpiration": 604800,
-  "eventsListeners": ["jboss-logging", "event-queue"],
+  "eventsListeners": [
+    "jboss-logging",
+    "event-queue"
+  ],
   "enabledEventTypes": [
     "ADMIN_CREATE_USER",
     "ADMIN_DELETE_USER",
@@ -44,7 +44,6 @@
     "REVOKE_TOKEN",
     "REVOKE_TOKEN_ERROR"
   ],
-
   "roles": {
     "realm": [
       {
@@ -65,7 +64,6 @@
         "composite": false,
         "clientRole": false
       },
-
       {
         "name": "asset_request_requester",
         "description": "Can submit asset requests",
@@ -90,7 +88,6 @@
         "composite": false,
         "clientRole": false
       },
-
       {
         "name": "doa_approver_level1",
         "description": "Delegation of Authority: Approve up to $1,000",
@@ -115,82 +112,132 @@
         "composite": false,
         "clientRole": false
       },
-
       {
         "name": "hr_manager",
         "description": "HR Department Manager",
         "composite": true,
-        "composites": ["asset_request_approver", "doa_approver_level1"],
+        "composites": {
+          "realm": [
+            "asset_request_approver",
+            "doa_approver_level1"
+          ]
+        },
         "clientRole": false
       },
       {
         "name": "hr_head",
         "description": "HR Department Head",
         "composite": true,
-        "composites": ["asset_request_approver", "doa_approver_level2", "department_head"],
+        "composites": {
+          "realm": [
+            "asset_request_approver",
+            "doa_approver_level2",
+            "department_head"
+          ]
+        },
         "clientRole": false
       },
-
       {
         "name": "it_manager",
         "description": "IT Department Manager",
         "composite": true,
-        "composites": ["asset_request_approver", "inventory_manager", "doa_approver_level1"],
+        "composites": {
+          "realm": [
+            "asset_request_approver",
+            "inventory_manager",
+            "doa_approver_level1"
+          ]
+        },
         "clientRole": false
       },
       {
         "name": "it_head",
         "description": "IT Department Head",
         "composite": true,
-        "composites": ["asset_request_approver", "inventory_manager", "doa_approver_level2", "department_head"],
+        "composites": {
+          "realm": [
+            "asset_request_approver",
+            "inventory_manager",
+            "doa_approver_level2",
+            "department_head"
+          ]
+        },
         "clientRole": false
       },
-
       {
         "name": "finance_manager",
         "description": "Finance Department Manager",
         "composite": true,
-        "composites": ["doa_approver_level1", "doa_approver_level2"],
+        "composites": {
+          "realm": [
+            "doa_approver_level1",
+            "doa_approver_level2"
+          ]
+        },
         "clientRole": false
       },
       {
         "name": "finance_head",
         "description": "Finance Department Head (CFO)",
         "composite": true,
-        "composites": ["doa_approver_level3", "doa_approver_level4", "department_head"],
+        "composites": {
+          "realm": [
+            "doa_approver_level3",
+            "doa_approver_level4",
+            "department_head"
+          ]
+        },
         "clientRole": false
       },
-
       {
         "name": "procurement_manager",
         "description": "Procurement Department Manager",
         "composite": true,
-        "composites": ["procurement_approver", "doa_approver_level1"],
+        "composites": {
+          "realm": [
+            "procurement_approver",
+            "doa_approver_level1"
+          ]
+        },
         "clientRole": false
       },
       {
         "name": "procurement_head",
         "description": "Procurement Department Head",
         "composite": true,
-        "composites": ["procurement_approver", "doa_approver_level2", "department_head"],
+        "composites": {
+          "realm": [
+            "procurement_approver",
+            "doa_approver_level2",
+            "department_head"
+          ]
+        },
         "clientRole": false
       },
-
       {
         "name": "logistics_manager",
         "description": "Logistics/Transport Manager",
         "composite": true,
-        "composites": ["transport_approver", "doa_approver_level1"],
+        "composites": {
+          "realm": [
+            "transport_approver",
+            "doa_approver_level1"
+          ]
+        },
         "clientRole": false
       },
       {
         "name": "transport_head",
         "description": "Transport Department Head",
         "composite": true,
-        "composites": ["transport_approver", "department_head"],
+        "composites": {
+          "realm": [
+            "transport_approver",
+            "department_head"
+          ]
+        },
         "clientRole": false
       },
-
       {
         "name": "inventory_manager",
         "description": "Inventory Manager - Manage inventory system",
@@ -207,10 +254,13 @@
         "name": "central_hub_manager",
         "description": "Central Hub Manager - Manage central warehouse",
         "composite": true,
-        "composites": ["hub_manager"],
+        "composites": {
+          "realm": [
+            "hub_manager"
+          ]
+        },
         "clientRole": false
       },
-
       {
         "name": "procurement_approver",
         "description": "Procurement Approver - Approve purchase orders",
@@ -235,7 +285,6 @@
         "composite": false,
         "clientRole": false
       },
-
       {
         "name": "department_poc",
         "description": "Department Point of Contact - Manage department workflows",
@@ -248,7 +297,6 @@
         "composite": false,
         "clientRole": false
       },
-
       {
         "name": "driver",
         "description": "Transport Driver - Pick up and deliver assets",
@@ -263,13 +311,14 @@
       }
     ]
   },
-
   "groups": [
     {
       "name": "HR Department",
       "path": "/HR Department",
       "attributes": {
-        "department": ["HR"]
+        "department": [
+          "HR"
+        ]
       },
       "subGroups": [
         {
@@ -290,7 +339,9 @@
       "name": "IT Department",
       "path": "/IT Department",
       "attributes": {
-        "department": ["IT"]
+        "department": [
+          "IT"
+        ]
       },
       "subGroups": [
         {
@@ -315,7 +366,9 @@
       "name": "Finance Department",
       "path": "/Finance Department",
       "attributes": {
-        "department": ["Finance"]
+        "department": [
+          "Finance"
+        ]
       },
       "subGroups": [
         {
@@ -336,7 +389,9 @@
       "name": "Procurement Department",
       "path": "/Procurement Department",
       "attributes": {
-        "department": ["Procurement"]
+        "department": [
+          "Procurement"
+        ]
       },
       "subGroups": [
         {
@@ -357,7 +412,9 @@
       "name": "Transport Department",
       "path": "/Transport Department",
       "attributes": {
-        "department": ["Transport"]
+        "department": [
+          "Transport"
+        ]
       },
       "subGroups": [
         {
@@ -378,7 +435,9 @@
       "name": "Inventory Warehouse",
       "path": "/Inventory Warehouse",
       "attributes": {
-        "department": ["Inventory"]
+        "department": [
+          "Inventory"
+        ]
       },
       "subGroups": [
         {
@@ -404,7 +463,6 @@
       ]
     }
   ],
-
   "clients": [
     {
       "clientId": "werkflow-admin-portal",
@@ -426,7 +484,7 @@
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": false,
-      "clientSecret": "4uohM7y1sGkOcR2gTR1APo4JDmkwRxSv"
+      "secret": "4uohM7y1sGkOcR2gTR1APo4JDmkwRxSv"
     },
     {
       "clientId": "werkflow-hr-portal",
@@ -448,7 +506,7 @@
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": false,
-      "clientSecret": "HR_PORTAL_SECRET_2024_SECURE"
+      "secret": "HR_PORTAL_SECRET_2024_SECURE"
     },
     {
       "clientId": "workflow-engine",
@@ -459,7 +517,7 @@
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": true,
-      "clientSecret": "workflow-engine-secret-key-12345678"
+      "secret": "workflow-engine-secret-key-12345678"
     }
   ]
 }

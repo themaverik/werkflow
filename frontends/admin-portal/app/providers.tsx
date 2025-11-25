@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SessionProvider, useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 import { setApiClientToken } from '@/lib/api/client'
+import { AuthProvider } from '@/lib/auth/auth-context'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -20,9 +21,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <SessionProvider>
-      <QueryClientProvider client={queryClient}>
-        <ApiTokenProvider>{children}</ApiTokenProvider>
-      </QueryClientProvider>
+      <AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <ApiTokenProvider>{children}</ApiTokenProvider>
+        </QueryClientProvider>
+      </AuthProvider>
     </SessionProvider>
   )
 }

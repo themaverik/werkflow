@@ -122,16 +122,41 @@ public class SecurityConfig {
     static class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
         @Override
         public Collection<GrantedAuthority> convert(Jwt jwt) {
-            Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+            List<String> allRoles = new java.util.ArrayList<>();
 
-            if (realmAccess == null || !realmAccess.containsKey("roles")) {
-                return List.of();
+            // 1. Check realm_access.roles (Keycloak realm roles)
+            Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+            if (realmAccess != null && realmAccess.containsKey("roles")) {
+                @SuppressWarnings("unchecked")
+                List<String> realmRoles = (List<String>) realmAccess.get("roles");
+                allRoles.addAll(realmRoles);
             }
 
-            @SuppressWarnings("unchecked")
-            List<String> roles = (List<String>) realmAccess.get("roles");
+            // 2. Check resource_access[client_id].roles (Client-specific roles)
+            Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
+            if (resourceAccess != null) {
+                for (Object clientRolesObj : resourceAccess.values()) {
+                    if (clientRolesObj instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> clientRoles = (Map<String, Object>) clientRolesObj;
+                        if (clientRoles.containsKey("roles")) {
+                            @SuppressWarnings("unchecked")
+                            List<String> roles = (List<String>) clientRoles.get("roles");
+                            allRoles.addAll(roles);
+                        }
+                    }
+                }
+            }
 
-            return roles.stream()
+            // 3. Check custom roles claim (if present)
+            List<String> customRoles = jwt.getClaimAsStringList("roles");
+            if (customRoles != null) {
+                allRoles.addAll(customRoles);
+            }
+
+            // Remove duplicates and convert to authorities
+            return allRoles.stream()
+                .distinct()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
                 .collect(Collectors.toList());
         }

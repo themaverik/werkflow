@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/routes")
@@ -104,6 +105,97 @@ public class RoleConfigController {
         Map<String, Object> response = new HashMap<>();
         response.put("routes", routeConfigs);
         response.put("totalRoutes", routeConfigs.size());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Debug endpoint - show current user's authorities and roles
+     * Helps diagnose authentication/authorization issues
+     */
+    @GetMapping("/debug/my-roles")
+    @Operation(
+        summary = "Debug: Show my current roles",
+        description = "Shows the current authenticated user's authorities extracted from JWT"
+    )
+    public ResponseEntity<Map<String, Object>> getMyRoles(Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            response.put("authenticated", false);
+            response.put("username", "ANONYMOUS");
+            return ResponseEntity.ok(response);
+        }
+
+        response.put("authenticated", true);
+        response.put("username", authentication.getName());
+
+        // Get authorities from Spring Security
+        List<String> authorities = authentication.getAuthorities().stream()
+            .map(auth -> auth.getAuthority())
+            .collect(Collectors.toList());
+
+        // Get stripped roles (without ROLE_ prefix)
+        List<String> strippedRoles = authentication.getAuthorities().stream()
+            .map(auth -> auth.getAuthority().replace("ROLE_", ""))
+            .collect(Collectors.toList());
+
+        response.put("authorities", authorities);
+        response.put("strippedRoles", strippedRoles);
+        response.put("totalRoles", authorities.size());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Debug endpoint - compare my roles with required roles for a route
+     */
+    @GetMapping("/debug/compare/{routePath}")
+    @Operation(
+        summary = "Debug: Compare my roles with route requirements",
+        description = "Shows what roles you have vs what's required for a route"
+    )
+    public ResponseEntity<Map<String, Object>> compareRoles(
+        @PathVariable String routePath,
+        Authentication authentication) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        String normalizedPath = routePath.startsWith("/") ? routePath : "/" + routePath;
+        response.put("routePath", normalizedPath);
+
+        // Get required roles for this route
+        List<String> requiredRoles = roleConfigService.getRequiredRolesForRoute(normalizedPath);
+        response.put("requiredRoles", requiredRoles);
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            response.put("authenticated", false);
+            response.put("username", "ANONYMOUS");
+            response.put("myRoles", List.of());
+            response.put("hasAccess", false);
+            response.put("matchingRoles", List.of());
+            response.put("missingRoles", requiredRoles);
+            return ResponseEntity.ok(response);
+        }
+
+        // Get user's stripped roles
+        List<String> myRoles = authentication.getAuthorities().stream()
+            .map(auth -> auth.getAuthority().replace("ROLE_", ""))
+            .collect(Collectors.toList());
+
+        response.put("authenticated", true);
+        response.put("username", authentication.getName());
+        response.put("myRoles", myRoles);
+
+        // Check which of my roles match required roles
+        List<String> matchingRoles = myRoles.stream()
+            .filter(myRole -> requiredRoles.stream()
+                .anyMatch(req -> myRole.equalsIgnoreCase(req)))
+            .collect(Collectors.toList());
+
+        response.put("matchingRoles", matchingRoles);
+        response.put("hasMatch", !matchingRoles.isEmpty());
+        response.put("hasAccess", !requiredRoles.isEmpty() ? !matchingRoles.isEmpty() : true);
 
         return ResponseEntity.ok(response);
     }

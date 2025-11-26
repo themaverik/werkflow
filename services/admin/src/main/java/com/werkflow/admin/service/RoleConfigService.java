@@ -22,6 +22,16 @@ public class RoleConfigService {
 
     public RoleConfigService(RoleConfigProperties roleConfigProperties) {
         this.roleConfigProperties = roleConfigProperties;
+
+        // Log loaded routes on startup
+        if (roleConfigProperties.getRoutes() != null && !roleConfigProperties.getRoutes().isEmpty()) {
+            logger.info("Route Configuration loaded successfully with {} routes:", roleConfigProperties.getRoutes().size());
+            roleConfigProperties.getRoutes().forEach((route, roles) ->
+                logger.info("  Route '{}' -> Required roles: {}", route, roles)
+            );
+        } else {
+            logger.warn("No route configuration loaded! RoleConfigProperties.routes is empty or null");
+        }
     }
 
     /**
@@ -35,8 +45,8 @@ public class RoleConfigService {
             return new ArrayList<>();
         }
 
-        // Normalize path
-        String normalizedPath = routePath.startsWith("/") ? routePath : "/" + routePath;
+        // Normalize path - remove leading slash for matching against YAML keys
+        String normalizedPath = routePath.startsWith("/") ? routePath.substring(1) : routePath;
 
         // Check exact match first
         if (roleConfigProperties.getRoutes() != null &&

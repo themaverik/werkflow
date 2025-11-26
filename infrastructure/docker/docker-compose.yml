@@ -214,7 +214,8 @@ services:
       SERVER_PORT: 8083
 
       # Keycloak Configuration for Docker Internal Network
-      KEYCLOAK_ISSUER: http://keycloak:8080/realms/werkflow
+      KEYCLOAK_URL: http://werkflow-keycloak:8080
+      KEYCLOAK_REALM: werkflow
     ports:
       - "8083:8083"
     volumes:

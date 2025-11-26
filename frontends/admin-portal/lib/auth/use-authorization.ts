@@ -57,9 +57,10 @@ export function useAuthorization(options?: UseAuthorizationOptions): UseAuthoriz
     }
 
     try {
-      // Call backend to check access
+      // Call backend admin service to check access
+      const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:8083/api'
       const response = await fetch(
-        `/api/routes/has-access/${routePath.replace(/^\//, '')}`,
+        `${adminApiUrl}/routes/has-access/${routePath.replace(/^\//, '')}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

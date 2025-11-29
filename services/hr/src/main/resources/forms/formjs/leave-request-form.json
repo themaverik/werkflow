@@ -1,0 +1,311 @@
+{
+  "type": "default",
+  "id": "leave-request-form",
+  "schemaVersion": 9,
+  "exporter": {
+    "name": "werkflow form-js converter",
+    "version": "1.0.0"
+  },
+  "components": [
+    {
+      "type": "text",
+      "text": "## Employee Leave Request\n\nSubmit your leave request for manager approval. Ensure you check your leave balance before submitting.",
+      "id": "Field_header"
+    },
+    {
+      "type": "text",
+      "text": "### Employee Information",
+      "id": "Field_employeeInfoHeader"
+    },
+    {
+      "label": "Employee ID",
+      "type": "textfield",
+      "id": "Field_employeeId",
+      "key": "employeeId",
+      "description": "Your employee identifier",
+      "readonly": true,
+      "defaultValue": "${currentUser.id}",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Employee Name",
+      "type": "textfield",
+      "id": "Field_employeeName",
+      "key": "employeeName",
+      "description": "Your full name",
+      "readonly": true,
+      "defaultValue": "${currentUser.fullName}",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Email Address",
+      "type": "textfield",
+      "id": "Field_employeeEmail",
+      "key": "employeeEmail",
+      "description": "Your email for notifications",
+      "readonly": true,
+      "defaultValue": "${currentUser.email}",
+      "validate": {
+        "required": true,
+        "validationType": "email"
+      }
+    },
+    {
+      "label": "Department",
+      "type": "textfield",
+      "id": "Field_department",
+      "key": "department",
+      "description": "Your department",
+      "readonly": true,
+      "defaultValue": "${currentUser.department}",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Manager ID",
+      "type": "textfield",
+      "id": "Field_managerId",
+      "key": "managerId",
+      "description": "Your direct manager",
+      "readonly": true,
+      "defaultValue": "${currentUser.managerId}",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "text",
+      "text": "### Leave Details",
+      "id": "Field_leaveDetailsHeader"
+    },
+    {
+      "label": "Leave Type",
+      "type": "select",
+      "id": "Field_leaveType",
+      "key": "leaveType",
+      "description": "Type of leave you are requesting",
+      "validate": {
+        "required": true
+      },
+      "values": [
+        {
+          "label": "Annual Leave",
+          "value": "ANNUAL_LEAVE"
+        },
+        {
+          "label": "Sick Leave",
+          "value": "SICK_LEAVE"
+        },
+        {
+          "label": "Casual Leave",
+          "value": "CASUAL_LEAVE"
+        },
+        {
+          "label": "Maternity Leave",
+          "value": "MATERNITY_LEAVE"
+        },
+        {
+          "label": "Paternity Leave",
+          "value": "PATERNITY_LEAVE"
+        },
+        {
+          "label": "Unpaid Leave",
+          "value": "UNPAID_LEAVE"
+        },
+        {
+          "label": "Compensatory Off",
+          "value": "COMPENSATORY_OFF"
+        },
+        {
+          "label": "Work From Home",
+          "value": "WORK_FROM_HOME"
+        }
+      ]
+    },
+    {
+      "label": "Start Date",
+      "type": "datetime",
+      "id": "Field_startDate",
+      "key": "startDate",
+      "description": "First day of leave",
+      "dateLabel": "Start Date",
+      "timeSerializingFormat": "utc_offset",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "End Date",
+      "type": "datetime",
+      "id": "Field_endDate",
+      "key": "endDate",
+      "description": "Last day of leave (inclusive)",
+      "dateLabel": "End Date",
+      "timeSerializingFormat": "utc_offset",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Total Days",
+      "type": "number",
+      "id": "Field_totalDays",
+      "key": "totalDays",
+      "description": "Number of working days requested (excluding weekends/holidays)",
+      "decimalDigits": 1,
+      "validate": {
+        "required": true,
+        "min": 0.5,
+        "max": 365
+      }
+    },
+    {
+      "label": "Half Day Leave",
+      "type": "checkbox",
+      "id": "Field_isHalfDay",
+      "key": "isHalfDay",
+      "description": "Check if this is a half-day leave request"
+    },
+    {
+      "label": "Half Day Period",
+      "type": "radio",
+      "id": "Field_halfDayPeriod",
+      "key": "halfDayPeriod",
+      "description": "Select which half of the day",
+      "conditional": {
+        "hide": "=isHalfDay = false"
+      },
+      "values": [
+        {
+          "label": "First Half (Morning)",
+          "value": "FIRST_HALF"
+        },
+        {
+          "label": "Second Half (Afternoon)",
+          "value": "SECOND_HALF"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "text": "### Leave Reason",
+      "id": "Field_reasonHeader"
+    },
+    {
+      "label": "Reason for Leave",
+      "type": "textarea",
+      "id": "Field_reason",
+      "key": "reason",
+      "description": "Briefly explain the reason for your leave",
+      "placeholder": "e.g., Family vacation, Personal matter, Medical appointment",
+      "rows": 4,
+      "validate": {
+        "required": true,
+        "minLength": 10,
+        "maxLength": 500
+      }
+    },
+    {
+      "label": "Emergency Contact Name",
+      "type": "textfield",
+      "id": "Field_emergencyContactName",
+      "key": "emergencyContactName",
+      "description": "Name of person to contact in case of emergency while on leave",
+      "placeholder": "Full name"
+    },
+    {
+      "label": "Emergency Contact Phone",
+      "type": "textfield",
+      "id": "Field_emergencyContactPhone",
+      "key": "emergencyContactPhone",
+      "description": "Emergency contact phone number",
+      "placeholder": "+1-XXX-XXX-XXXX",
+      "validate": {
+        "pattern": "^[+]?[0-9]{1,3}[-\\s]?[(]?[0-9]{1,4}[)]?[-\\s]?[0-9]{1,4}[-\\s]?[0-9]{1,9}$"
+      }
+    },
+    {
+      "type": "text",
+      "text": "### Coverage Arrangement",
+      "id": "Field_coverageHeader"
+    },
+    {
+      "label": "Work Coverage Arranged",
+      "type": "checkbox",
+      "id": "Field_coverageArranged",
+      "key": "coverageArranged",
+      "description": "I have arranged for coverage of my responsibilities during my absence",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Covering Employee",
+      "type": "textfield",
+      "id": "Field_coveringEmployee",
+      "key": "coveringEmployee",
+      "description": "Name of employee covering your work",
+      "placeholder": "Employee name or ID",
+      "conditional": {
+        "hide": "=coverageArranged = false"
+      }
+    },
+    {
+      "label": "Coverage Notes",
+      "type": "textarea",
+      "id": "Field_coverageNotes",
+      "key": "coverageNotes",
+      "description": "Details about work coverage arrangement",
+      "placeholder": "Explain how your work will be covered during your absence",
+      "rows": 3,
+      "validate": {
+        "maxLength": 500
+      }
+    },
+    {
+      "type": "text",
+      "text": "### Medical Certificate (for Sick Leave)",
+      "id": "Field_medicalCertHeader",
+      "conditional": {
+        "hide": "=leaveType != 'SICK_LEAVE'"
+      }
+    },
+    {
+      "label": "Medical Certificate Required",
+      "type": "checkbox",
+      "id": "Field_medicalCertRequired",
+      "key": "medicalCertRequired",
+      "description": "Check if medical certificate is attached (required for sick leave > 3 days)",
+      "conditional": {
+        "hide": "=leaveType != 'SICK_LEAVE' || totalDays <= 3"
+      }
+    },
+    {
+      "type": "text",
+      "text": "### Additional Information",
+      "id": "Field_additionalInfoHeader"
+    },
+    {
+      "label": "Additional Comments",
+      "type": "textarea",
+      "id": "Field_additionalComments",
+      "key": "additionalComments",
+      "description": "Any additional information or special circumstances",
+      "placeholder": "Optional comments",
+      "rows": 3,
+      "validate": {
+        "maxLength": 500
+      }
+    },
+    {
+      "type": "text",
+      "text": "---\n\n**Leave Balance Information:**\n- Annual Leave: Check your remaining balance before submitting\n- Sick Leave: As per company policy\n- Ensure all required fields are completed\n\n**Note:** Your request will be sent to your manager for approval.",
+      "id": "Field_footer"
+    }
+  ]
+}

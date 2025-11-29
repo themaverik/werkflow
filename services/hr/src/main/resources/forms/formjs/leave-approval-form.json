@@ -1,0 +1,263 @@
+{
+  "type": "default",
+  "id": "leave-approval-form",
+  "schemaVersion": 9,
+  "exporter": {
+    "name": "werkflow form-js converter",
+    "version": "1.0.0"
+  },
+  "components": [
+    {
+      "type": "text",
+      "text": "## Leave Request Approval\n\nReview the employee leave request and make your approval decision.",
+      "id": "Field_header"
+    },
+    {
+      "type": "text",
+      "text": "### Employee Information",
+      "id": "Field_employeeInfoHeader"
+    },
+    {
+      "label": "Employee Name",
+      "type": "textfield",
+      "id": "Field_employeeName",
+      "key": "employeeName",
+      "readonly": true
+    },
+    {
+      "label": "Employee ID",
+      "type": "textfield",
+      "id": "Field_employeeId",
+      "key": "employeeId",
+      "readonly": true
+    },
+    {
+      "label": "Department",
+      "type": "textfield",
+      "id": "Field_department",
+      "key": "department",
+      "readonly": true
+    },
+    {
+      "label": "Request Date",
+      "type": "textfield",
+      "id": "Field_requestDate",
+      "key": "requestDate",
+      "readonly": true
+    },
+    {
+      "type": "text",
+      "text": "### Leave Details",
+      "id": "Field_leaveDetailsHeader"
+    },
+    {
+      "label": "Leave Type",
+      "type": "textfield",
+      "id": "Field_leaveType",
+      "key": "leaveType",
+      "readonly": true
+    },
+    {
+      "label": "Start Date",
+      "type": "textfield",
+      "id": "Field_startDate",
+      "key": "startDate",
+      "readonly": true
+    },
+    {
+      "label": "End Date",
+      "type": "textfield",
+      "id": "Field_endDate",
+      "key": "endDate",
+      "readonly": true
+    },
+    {
+      "label": "Total Days Requested",
+      "type": "number",
+      "id": "Field_totalDays",
+      "key": "totalDays",
+      "readonly": true,
+      "decimalDigits": 1
+    },
+    {
+      "label": "Half Day",
+      "type": "textfield",
+      "id": "Field_isHalfDay",
+      "key": "isHalfDay",
+      "readonly": true,
+      "defaultValue": "${isHalfDay ? 'Yes (' + halfDayPeriod + ')' : 'No'}"
+    },
+    {
+      "type": "text",
+      "text": "### Leave Reason",
+      "id": "Field_reasonHeader"
+    },
+    {
+      "label": "Reason for Leave",
+      "type": "textarea",
+      "id": "Field_reason",
+      "key": "reason",
+      "readonly": true,
+      "rows": 3
+    },
+    {
+      "label": "Emergency Contact",
+      "type": "textfield",
+      "id": "Field_emergencyContact",
+      "key": "emergencyContactName",
+      "readonly": true,
+      "defaultValue": "${emergencyContactName} - ${emergencyContactPhone}"
+    },
+    {
+      "type": "text",
+      "text": "### Coverage Arrangement",
+      "id": "Field_coverageHeader"
+    },
+    {
+      "label": "Coverage Arranged",
+      "type": "textfield",
+      "id": "Field_coverageArranged",
+      "key": "coverageArranged",
+      "readonly": true,
+      "defaultValue": "${coverageArranged ? 'Yes' : 'No'}"
+    },
+    {
+      "label": "Covering Employee",
+      "type": "textfield",
+      "id": "Field_coveringEmployee",
+      "key": "coveringEmployee",
+      "readonly": true,
+      "conditional": {
+        "hide": "=coverageArranged = false"
+      }
+    },
+    {
+      "label": "Coverage Notes",
+      "type": "textarea",
+      "id": "Field_coverageNotes",
+      "key": "coverageNotes",
+      "readonly": true,
+      "rows": 2
+    },
+    {
+      "type": "text",
+      "text": "### Leave Balance Check",
+      "id": "Field_balanceHeader"
+    },
+    {
+      "label": "Current Leave Balance",
+      "type": "number",
+      "id": "Field_currentBalance",
+      "key": "currentBalance",
+      "readonly": true,
+      "suffix": "days",
+      "decimalDigits": 1
+    },
+    {
+      "label": "Balance After This Request",
+      "type": "number",
+      "id": "Field_balanceAfter",
+      "key": "balanceAfter",
+      "readonly": true,
+      "suffix": "days",
+      "decimalDigits": 1
+    },
+    {
+      "label": "Sufficient Balance",
+      "type": "textfield",
+      "id": "Field_sufficientBalance",
+      "key": "sufficientBalance",
+      "readonly": true,
+      "defaultValue": "${balanceAfter >= 0 ? 'Yes - Sufficient balance' : 'No - Insufficient balance'}"
+    },
+    {
+      "type": "text",
+      "text": "---\n\n### Approval Decision",
+      "id": "Field_decisionHeader"
+    },
+    {
+      "label": "Decision",
+      "type": "radio",
+      "id": "Field_approved",
+      "key": "approved",
+      "description": "Do you approve this leave request?",
+      "validate": {
+        "required": true
+      },
+      "values": [
+        {
+          "label": "Approve",
+          "value": true
+        },
+        {
+          "label": "Reject",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "Manager Comments",
+      "type": "textarea",
+      "id": "Field_approverComments",
+      "key": "approverComments",
+      "description": "Provide comments for your decision",
+      "placeholder": "Enter your comments here...",
+      "rows": 4,
+      "validate": {
+        "required": true,
+        "minLength": 10
+      }
+    },
+    {
+      "label": "Rejection Reason",
+      "type": "textarea",
+      "id": "Field_rejectionReason",
+      "key": "rejectionReason",
+      "description": "If rejecting, provide detailed reason",
+      "placeholder": "Explain why this leave request is being rejected...",
+      "rows": 4,
+      "conditional": {
+        "hide": "=approved = true"
+      },
+      "validate": {
+        "required": true,
+        "minLength": 20
+      }
+    },
+    {
+      "label": "Approved Days (if different)",
+      "type": "number",
+      "id": "Field_approvedDays",
+      "key": "approvedDays",
+      "description": "If approving with different number of days, enter here",
+      "decimalDigits": 1,
+      "conditional": {
+        "hide": "=approved = false"
+      },
+      "validate": {
+        "min": 0.5,
+        "max": 365
+      }
+    },
+    {
+      "label": "Conditions/Notes",
+      "type": "textarea",
+      "id": "Field_approvalConditions",
+      "key": "approvalConditions",
+      "description": "Any conditions or special notes for this approval",
+      "placeholder": "e.g., Ensure project handover before leave, Remote availability required, etc.",
+      "rows": 3,
+      "conditional": {
+        "hide": "=approved = false"
+      },
+      "validate": {
+        "maxLength": 500
+      }
+    },
+    {
+      "type": "text",
+      "text": "---\n\n**Note:** Employee will be notified of your decision. Approved leave will be automatically deducted from their balance.",
+      "id": "Field_footer"
+    }
+  ]
+}

@@ -1,0 +1,435 @@
+{
+  "type": "default",
+  "id": "purchase-requisition-form",
+  "schemaVersion": 9,
+  "exporter": {
+    "name": "werkflow form-js converter",
+    "version": "1.0.0"
+  },
+  "components": [
+    {
+      "type": "text",
+      "text": "## Purchase Requisition (PR)\n\nCreate a purchase requisition for goods or services. This will be converted to a Purchase Order (PO) after approval.",
+      "id": "Field_header"
+    },
+    {
+      "type": "text",
+      "text": "### Requester Information",
+      "id": "Field_requesterInfoHeader"
+    },
+    {
+      "label": "Requester ID",
+      "type": "textfield",
+      "id": "Field_requesterId",
+      "key": "requesterId",
+      "description": "Employee ID",
+      "readonly": true,
+      "defaultValue": "${currentUser.id}",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Requester Name",
+      "type": "textfield",
+      "id": "Field_requesterName",
+      "key": "requesterName",
+      "description": "Full name",
+      "readonly": true,
+      "defaultValue": "${currentUser.fullName}",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Email",
+      "type": "textfield",
+      "id": "Field_requesterEmail",
+      "key": "requesterEmail",
+      "readonly": true,
+      "defaultValue": "${currentUser.email}",
+      "validate": {
+        "required": true,
+        "validationType": "email"
+      }
+    },
+    {
+      "label": "Department",
+      "type": "select",
+      "id": "Field_department",
+      "key": "department",
+      "description": "Requesting department",
+      "validate": {
+        "required": true
+      },
+      "values": [
+        {
+          "label": "Finance",
+          "value": "Finance"
+        },
+        {
+          "label": "Engineering",
+          "value": "Engineering"
+        },
+        {
+          "label": "IT",
+          "value": "IT"
+        },
+        {
+          "label": "Marketing",
+          "value": "Marketing"
+        },
+        {
+          "label": "Sales",
+          "value": "Sales"
+        },
+        {
+          "label": "HR",
+          "value": "HR"
+        },
+        {
+          "label": "Operations",
+          "value": "Operations"
+        },
+        {
+          "label": "Facilities",
+          "value": "Facilities"
+        },
+        {
+          "label": "Procurement",
+          "value": "Procurement"
+        }
+      ]
+    },
+    {
+      "label": "Cost Center",
+      "type": "textfield",
+      "id": "Field_costCenter",
+      "key": "costCenter",
+      "description": "Cost center to be charged",
+      "placeholder": "CC-XXXX",
+      "validate": {
+        "required": true,
+        "pattern": "^CC-[0-9]{4}$"
+      }
+    },
+    {
+      "type": "text",
+      "text": "### Purchase Details",
+      "id": "Field_purchaseDetailsHeader"
+    },
+    {
+      "label": "PR Type",
+      "type": "select",
+      "id": "Field_prType",
+      "key": "prType",
+      "description": "Type of purchase requisition",
+      "validate": {
+        "required": true
+      },
+      "values": [
+        {
+          "label": "Goods - Physical items",
+          "value": "GOODS"
+        },
+        {
+          "label": "Services - Professional services",
+          "value": "SERVICES"
+        },
+        {
+          "label": "Software - Licenses and subscriptions",
+          "value": "SOFTWARE"
+        },
+        {
+          "label": "Equipment - Machinery or tools",
+          "value": "EQUIPMENT"
+        },
+        {
+          "label": "Office Supplies - Stationery, etc.",
+          "value": "OFFICE_SUPPLIES"
+        },
+        {
+          "label": "Other",
+          "value": "OTHER"
+        }
+      ]
+    },
+    {
+      "label": "Item Description",
+      "type": "textarea",
+      "id": "Field_itemDescription",
+      "key": "itemDescription",
+      "description": "Detailed description of items or services",
+      "placeholder": "Provide complete specifications and requirements",
+      "rows": 4,
+      "validate": {
+        "required": true,
+        "minLength": 20,
+        "maxLength": 1000
+      }
+    },
+    {
+      "label": "Quantity",
+      "type": "number",
+      "id": "Field_quantity",
+      "key": "quantity",
+      "description": "Number of units",
+      "validate": {
+        "required": true,
+        "min": 1,
+        "max": 100000
+      }
+    },
+    {
+      "label": "Unit of Measure",
+      "type": "select",
+      "id": "Field_unitOfMeasure",
+      "key": "unitOfMeasure",
+      "description": "Unit of measurement",
+      "validate": {
+        "required": true
+      },
+      "values": [
+        {
+          "label": "Each (EA)",
+          "value": "EA"
+        },
+        {
+          "label": "Box",
+          "value": "BOX"
+        },
+        {
+          "label": "Pack",
+          "value": "PACK"
+        },
+        {
+          "label": "Set",
+          "value": "SET"
+        },
+        {
+          "label": "License",
+          "value": "LICENSE"
+        },
+        {
+          "label": "Hour",
+          "value": "HOUR"
+        },
+        {
+          "label": "Day",
+          "value": "DAY"
+        },
+        {
+          "label": "Month",
+          "value": "MONTH"
+        }
+      ]
+    },
+    {
+      "label": "Estimated Unit Price (USD)",
+      "type": "number",
+      "id": "Field_estimatedUnitPrice",
+      "key": "estimatedUnitPrice",
+      "description": "Estimated price per unit",
+      "decimalDigits": 2,
+      "validate": {
+        "required": true,
+        "min": 0.01
+      },
+      "serializeToString": false
+    },
+    {
+      "label": "Total Amount (USD)",
+      "type": "number",
+      "id": "Field_estimatedAmount",
+      "key": "estimatedAmount",
+      "description": "Total estimated amount (calculated: quantity × unit price)",
+      "decimalDigits": 2,
+      "readonly": true,
+      "defaultValue": "${quantity * estimatedUnitPrice}",
+      "serializeToString": false
+    },
+    {
+      "type": "text",
+      "text": "### Vendor Information",
+      "id": "Field_vendorHeader"
+    },
+    {
+      "label": "Preferred Vendor",
+      "type": "textfield",
+      "id": "Field_supplier",
+      "key": "supplier",
+      "description": "Preferred supplier/vendor name",
+      "placeholder": "e.g., Amazon Business, Office Depot, Dell"
+    },
+    {
+      "label": "Vendor Contact Person",
+      "type": "textfield",
+      "id": "Field_vendorContact",
+      "key": "vendorContact",
+      "description": "Vendor contact name (if known)",
+      "placeholder": "Contact person name"
+    },
+    {
+      "label": "Vendor Email",
+      "type": "textfield",
+      "id": "Field_vendorEmail",
+      "key": "vendorEmail",
+      "description": "Vendor contact email",
+      "placeholder": "vendor@company.com",
+      "validate": {
+        "validationType": "email"
+      }
+    },
+    {
+      "label": "Vendor Phone",
+      "type": "textfield",
+      "id": "Field_vendorPhone",
+      "key": "vendorPhone",
+      "description": "Vendor contact phone",
+      "placeholder": "+1-XXX-XXX-XXXX"
+    },
+    {
+      "label": "Alternate Vendors",
+      "type": "textarea",
+      "id": "Field_alternateVendors",
+      "key": "alternateVendors",
+      "description": "List other potential vendors (one per line)",
+      "placeholder": "Vendor 1\nVendor 2\nVendor 3",
+      "rows": 3,
+      "validate": {
+        "maxLength": 500
+      }
+    },
+    {
+      "type": "text",
+      "text": "### Delivery Requirements",
+      "id": "Field_deliveryHeader"
+    },
+    {
+      "label": "Required Delivery Date",
+      "type": "datetime",
+      "id": "Field_requiredDate",
+      "key": "requiredDate",
+      "description": "When is this needed?",
+      "dateLabel": "Delivery Date",
+      "timeSerializingFormat": "utc_offset",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Delivery Location",
+      "type": "textfield",
+      "id": "Field_deliveryLocation",
+      "key": "deliveryLocation",
+      "description": "Delivery address or location code",
+      "placeholder": "e.g., Building A - Floor 3, Warehouse 2",
+      "validate": {
+        "required": true,
+        "maxLength": 200
+      }
+    },
+    {
+      "label": "Urgency",
+      "type": "select",
+      "id": "Field_urgency",
+      "key": "urgency",
+      "description": "Urgency level of this request",
+      "defaultValue": "Normal",
+      "validate": {
+        "required": true
+      },
+      "values": [
+        {
+          "label": "Low - No rush",
+          "value": "Low"
+        },
+        {
+          "label": "Normal - Standard timeline",
+          "value": "Normal"
+        },
+        {
+          "label": "High - Urgent",
+          "value": "High"
+        },
+        {
+          "label": "Critical - Immediate",
+          "value": "Critical"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "text": "### Justification",
+      "id": "Field_justificationHeader"
+    },
+    {
+      "label": "Business Justification",
+      "type": "textarea",
+      "id": "Field_justification",
+      "key": "justification",
+      "description": "Explain why this purchase is necessary",
+      "placeholder": "Describe the business need and expected benefits",
+      "rows": 4,
+      "validate": {
+        "required": true,
+        "minLength": 20,
+        "maxLength": 1000
+      }
+    },
+    {
+      "label": "Budget Available",
+      "type": "checkbox",
+      "id": "Field_budgetConfirmed",
+      "key": "budgetConfirmed",
+      "description": "I confirm that budget is available for this purchase",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "GL Account Code",
+      "type": "textfield",
+      "id": "Field_glAccount",
+      "key": "glAccount",
+      "description": "General Ledger account code",
+      "placeholder": "GL-XXXX-XXXX",
+      "validate": {
+        "pattern": "^GL-[0-9]{4}-[0-9]{4}$"
+      }
+    },
+    {
+      "type": "text",
+      "text": "### Additional Information",
+      "id": "Field_additionalHeader"
+    },
+    {
+      "label": "Special Instructions",
+      "type": "textarea",
+      "id": "Field_specialInstructions",
+      "key": "specialInstructions",
+      "description": "Any special handling, packaging, or delivery instructions",
+      "placeholder": "e.g., Fragile items, requires signature, specific delivery time",
+      "rows": 3,
+      "validate": {
+        "maxLength": 500
+      }
+    },
+    {
+      "label": "Additional Comments",
+      "type": "textarea",
+      "id": "Field_comments",
+      "key": "comments",
+      "description": "Any other relevant information",
+      "rows": 2,
+      "validate": {
+        "maxLength": 500
+      }
+    },
+    {
+      "type": "text",
+      "text": "---\n\n**Note:** Your PR will be routed for approval based on the total amount. Once approved, Procurement will create a PO and manage vendor communication.",
+      "id": "Field_footer"
+    }
+  ]
+}

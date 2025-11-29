@@ -1,0 +1,245 @@
+{
+  "type": "default",
+  "id": "capex-approval-form",
+  "schemaVersion": 9,
+  "exporter": {
+    "name": "werkflow form-js converter",
+    "version": "1.0.0"
+  },
+  "components": [
+    {
+      "type": "text",
+      "text": "## CapEx Request Approval\n\nReview the capital expenditure request details below and make your approval decision.",
+      "id": "Field_header"
+    },
+    {
+      "type": "text",
+      "text": "### Request Information",
+      "id": "Field_requestInfoHeader"
+    },
+    {
+      "label": "Request Number",
+      "type": "textfield",
+      "id": "Field_requestId",
+      "key": "requestId",
+      "readonly": true
+    },
+    {
+      "label": "Requester",
+      "type": "textfield",
+      "id": "Field_requester",
+      "key": "requesterName",
+      "readonly": true
+    },
+    {
+      "label": "Department",
+      "type": "textfield",
+      "id": "Field_department",
+      "key": "department",
+      "readonly": true
+    },
+    {
+      "label": "Request Date",
+      "type": "textfield",
+      "id": "Field_requestDate",
+      "key": "requestDate",
+      "readonly": true
+    },
+    {
+      "type": "text",
+      "text": "### Asset Details",
+      "id": "Field_assetHeader"
+    },
+    {
+      "label": "Item Description",
+      "type": "textarea",
+      "id": "Field_itemDescription",
+      "key": "itemDescription",
+      "readonly": true,
+      "rows": 2
+    },
+    {
+      "label": "Asset Category",
+      "type": "textfield",
+      "id": "Field_assetCategory",
+      "key": "assetCategory",
+      "readonly": true
+    },
+    {
+      "label": "Amount (USD)",
+      "type": "number",
+      "id": "Field_amount",
+      "key": "amount",
+      "readonly": true,
+      "decimalDigits": 2,
+      "serializeToString": false
+    },
+    {
+      "label": "Budget Type",
+      "type": "textfield",
+      "id": "Field_budgetType",
+      "key": "budgetType",
+      "readonly": true
+    },
+    {
+      "label": "Urgency",
+      "type": "textfield",
+      "id": "Field_urgency",
+      "key": "urgency",
+      "readonly": true
+    },
+    {
+      "type": "text",
+      "text": "### Business Justification",
+      "id": "Field_justificationHeader"
+    },
+    {
+      "label": "Business Justification",
+      "type": "textarea",
+      "id": "Field_justification",
+      "key": "justification",
+      "readonly": true,
+      "rows": 4
+    },
+    {
+      "label": "Expected Benefits",
+      "type": "textarea",
+      "id": "Field_expectedBenefits",
+      "key": "expectedBenefits",
+      "readonly": true,
+      "rows": 3
+    },
+    {
+      "label": "Expected ROI (%)",
+      "type": "number",
+      "id": "Field_expectedROI",
+      "key": "expectedROI",
+      "readonly": true,
+      "suffix": "%",
+      "decimalDigits": 2
+    },
+    {
+      "label": "Payback Period (months)",
+      "type": "number",
+      "id": "Field_paybackPeriod",
+      "key": "paybackPeriod",
+      "readonly": true,
+      "suffix": "months"
+    },
+    {
+      "type": "text",
+      "text": "### Budget Check Results",
+      "id": "Field_budgetCheckHeader"
+    },
+    {
+      "label": "Budget Available",
+      "type": "textfield",
+      "id": "Field_budgetAvailable",
+      "key": "budgetAvailable",
+      "readonly": true,
+      "defaultValue": "${budgetAvailable ? 'Yes - Budget is available' : 'No - Insufficient budget'}"
+    },
+    {
+      "label": "Cost Center",
+      "type": "textfield",
+      "id": "Field_costCenter",
+      "key": "costCenter",
+      "readonly": true
+    },
+    {
+      "label": "Budget Year",
+      "type": "number",
+      "id": "Field_budgetYear",
+      "key": "budgetYear",
+      "readonly": true
+    },
+    {
+      "type": "text",
+      "text": "---\n\n### Approval Decision",
+      "id": "Field_decisionHeader"
+    },
+    {
+      "label": "Decision",
+      "type": "radio",
+      "id": "Field_approved",
+      "key": "approved",
+      "description": "Do you approve this CapEx request?",
+      "validate": {
+        "required": true
+      },
+      "values": [
+        {
+          "label": "Approve",
+          "value": true
+        },
+        {
+          "label": "Reject",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "Approver Comments",
+      "type": "textarea",
+      "id": "Field_approverComments",
+      "key": "approverComments",
+      "description": "Provide comments or justification for your decision",
+      "placeholder": "Enter your comments here...",
+      "rows": 4,
+      "validate": {
+        "required": true,
+        "minLength": 10
+      }
+    },
+    {
+      "label": "Rejection Reason",
+      "type": "textarea",
+      "id": "Field_rejectionReason",
+      "key": "rejectionReason",
+      "description": "If rejecting, provide detailed reason",
+      "placeholder": "Explain why this request is being rejected...",
+      "rows": 4,
+      "conditional": {
+        "hide": "=approved = true"
+      },
+      "validate": {
+        "required": true,
+        "minLength": 20
+      }
+    },
+    {
+      "label": "Approved Amount (if different)",
+      "type": "number",
+      "id": "Field_approvedAmount",
+      "key": "approvedAmount",
+      "description": "If approving with a different amount, enter it here",
+      "decimalDigits": 2,
+      "conditional": {
+        "hide": "=approved = false"
+      },
+      "validate": {
+        "min": 0.01
+      }
+    },
+    {
+      "label": "Conditions/Notes",
+      "type": "textarea",
+      "id": "Field_approvalConditions",
+      "key": "approvalConditions",
+      "description": "Any conditions or special notes for this approval",
+      "placeholder": "e.g., Approval contingent on vendor selection, Must complete by Q2, etc.",
+      "rows": 3,
+      "conditional": {
+        "hide": "=approved = false"
+      },
+      "validate": {
+        "maxLength": 500
+      }
+    },
+    {
+      "type": "text",
+      "text": "---\n\n**Note:** Your decision will be recorded with timestamp and routed according to the approval workflow.",
+      "id": "Field_footer"
+    }
+  ]
+}

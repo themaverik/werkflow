@@ -1,0 +1,359 @@
+{
+  "type": "default",
+  "id": "capex-request-form",
+  "schemaVersion": 9,
+  "exporter": {
+    "name": "werkflow form-js converter",
+    "version": "1.0.0"
+  },
+  "components": [
+    {
+      "type": "text",
+      "text": "## Capital Expenditure Request\n\nPlease complete this form to submit a capital expenditure request. Your request will be routed for approval based on the amount requested.",
+      "id": "Field_header"
+    },
+    {
+      "label": "Requester",
+      "type": "textfield",
+      "id": "Field_requesterId",
+      "key": "requesterId",
+      "description": "Employee submitting the CapEx request",
+      "readonly": true,
+      "defaultValue": "${currentUser.id}",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Requester Name",
+      "type": "textfield",
+      "id": "Field_requesterName",
+      "key": "requesterName",
+      "description": "Full name of requester",
+      "readonly": true,
+      "defaultValue": "${currentUser.fullName}",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Requester Email",
+      "type": "textfield",
+      "id": "Field_requesterEmail",
+      "key": "requesterEmail",
+      "description": "Email address for notifications",
+      "readonly": true,
+      "defaultValue": "${currentUser.email}",
+      "validate": {
+        "required": true,
+        "validationType": "email"
+      }
+    },
+    {
+      "label": "Department",
+      "type": "select",
+      "id": "Field_department",
+      "key": "department",
+      "description": "Department requesting the capital expenditure",
+      "validate": {
+        "required": true
+      },
+      "values": [
+        {
+          "label": "Finance",
+          "value": "Finance"
+        },
+        {
+          "label": "Engineering",
+          "value": "Engineering"
+        },
+        {
+          "label": "IT",
+          "value": "IT"
+        },
+        {
+          "label": "Marketing",
+          "value": "Marketing"
+        },
+        {
+          "label": "Sales",
+          "value": "Sales"
+        },
+        {
+          "label": "HR",
+          "value": "HR"
+        },
+        {
+          "label": "Operations",
+          "value": "Operations"
+        },
+        {
+          "label": "Facilities",
+          "value": "Facilities"
+        },
+        {
+          "label": "Procurement",
+          "value": "Procurement"
+        },
+        {
+          "label": "Legal",
+          "value": "Legal"
+        }
+      ]
+    },
+    {
+      "label": "Cost Center",
+      "type": "textfield",
+      "id": "Field_costCenter",
+      "key": "costCenter",
+      "description": "Cost center to be charged for this expenditure",
+      "validate": {
+        "required": true,
+        "pattern": "^CC-[0-9]{4}$"
+      },
+      "placeholder": "CC-XXXX"
+    },
+    {
+      "label": "Urgency Level",
+      "type": "select",
+      "id": "Field_urgency",
+      "key": "urgency",
+      "description": "How urgent is this request?",
+      "defaultValue": "MEDIUM",
+      "validate": {
+        "required": true
+      },
+      "values": [
+        {
+          "label": "Low - Standard procurement timeline",
+          "value": "LOW"
+        },
+        {
+          "label": "Medium - Needed within 3 months",
+          "value": "MEDIUM"
+        },
+        {
+          "label": "High - Needed within 1 month",
+          "value": "HIGH"
+        },
+        {
+          "label": "Critical - Immediate need",
+          "value": "CRITICAL"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "text": "### Asset Details",
+      "id": "Field_assetDetailsHeader"
+    },
+    {
+      "label": "Item Description",
+      "type": "textfield",
+      "id": "Field_itemDescription",
+      "key": "itemDescription",
+      "description": "Brief description of the asset or equipment",
+      "placeholder": "e.g., Dell Laptop XPS 15, Server Rack, Office Furniture",
+      "validate": {
+        "required": true,
+        "maxLength": 200
+      }
+    },
+    {
+      "label": "Asset Category",
+      "type": "select",
+      "id": "Field_assetCategory",
+      "key": "assetCategory",
+      "description": "Category of the capital asset",
+      "validate": {
+        "required": true
+      },
+      "values": [
+        {
+          "label": "IT Hardware",
+          "value": "IT_HARDWARE"
+        },
+        {
+          "label": "IT Software & Licenses",
+          "value": "IT_SOFTWARE"
+        },
+        {
+          "label": "Machinery & Equipment",
+          "value": "MACHINERY"
+        },
+        {
+          "label": "Vehicles",
+          "value": "VEHICLES"
+        },
+        {
+          "label": "Furniture & Fixtures",
+          "value": "FURNITURE"
+        },
+        {
+          "label": "Building & Infrastructure",
+          "value": "BUILDING"
+        },
+        {
+          "label": "Other",
+          "value": "OTHER"
+        }
+      ]
+    },
+    {
+      "label": "Estimated Amount (USD)",
+      "type": "number",
+      "id": "Field_amount",
+      "key": "amount",
+      "description": "Total estimated cost including taxes and delivery",
+      "decimalDigits": 2,
+      "validate": {
+        "required": true,
+        "min": 0.01
+      },
+      "serializeToString": false
+    },
+    {
+      "label": "Budget Type",
+      "type": "select",
+      "id": "Field_budgetType",
+      "key": "budgetType",
+      "description": "Classification of expenditure type",
+      "defaultValue": "capex",
+      "validate": {
+        "required": true
+      },
+      "values": [
+        {
+          "label": "Capital Expenditure",
+          "value": "capex"
+        },
+        {
+          "label": "Operating Expenditure",
+          "value": "opex"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "text": "### Business Justification",
+      "id": "Field_justificationHeader"
+    },
+    {
+      "label": "Business Justification",
+      "type": "textarea",
+      "id": "Field_justification",
+      "key": "justification",
+      "description": "Explain the business need, expected ROI, and strategic alignment",
+      "placeholder": "Provide detailed explanation of why this expenditure is necessary",
+      "rows": 5,
+      "validate": {
+        "required": true,
+        "maxLength": 1000
+      }
+    },
+    {
+      "label": "Expected Benefits",
+      "type": "textarea",
+      "id": "Field_expectedBenefits",
+      "key": "expectedBenefits",
+      "description": "What benefits will this asset provide to the organization?",
+      "placeholder": "e.g., Increased productivity, cost savings, improved efficiency",
+      "rows": 3,
+      "validate": {
+        "maxLength": 500
+      }
+    },
+    {
+      "label": "Expected ROI (%)",
+      "type": "number",
+      "id": "Field_expectedROI",
+      "key": "expectedROI",
+      "description": "Expected return on investment (if applicable)",
+      "suffix": "%",
+      "decimalDigits": 2,
+      "validate": {
+        "min": 0,
+        "max": 1000
+      }
+    },
+    {
+      "label": "Payback Period (months)",
+      "type": "number",
+      "id": "Field_paybackPeriod",
+      "key": "paybackPeriod",
+      "description": "Expected payback period (if applicable)",
+      "suffix": "months",
+      "validate": {
+        "min": 0,
+        "max": 120
+      }
+    },
+    {
+      "type": "text",
+      "text": "### Vendor Information",
+      "id": "Field_vendorHeader"
+    },
+    {
+      "label": "Preferred Vendor (if any)",
+      "type": "textfield",
+      "id": "Field_vendor",
+      "key": "vendor",
+      "description": "Select vendor if already identified",
+      "placeholder": "e.g., Dell, HP, Amazon Business"
+    },
+    {
+      "label": "Alternate Vendors",
+      "type": "textfield",
+      "id": "Field_alternateVendors",
+      "key": "alternateVendors",
+      "description": "Other vendors to consider for RFQ process (comma-separated)",
+      "placeholder": "e.g., Lenovo, Microsoft, CDW"
+    },
+    {
+      "label": "Expected Delivery Date",
+      "type": "datetime",
+      "id": "Field_expectedDeliveryDate",
+      "key": "expectedDeliveryDate",
+      "description": "When is the asset needed?",
+      "dateLabel": "Date",
+      "timeSerializingFormat": "utc_offset",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "text",
+      "text": "### Additional Information",
+      "id": "Field_additionalHeader"
+    },
+    {
+      "label": "Budget Year",
+      "type": "number",
+      "id": "Field_budgetYear",
+      "key": "budgetYear",
+      "description": "Fiscal year for budget allocation",
+      "defaultValue": "2025",
+      "validate": {
+        "required": true,
+        "min": 2024,
+        "max": 2030
+      }
+    },
+    {
+      "label": "Additional Comments",
+      "type": "textarea",
+      "id": "Field_comments",
+      "key": "comments",
+      "description": "Any additional information or special requirements",
+      "rows": 3,
+      "validate": {
+        "maxLength": 500
+      }
+    },
+    {
+      "type": "text",
+      "text": "---\n\n**Note:** Your request will be automatically routed for approval based on the amount:\n- **$0 - $999**: Department Manager\n- **$1,000 - $9,999**: Department Head\n- **$10,000 - $99,999**: Finance Manager\n- **$100,000+**: Executive/CFO",
+      "id": "Field_footer"
+    }
+  ]
+}

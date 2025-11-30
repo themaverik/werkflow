@@ -12,8 +12,4 @@ public class FormNotFoundException extends RuntimeException {
     public FormNotFoundException(String formKey, Integer version) {
         super("Form not found with key: " + formKey + " and version: " + version);
     }
-
-    public FormNotFoundException(String message) {
-        super(message);
-    }
 }

@@ -188,18 +188,24 @@ public class FormSchemaController {
     /**
      * Request DTO for creating forms
      */
-    public record CreateFormRequest(
-            String formKey,
-            JsonNode schemaJson,
-            String description,
-            FormSchema.FormType formType
-    ) {}
+    @lombok.Data
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    public static class CreateFormRequest {
+        private String formKey;
+        private JsonNode schemaJson;
+        private String description;
+        private FormSchema.FormType formType;
+    }
 
     /**
      * Request DTO for updating forms
      */
-    public record UpdateFormRequest(
-            JsonNode schemaJson,
-            String description
-    ) {}
+    @lombok.Data
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    public static class UpdateFormRequest {
+        private JsonNode schemaJson;
+        private String description;
+    }
 }

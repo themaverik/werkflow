@@ -54,6 +54,12 @@ public class SecurityConfig {
                 // Task endpoints - authenticated users (task assignment handles authorization)
                 .requestMatchers(new AntPathRequestMatcher("/api/tasks/**")).authenticated()
 
+                // Workflow task endpoints - authenticated users (authorization by query filters)
+                .requestMatchers(new AntPathRequestMatcher("/workflows/tasks/**")).authenticated()
+
+                // Process monitoring endpoints - authenticated users (authorization by service layer)
+                .requestMatchers(new AntPathRequestMatcher("/workflows/processes/**")).authenticated()
+
                 // History endpoints - authenticated users
                 .requestMatchers(new AntPathRequestMatcher("/api/history/**")).authenticated()
 

@@ -32,6 +32,20 @@ spring:
     schemas: ${SPRING_DATASOURCE_SCHEMA:flowable}
     locations: classpath:db/migration
 
+  # Mail configuration for notification service
+  mail:
+    host: ${SMTP_HOST:smtp.mailtrap.io}
+    port: ${SMTP_PORT:2525}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+
   security:
     oauth2:
       resourceserver:
@@ -155,3 +169,12 @@ app:
     finance-url: ${FINANCE_SERVICE_URL:http://localhost:8084}
     procurement-url: ${PROCUREMENT_SERVICE_URL:http://localhost:8085}
     inventory-url: ${INVENTORY_SERVICE_URL:http://localhost:8086}
+
+  # Mail configuration for notification service
+  mail:
+    from: ${MAIL_FROM:noreply@werkflow.local}
+    fromName: ${MAIL_FROM_NAME:Werkflow Platform}
+    replyTo: ${MAIL_REPLY_TO:support@werkflow.local}
+
+  # Application URL for email links
+  url: ${APP_URL:http://localhost:3000}

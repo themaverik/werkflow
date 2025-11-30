@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -34,4 +35,12 @@ public class TaskResponse {
     private String category;
     private String tenantId;
     private Map<String, Object> variables;
+
+    // Enhanced fields for task list endpoints
+    private String processDefinitionKey;
+    private String processDefinitionName;
+    private List<String> candidateGroups;
+    private List<String> candidateUsers;
+    private Long executionDuration; // milliseconds since creation
+    private String department; // department associated with task
 }

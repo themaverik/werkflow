@@ -1,9 +1,9 @@
 package com.werkflow.delegates.notification;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
@@ -43,10 +43,10 @@ import java.util.List;
  */
 @Slf4j
 @Component("notificationDelegate")
-@RequiredArgsConstructor
 public class NotificationDelegate implements JavaDelegate {
 
-    private final JavaMailSender mailSender;
+    @Autowired(required = false)
+    private JavaMailSender mailSender;
 
     @Override
     public void execute(DelegateExecution execution) {
@@ -111,6 +111,12 @@ public class NotificationDelegate implements JavaDelegate {
 
     private void sendEmailNotification(List<String> recipients, String subject, String message,
                                         String actionUrl, String actionLabel) {
+        if (mailSender == null) {
+            log.warn("JavaMailSender not configured, email notification will be logged only");
+            log.info("Email would be sent to {} recipients with subject: {}", recipients.size(), subject);
+            return;
+        }
+
         String emailBody = buildEmailBody(message, actionUrl, actionLabel);
 
         SimpleMailMessage mailMessage = new SimpleMailMessage();

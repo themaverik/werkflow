@@ -462,7 +462,7 @@ class CapExWorkflowIntegrationTest extends IntegrationTestBase {
                 .contains("startEvent", "createCapExRequest", "checkBudget", "managerApproval");
 
         // Verify task completion time
-        org.flowable.engine.history.HistoricTaskInstance completedTask =
+        HistoricTaskInstance completedTask =
                 historyService.createHistoricTaskInstanceQuery()
                         .processInstanceId(processInstanceId)
                         .taskDefinitionKey("managerApproval")

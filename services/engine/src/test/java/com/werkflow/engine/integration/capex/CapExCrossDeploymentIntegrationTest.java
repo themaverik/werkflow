@@ -3,6 +3,7 @@ package com.werkflow.engine.integration.capex;
 import com.werkflow.engine.fixtures.IntegrationTestBase;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.task.api.Task;
+import org.flowable.variable.api.history.HistoricVariableInstance;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

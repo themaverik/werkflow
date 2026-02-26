@@ -555,4 +555,121 @@ For issues or questions:
 
 ---
 
+## Appendix A: Adding Sample Forms
+
+### Sample Forms Available
+
+As of Version 7 migration, Werkflow includes 6 sample forms:
+
+1. **capex-request** - Capital expenditure request (PROCESS_START)
+2. **capex-approval** - CapEx approval decision (APPROVAL)
+3. **employee-onboarding** - New employee information (TASK_FORM)
+4. **asset-transfer** - Asset transfer between departments (TASK_FORM)
+5. **contact-request** - General inquiry form (CUSTOM)
+6. **purchase-request** - Purchase requisition (TASK_FORM)
+
+### Using Forms in BPMN
+
+Reference forms in your BPMN processes using the `flowable:formKey` attribute:
+
+```xml
+<!-- Start Event with Form -->
+<startEvent id="start" name="Submit Request" flowable:formKey="capex-request">
+  <documentation>User submits a capital expenditure request</documentation>
+</startEvent>
+
+<!-- User Task with Form -->
+<userTask id="review" name="Manager Review"
+          flowable:candidateGroups="FINANCE_MANAGER"
+          flowable:formKey="capex-approval">
+  <documentation>Manager reviews and approves/rejects request</documentation>
+</userTask>
+```
+
+### Adding New Forms
+
+To add new forms to Werkflow:
+
+#### Option 1: Via Admin Portal UI (Recommended)
+1. Navigate to Admin Portal: `http://localhost:3000/forms`
+2. Click "Create New Form"
+3. Use the Form.js visual editor to design your form
+4. Save with a unique form_key (e.g., "leave-request")
+5. Form is immediately available for use in BPMN
+
+#### Option 2: Via Flyway Migration
+1. Create new migration file: `V{next}__add_{form_name}_form.sql`
+2. Add INSERT statement (see V7 migration for examples)
+3. Deploy application - Flyway runs migration automatically
+
+Example migration:
+```sql
+INSERT INTO form_schemas (
+    form_key,
+    version,
+    schema_json,
+    description,
+    form_type,
+    is_active,
+    created_by,
+    updated_by
+) VALUES (
+    'your-form-key',
+    1,
+    '{
+        "type": "default",
+        "schemaVersion": 9,
+        "components": [
+            {
+                "type": "textfield",
+                "id": "fieldName",
+                "key": "fieldName",
+                "label": "Field Label",
+                "validate": {"required": true}
+            }
+        ]
+    }'::jsonb,
+    'Your form description',
+    'TASK_FORM',
+    true,
+    'system',
+    'system'
+) ON CONFLICT (form_key, version) DO NOTHING;
+```
+
+### Form Types
+
+- **PROCESS_START**: Used on start events to collect initial data
+- **TASK_FORM**: Used on user tasks for data collection
+- **APPROVAL**: Used for approval/rejection decisions
+- **CUSTOM**: General-purpose forms not tied to workflows
+
+### Form Field Types
+
+Supported Form.js field types:
+- `textfield`: Single-line text
+- `textarea`: Multi-line text
+- `number`: Numeric input
+- `select`: Dropdown selection
+- `checkbox`: Boolean checkbox
+- `radio`: Radio button group
+- `date`: Date picker
+- `text`: Read-only display text
+
+### Validation Rules
+
+Common validation options:
+```javascript
+"validate": {
+    "required": true,           // Field is required
+    "minLength": 10,            // Minimum text length
+    "maxLength": 100,           // Maximum text length
+    "min": 0,                   // Minimum number value
+    "max": 1000,                // Maximum number value
+    "pattern": "^[0-9]+$"       // Regex pattern
+}
+```
+
+---
+
 **End of Service Registry User Guide**

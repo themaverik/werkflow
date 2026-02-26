@@ -188,11 +188,17 @@ public class FormSchemaService {
         log.info("Getting list of all forms");
 
         String sql = """
-                SELECT DISTINCT ON (form_key) id, form_key, version, schema_json, description, form_type,
+                SELECT id, form_key, version, schema_json, description, form_type,
                        is_active, created_at, updated_at, created_by, updated_by
-                FROM form_schemas
-                WHERE is_active = true
-                ORDER BY form_key, version DESC
+                FROM (
+                    SELECT id, form_key, version, schema_json, description, form_type,
+                           is_active, created_at, updated_at, created_by, updated_by,
+                           ROW_NUMBER() OVER (PARTITION BY form_key ORDER BY version DESC) as rn
+                    FROM form_schemas
+                    WHERE is_active = true
+                ) t
+                WHERE rn = 1
+                ORDER BY form_key
                 """;
 
         return jdbcTemplate.query(sql, new FormSchemaRowMapper());

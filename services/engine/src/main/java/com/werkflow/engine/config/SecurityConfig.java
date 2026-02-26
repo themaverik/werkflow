@@ -44,6 +44,10 @@ public class SecurityConfig {
                 .requestMatchers(new AntPathRequestMatcher("/swagger-ui.html")).permitAll()
 
                 // Process definition endpoints - require workflow designer role
+                // Support both /process-definitions and /api/process-definitions paths
+                .requestMatchers(new AntPathRequestMatcher("/process-definitions/**", HttpMethod.POST.name())).hasAnyRole("WORKFLOW_DESIGNER", "SUPER_ADMIN")
+                .requestMatchers(new AntPathRequestMatcher("/process-definitions/**", HttpMethod.DELETE.name())).hasAnyRole("WORKFLOW_DESIGNER", "SUPER_ADMIN")
+                .requestMatchers(new AntPathRequestMatcher("/process-definitions/**", HttpMethod.GET.name())).authenticated()
                 .requestMatchers(new AntPathRequestMatcher("/api/process-definitions/**", HttpMethod.POST.name())).hasAnyRole("WORKFLOW_DESIGNER", "SUPER_ADMIN")
                 .requestMatchers(new AntPathRequestMatcher("/api/process-definitions/**", HttpMethod.DELETE.name())).hasAnyRole("WORKFLOW_DESIGNER", "SUPER_ADMIN")
                 .requestMatchers(new AntPathRequestMatcher("/api/process-definitions/**", HttpMethod.GET.name())).authenticated()
@@ -62,6 +66,13 @@ public class SecurityConfig {
 
                 // History endpoints - authenticated users
                 .requestMatchers(new AntPathRequestMatcher("/api/history/**")).authenticated()
+
+                // Form schema endpoints - authenticated users
+                .requestMatchers(new AntPathRequestMatcher("/forms/**")).authenticated()
+                .requestMatchers(new AntPathRequestMatcher("/api/forms/**")).authenticated()
+
+                // Service registry endpoints - authenticated users (basic read-only service info)
+                .requestMatchers(new AntPathRequestMatcher("/api/services/**")).authenticated()
 
                 // Werkflow custom API endpoints - authenticated users
                 .requestMatchers(new AntPathRequestMatcher("/werkflow/api/**")).authenticated()

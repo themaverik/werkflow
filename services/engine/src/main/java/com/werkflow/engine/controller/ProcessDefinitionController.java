@@ -18,9 +18,10 @@ import java.util.List;
 
 /**
  * REST controller for managing BPMN process definitions
+ * Supports both /process-definitions and /api/process-definitions paths
  */
 @RestController
-@RequestMapping("/api/process-definitions")
+@RequestMapping({"/process-definitions", "/api/process-definitions"})
 @RequiredArgsConstructor
 @Tag(name = "Process Definitions", description = "BPMN process definition management")
 @SecurityRequirement(name = "bearer-jwt")

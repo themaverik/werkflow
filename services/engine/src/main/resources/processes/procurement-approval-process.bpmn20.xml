@@ -18,39 +18,161 @@
       <documentation>Employee submits a purchase request</documentation>
     </startEvent>
 
-    <!-- Service Task: Create Purchase Request in Procurement Service -->
-    <serviceTask id="createPurchaseRequest" name="Create Purchase Request"
-                 flowable:expression="${execution.setVariable('requestId', procurementService.createRequest(execution.getVariables()))}">
+    <!-- Script Task: Create Purchase Request in Procurement Service -->
+    <scriptTask id="createPurchaseRequest" name="Create Purchase Request" scriptFormat="groovy">
       <documentation>Creates purchase request record in Procurement Service via REST API</documentation>
-    </serviceTask>
+      <script>
+        <![CDATA[
+          import groovy.json.JsonBuilder
+          import groovy.json.JsonSlurper
+          import java.net.HttpURLConnection
 
-    <!-- Service Task: Fetch Approved Vendors -->
-    <serviceTask id="fetchVendors" name="Fetch Approved Vendors"
-                 flowable:expression="${execution.setVariable('vendors', procurementService.getApprovedVendors(itemCategory))}">
+          def procurementServiceUrl = execution.getVariable('procurementServiceUrl')
+          def url = new URL("${procurementServiceUrl}/api/workflow/procurement/create-request")
+          def connection = url.openConnection() as HttpURLConnection
+
+          connection.setRequestMethod('POST')
+          connection.setDoOutput(true)
+          connection.setRequestProperty('Content-Type', 'application/json')
+          connection.setConnectTimeout(15000)
+          connection.setReadTimeout(15000)
+
+          def requestBody = [
+            itemName: execution.getVariable('itemName'),
+            itemCategory: execution.getVariable('itemCategory'),
+            quantity: execution.getVariable('quantity'),
+            estimatedUnitPrice: execution.getVariable('estimatedUnitPrice'),
+            urgency: execution.getVariable('urgency'),
+            justification: execution.getVariable('justification'),
+            departmentName: execution.getVariable('departmentName'),
+            requestedBy: execution.getVariable('requestedBy')
+          ]
+
+          def jsonBody = new JsonBuilder(requestBody).toString()
+          connection.outputStream.withWriter { it.write(jsonBody) }
+
+          def responseCode = connection.responseCode
+          if (responseCode == 200 || responseCode == 201) {
+            def response = new JsonSlurper().parseText(connection.inputStream.text)
+            execution.setVariable('requestId', response.requestId)
+            execution.setVariable('requestNumber', response.requestNumber)
+          } else {
+            throw new RuntimeException("Failed to create purchase request: HTTP ${responseCode}")
+          }
+        ]]>
+      </script>
+    </scriptTask>
+
+    <!-- Script Task: Fetch Approved Vendors -->
+    <scriptTask id="fetchVendors" name="Fetch Approved Vendors" scriptFormat="groovy">
       <documentation>Retrieves list of approved vendors for the requested item category</documentation>
-    </serviceTask>
+      <script>
+        <![CDATA[
+          import groovy.json.JsonSlurper
+          import java.net.HttpURLConnection
+
+          def procurementServiceUrl = execution.getVariable('procurementServiceUrl')
+          def itemCategory = execution.getVariable('itemCategory')
+          def url = new URL("${procurementServiceUrl}/api/workflow/procurement/vendors?category=${itemCategory}")
+          def connection = url.openConnection() as HttpURLConnection
+
+          connection.setRequestMethod('GET')
+          connection.setRequestProperty('Content-Type', 'application/json')
+          connection.setConnectTimeout(15000)
+          connection.setReadTimeout(15000)
+
+          def responseCode = connection.responseCode
+          if (responseCode == 200) {
+            def response = new JsonSlurper().parseText(connection.inputStream.text)
+            execution.setVariable('vendors', response.vendors)
+          } else {
+            throw new RuntimeException("Failed to fetch vendors: HTTP ${responseCode}")
+          }
+        ]]>
+      </script>
+    </scriptTask>
 
     <!-- User Task: Select Vendor -->
     <userTask id="selectVendor" name="Select Vendor" flowable:candidateGroups="PROCUREMENT_TEAM" flowable:formKey="vendor-selection">
       <documentation>Procurement team selects vendor from approved vendor list</documentation>
     </userTask>
 
-    <!-- Service Task: Request Quotations -->
-    <serviceTask id="requestQuotations" name="Request Quotations"
-                 flowable:expression="${procurementService.requestQuotations(requestId, selectedVendorIds)}">
+    <!-- Script Task: Request Quotations -->
+    <scriptTask id="requestQuotations" name="Request Quotations" scriptFormat="groovy">
       <documentation>Sends quotation requests to selected vendors</documentation>
-    </serviceTask>
+      <script>
+        <![CDATA[
+          import groovy.json.JsonBuilder
+          import java.net.HttpURLConnection
+
+          def procurementServiceUrl = execution.getVariable('procurementServiceUrl')
+          def url = new URL("${procurementServiceUrl}/api/workflow/procurement/request-quotations")
+          def connection = url.openConnection() as HttpURLConnection
+
+          connection.setRequestMethod('POST')
+          connection.setDoOutput(true)
+          connection.setRequestProperty('Content-Type', 'application/json')
+          connection.setConnectTimeout(15000)
+          connection.setReadTimeout(15000)
+
+          def requestBody = [
+            requestId: execution.getVariable('requestId'),
+            selectedVendorIds: execution.getVariable('selectedVendorIds')
+          ]
+
+          def jsonBody = new JsonBuilder(requestBody).toString()
+          connection.outputStream.withWriter { it.write(jsonBody) }
+
+          def responseCode = connection.responseCode
+          if (responseCode != 200 && responseCode != 201 && responseCode != 204) {
+            throw new RuntimeException("Failed to request quotations: HTTP ${responseCode}")
+          }
+        ]]>
+      </script>
+    </scriptTask>
 
     <!-- User Task: Review Quotations -->
     <userTask id="reviewQuotations" name="Review Quotations" flowable:candidateGroups="PROCUREMENT_TEAM" flowable:formKey="quotation-review">
       <documentation>Procurement team reviews and compares vendor quotations</documentation>
     </userTask>
 
-    <!-- Service Task: Calculate Total Cost -->
-    <serviceTask id="calculateTotalCost" name="Calculate Total Cost"
-                 flowable:expression="${execution.setVariable('totalCost', procurementService.calculateTotalCost(requestId, selectedQuotationId))}">
+    <!-- Script Task: Calculate Total Cost -->
+    <scriptTask id="calculateTotalCost" name="Calculate Total Cost" scriptFormat="groovy">
       <documentation>Calculates total cost including taxes and shipping</documentation>
-    </serviceTask>
+      <script>
+        <![CDATA[
+          import groovy.json.JsonBuilder
+          import groovy.json.JsonSlurper
+          import java.net.HttpURLConnection
+
+          def procurementServiceUrl = execution.getVariable('procurementServiceUrl')
+          def url = new URL("${procurementServiceUrl}/api/workflow/procurement/calculate-cost")
+          def connection = url.openConnection() as HttpURLConnection
+
+          connection.setRequestMethod('POST')
+          connection.setDoOutput(true)
+          connection.setRequestProperty('Content-Type', 'application/json')
+          connection.setConnectTimeout(15000)
+          connection.setReadTimeout(15000)
+
+          def requestBody = [
+            requestId: execution.getVariable('requestId'),
+            selectedQuotationId: execution.getVariable('selectedQuotationId')
+          ]
+
+          def jsonBody = new JsonBuilder(requestBody).toString()
+          connection.outputStream.withWriter { it.write(jsonBody) }
+
+          def responseCode = connection.responseCode
+          if (responseCode == 200 || responseCode == 201) {
+            def response = new JsonSlurper().parseText(connection.inputStream.text)
+            execution.setVariable('totalCost', response.totalCost)
+          } else {
+            throw new RuntimeException("Failed to calculate total cost: HTTP ${responseCode}")
+          }
+        ]]>
+      </script>
+    </scriptTask>
 
     <!-- Exclusive Gateway: Amount-based Approval Routing -->
     <exclusiveGateway id="amountGateway" name="Amount > $10,000?" />
@@ -79,40 +201,168 @@
     <!-- Exclusive Gateway: Final Decision -->
     <exclusiveGateway id="decisionGateway" name="Approved?" />
 
-    <!-- Service Task: Create Purchase Order -->
-    <serviceTask id="createPurchaseOrder" name="Create Purchase Order"
-                 flowable:expression="${execution.setVariable('poNumber', procurementService.createPurchaseOrder(requestId, selectedQuotationId))}">
+    <!-- Script Task: Create Purchase Order -->
+    <scriptTask id="createPurchaseOrder" name="Create Purchase Order" scriptFormat="groovy">
       <documentation>Creates purchase order in Procurement Service</documentation>
-    </serviceTask>
+      <script>
+        <![CDATA[
+          import groovy.json.JsonBuilder
+          import groovy.json.JsonSlurper
+          import java.net.HttpURLConnection
 
-    <!-- Service Task: Send PO to Vendor -->
-    <serviceTask id="sendPOToVendor" name="Send PO to Vendor"
-                 flowable:expression="${procurementService.sendPurchaseOrder(poNumber, vendorEmail)}">
+          def procurementServiceUrl = execution.getVariable('procurementServiceUrl')
+          def url = new URL("${procurementServiceUrl}/api/workflow/procurement/create-po")
+          def connection = url.openConnection() as HttpURLConnection
+
+          connection.setRequestMethod('POST')
+          connection.setDoOutput(true)
+          connection.setRequestProperty('Content-Type', 'application/json')
+          connection.setConnectTimeout(15000)
+          connection.setReadTimeout(15000)
+
+          def requestBody = [
+            requestId: execution.getVariable('requestId'),
+            selectedQuotationId: execution.getVariable('selectedQuotationId')
+          ]
+
+          def jsonBody = new JsonBuilder(requestBody).toString()
+          connection.outputStream.withWriter { it.write(jsonBody) }
+
+          def responseCode = connection.responseCode
+          if (responseCode == 200 || responseCode == 201) {
+            def response = new JsonSlurper().parseText(connection.inputStream.text)
+            execution.setVariable('poNumber', response.poNumber)
+          } else {
+            throw new RuntimeException("Failed to create purchase order: HTTP ${responseCode}")
+          }
+        ]]>
+      </script>
+    </scriptTask>
+
+    <!-- Script Task: Send PO to Vendor -->
+    <scriptTask id="sendPOToVendor" name="Send PO to Vendor" scriptFormat="groovy">
       <documentation>Sends purchase order to selected vendor via email</documentation>
-    </serviceTask>
+      <script>
+        <![CDATA[
+          import groovy.json.JsonBuilder
+          import java.net.HttpURLConnection
 
-    <!-- Service Task: Update Request Status - Approved -->
-    <serviceTask id="updateApproved" name="Update Status: Approved"
-                 flowable:expression="${procurementService.updateRequestStatus(requestId, 'APPROVED', poNumber)}">
+          def procurementServiceUrl = execution.getVariable('procurementServiceUrl')
+          def url = new URL("${procurementServiceUrl}/api/workflow/procurement/send-po")
+          def connection = url.openConnection() as HttpURLConnection
+
+          connection.setRequestMethod('POST')
+          connection.setDoOutput(true)
+          connection.setRequestProperty('Content-Type', 'application/json')
+          connection.setConnectTimeout(15000)
+          connection.setReadTimeout(15000)
+
+          def requestBody = [
+            poNumber: execution.getVariable('poNumber'),
+            vendorEmail: execution.getVariable('vendorEmail')
+          ]
+
+          def jsonBody = new JsonBuilder(requestBody).toString()
+          connection.outputStream.withWriter { it.write(jsonBody) }
+
+          def responseCode = connection.responseCode
+          if (responseCode != 200 && responseCode != 201 && responseCode != 204) {
+            throw new RuntimeException("Failed to send PO to vendor: HTTP ${responseCode}")
+          }
+        ]]>
+      </script>
+    </scriptTask>
+
+    <!-- Script Task: Update Request Status - Approved -->
+    <scriptTask id="updateApproved" name="Update Status: Approved" scriptFormat="groovy">
       <documentation>Updates purchase request status to APPROVED with PO number</documentation>
-    </serviceTask>
+      <script>
+        <![CDATA[
+          import groovy.json.JsonBuilder
+          import java.net.HttpURLConnection
+
+          def procurementServiceUrl = execution.getVariable('procurementServiceUrl')
+          def url = new URL("${procurementServiceUrl}/api/workflow/procurement/update-status")
+          def connection = url.openConnection() as HttpURLConnection
+
+          connection.setRequestMethod('PUT')
+          connection.setDoOutput(true)
+          connection.setRequestProperty('Content-Type', 'application/json')
+          connection.setConnectTimeout(15000)
+          connection.setReadTimeout(15000)
+
+          def requestBody = [
+            requestId: execution.getVariable('requestId'),
+            status: 'APPROVED',
+            poNumber: execution.getVariable('poNumber')
+          ]
+
+          def jsonBody = new JsonBuilder(requestBody).toString()
+          connection.outputStream.withWriter { it.write(jsonBody) }
+
+          def responseCode = connection.responseCode
+          if (responseCode != 200 && responseCode != 204) {
+            throw new RuntimeException("Failed to update status: HTTP ${responseCode}")
+          }
+        ]]>
+      </script>
+    </scriptTask>
 
     <!-- Service Task: Send Approval Notification -->
     <serviceTask id="sendApprovalNotification" name="Send Approval Notification"
-                 flowable:expression="${notificationService.sendEmail(requesterEmail, 'Purchase Request Approved', approvalMessage)}">
+                 flowable:delegateExpression="${notificationDelegate}">
       <documentation>Sends email notification to requester about approval</documentation>
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[PROCUREMENT_APPROVED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
     </serviceTask>
 
-    <!-- Service Task: Update Request Status - Rejected -->
-    <serviceTask id="updateRejected" name="Update Status: Rejected"
-                 flowable:expression="${procurementService.updateRequestStatus(requestId, 'REJECTED', execution.getVariable('rejectionReason'))}">
+    <!-- Script Task: Update Request Status - Rejected -->
+    <scriptTask id="updateRejected" name="Update Status: Rejected" scriptFormat="groovy">
       <documentation>Updates purchase request status to REJECTED</documentation>
-    </serviceTask>
+      <script>
+        <![CDATA[
+          import groovy.json.JsonBuilder
+          import java.net.HttpURLConnection
+
+          def procurementServiceUrl = execution.getVariable('procurementServiceUrl')
+          def url = new URL("${procurementServiceUrl}/api/workflow/procurement/update-status")
+          def connection = url.openConnection() as HttpURLConnection
+
+          connection.setRequestMethod('PUT')
+          connection.setDoOutput(true)
+          connection.setRequestProperty('Content-Type', 'application/json')
+          connection.setConnectTimeout(15000)
+          connection.setReadTimeout(15000)
+
+          def requestBody = [
+            requestId: execution.getVariable('requestId'),
+            status: 'REJECTED',
+            rejectionReason: execution.getVariable('rejectionReason')
+          ]
+
+          def jsonBody = new JsonBuilder(requestBody).toString()
+          connection.outputStream.withWriter { it.write(jsonBody) }
+
+          def responseCode = connection.responseCode
+          if (responseCode != 200 && responseCode != 204) {
+            throw new RuntimeException("Failed to update status: HTTP ${responseCode}")
+          }
+        ]]>
+      </script>
+    </scriptTask>
 
     <!-- Service Task: Send Rejection Notification -->
     <serviceTask id="sendRejectionNotification" name="Send Rejection Notification"
-                 flowable:expression="${notificationService.sendEmail(requesterEmail, 'Purchase Request Rejected', rejectionMessage)}">
+                 flowable:delegateExpression="${notificationDelegate}">
       <documentation>Sends email notification to requester about rejection</documentation>
+      <extensionElements>
+        <flowable:field name="notificationType">
+          <flowable:string><![CDATA[PROCUREMENT_REJECTED]]></flowable:string>
+        </flowable:field>
+      </extensionElements>
     </serviceTask>
 
     <!-- End Events -->
@@ -140,10 +390,10 @@
 
     <!-- Director Gateway Flows -->
     <sequenceFlow id="directorNotNeeded" sourceRef="directorGateway" targetRef="mergeGateway">
-      <conditionExpression xsi:type="tFormalExpression">${totalCost &lt;= 10000}</conditionExpression>
+      <conditionExpression xsi:type="tFormalExpression">${totalCost &lt;= 10000 || (supervisorApproved == true &amp;&amp; totalCost &lt;= 50000)}</conditionExpression>
     </sequenceFlow>
     <sequenceFlow id="directorPath" sourceRef="directorGateway" targetRef="managerApproval">
-      <conditionExpression xsi:type="tFormalExpression">${totalCost &gt; 10000}</conditionExpression>
+      <conditionExpression xsi:type="tFormalExpression">${supervisorApproved == true &amp;&amp; totalCost &gt; 10000}</conditionExpression>
     </sequenceFlow>
 
     <sequenceFlow id="flow9" sourceRef="managerApproval" targetRef="directorApproval" />
@@ -152,10 +402,21 @@
 
     <!-- Decision Gateway Flows -->
     <sequenceFlow id="approved" sourceRef="decisionGateway" targetRef="createPurchaseOrder">
-      <conditionExpression xsi:type="tFormalExpression">${approvalDecision == 'APPROVED'}</conditionExpression>
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[
+        ${
+          (supervisorApproved == true) &&
+          (totalCost <= 10000 || (managerApproved == true && (totalCost <= 50000 || directorApproved == true)))
+        }
+      ]]></conditionExpression>
     </sequenceFlow>
     <sequenceFlow id="rejected" sourceRef="decisionGateway" targetRef="updateRejected">
-      <conditionExpression xsi:type="tFormalExpression">${approvalDecision == 'REJECTED'}</conditionExpression>
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[
+        ${
+          (supervisorApproved == false) ||
+          (totalCost > 10000 && managerApproved == false) ||
+          (totalCost > 50000 && directorApproved == false)
+        }
+      ]]></conditionExpression>
     </sequenceFlow>
 
     <!-- Approval Path -->
@@ -173,15 +434,224 @@
   <!-- BPMN Diagram (Visual Layout) -->
   <bpmndi:BPMNDiagram id="BPMNDiagram_procurement-approval-process">
     <bpmndi:BPMNPlane bpmnElement="procurement-approval-process" id="BPMNPlane_procurement-approval-process">
+
+      <!-- Start Event -->
       <bpmndi:BPMNShape bpmnElement="startEvent" id="BPMNShape_startEvent">
         <omgdc:Bounds height="30.0" width="30.0" x="100.0" y="163.0"/>
       </bpmndi:BPMNShape>
+
+      <!-- Script Tasks -->
+      <bpmndi:BPMNShape bpmnElement="createPurchaseRequest" id="BPMNShape_createPurchaseRequest">
+        <omgdc:Bounds height="80.0" width="100.0" x="180.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="fetchVendors" id="BPMNShape_fetchVendors">
+        <omgdc:Bounds height="80.0" width="100.0" x="330.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+
+      <!-- User Tasks -->
+      <bpmndi:BPMNShape bpmnElement="selectVendor" id="BPMNShape_selectVendor">
+        <omgdc:Bounds height="80.0" width="100.0" x="480.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="requestQuotations" id="BPMNShape_requestQuotations">
+        <omgdc:Bounds height="80.0" width="100.0" x="630.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="reviewQuotations" id="BPMNShape_reviewQuotations">
+        <omgdc:Bounds height="80.0" width="100.0" x="780.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="calculateTotalCost" id="BPMNShape_calculateTotalCost">
+        <omgdc:Bounds height="80.0" width="100.0" x="930.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Gateways -->
+      <bpmndi:BPMNShape bpmnElement="amountGateway" id="BPMNShape_amountGateway">
+        <omgdc:Bounds height="40.0" width="40.0" x="1080.0" y="158.0"/>
+      </bpmndi:BPMNShape>
+
       <bpmndi:BPMNShape bpmnElement="supervisorApproval" id="BPMNShape_supervisorApproval">
-        <omgdc:Bounds height="80.0" width="100.0" x="700.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="1170.0" y="138.0"/>
       </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="directorGateway" id="BPMNShape_directorGateway">
+        <omgdc:Bounds height="40.0" width="40.0" x="1320.0" y="158.0"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="managerApproval" id="BPMNShape_managerApproval">
+        <omgdc:Bounds height="80.0" width="100.0" x="1410.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="directorApproval" id="BPMNShape_directorApproval">
+        <omgdc:Bounds height="80.0" width="100.0" x="1560.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="mergeGateway" id="BPMNShape_mergeGateway">
+        <omgdc:Bounds height="40.0" width="40.0" x="1710.0" y="158.0"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="decisionGateway" id="BPMNShape_decisionGateway">
+        <omgdc:Bounds height="40.0" width="40.0" x="1800.0" y="158.0"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Approval Path -->
+      <bpmndi:BPMNShape bpmnElement="createPurchaseOrder" id="BPMNShape_createPurchaseOrder">
+        <omgdc:Bounds height="80.0" width="100.0" x="1890.0" y="50.0"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="sendPOToVendor" id="BPMNShape_sendPOToVendor">
+        <omgdc:Bounds height="80.0" width="100.0" x="2040.0" y="50.0"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="updateApproved" id="BPMNShape_updateApproved">
+        <omgdc:Bounds height="80.0" width="100.0" x="2190.0" y="50.0"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="sendApprovalNotification" id="BPMNShape_sendApprovalNotification">
+        <omgdc:Bounds height="80.0" width="100.0" x="2340.0" y="50.0"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Rejection Path -->
+      <bpmndi:BPMNShape bpmnElement="updateRejected" id="BPMNShape_updateRejected">
+        <omgdc:Bounds height="80.0" width="100.0" x="1890.0" y="250.0"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="sendRejectionNotification" id="BPMNShape_sendRejectionNotification">
+        <omgdc:Bounds height="80.0" width="100.0" x="2040.0" y="250.0"/>
+      </bpmndi:BPMNShape>
+
+      <!-- End Events -->
       <bpmndi:BPMNShape bpmnElement="endEventApproved" id="BPMNShape_endEventApproved">
-        <omgdc:Bounds height="28.0" width="28.0" x="1600.0" y="164.0"/>
+        <omgdc:Bounds height="28.0" width="28.0" x="2490.0" y="76.0"/>
       </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="endEventRejected" id="BPMNShape_endEventRejected">
+        <omgdc:Bounds height="28.0" width="28.0" x="2190.0" y="276.0"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Sequence Flow Edges -->
+      <bpmndi:BPMNEdge bpmnElement="flow1" id="BPMNEdge_flow1">
+        <omgdi:waypoint x="130.0" y="178.0"/>
+        <omgdi:waypoint x="180.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="flow2" id="BPMNEdge_flow2">
+        <omgdi:waypoint x="280.0" y="178.0"/>
+        <omgdi:waypoint x="330.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="flow3" id="BPMNEdge_flow3">
+        <omgdi:waypoint x="430.0" y="178.0"/>
+        <omgdi:waypoint x="480.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="flow4" id="BPMNEdge_flow4">
+        <omgdi:waypoint x="580.0" y="178.0"/>
+        <omgdi:waypoint x="630.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="flow5" id="BPMNEdge_flow5">
+        <omgdi:waypoint x="730.0" y="178.0"/>
+        <omgdi:waypoint x="780.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="flow6" id="BPMNEdge_flow6">
+        <omgdi:waypoint x="880.0" y="178.0"/>
+        <omgdi:waypoint x="930.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="flow7" id="BPMNEdge_flow7">
+        <omgdi:waypoint x="1030.0" y="178.0"/>
+        <omgdi:waypoint x="1080.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="amountLow" id="BPMNEdge_amountLow">
+        <omgdi:waypoint x="1120.0" y="178.0"/>
+        <omgdi:waypoint x="1170.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="amountHigh" id="BPMNEdge_amountHigh">
+        <omgdi:waypoint x="1100.0" y="198.0"/>
+        <omgdi:waypoint x="1100.0" y="240.0"/>
+        <omgdi:waypoint x="1220.0" y="240.0"/>
+        <omgdi:waypoint x="1220.0" y="218.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="flow8" id="BPMNEdge_flow8">
+        <omgdi:waypoint x="1270.0" y="178.0"/>
+        <omgdi:waypoint x="1320.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="directorNotNeeded" id="BPMNEdge_directorNotNeeded">
+        <omgdi:waypoint x="1340.0" y="198.0"/>
+        <omgdi:waypoint x="1340.0" y="280.0"/>
+        <omgdi:waypoint x="1730.0" y="280.0"/>
+        <omgdi:waypoint x="1730.0" y="198.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="directorPath" id="BPMNEdge_directorPath">
+        <omgdi:waypoint x="1360.0" y="178.0"/>
+        <omgdi:waypoint x="1410.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="flow9" id="BPMNEdge_flow9">
+        <omgdi:waypoint x="1510.0" y="178.0"/>
+        <omgdi:waypoint x="1560.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="flow10" id="BPMNEdge_flow10">
+        <omgdi:waypoint x="1660.0" y="178.0"/>
+        <omgdi:waypoint x="1710.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="flow11" id="BPMNEdge_flow11">
+        <omgdi:waypoint x="1750.0" y="178.0"/>
+        <omgdi:waypoint x="1800.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="approved" id="BPMNEdge_approved">
+        <omgdi:waypoint x="1820.0" y="158.0"/>
+        <omgdi:waypoint x="1820.0" y="90.0"/>
+        <omgdi:waypoint x="1890.0" y="90.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="rejected" id="BPMNEdge_rejected">
+        <omgdi:waypoint x="1820.0" y="198.0"/>
+        <omgdi:waypoint x="1820.0" y="290.0"/>
+        <omgdi:waypoint x="1890.0" y="290.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="flow12" id="BPMNEdge_flow12">
+        <omgdi:waypoint x="1990.0" y="90.0"/>
+        <omgdi:waypoint x="2040.0" y="90.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="flow13" id="BPMNEdge_flow13">
+        <omgdi:waypoint x="2140.0" y="90.0"/>
+        <omgdi:waypoint x="2190.0" y="90.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="flow14" id="BPMNEdge_flow14">
+        <omgdi:waypoint x="2290.0" y="90.0"/>
+        <omgdi:waypoint x="2340.0" y="90.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="flow15" id="BPMNEdge_flow15">
+        <omgdi:waypoint x="2440.0" y="90.0"/>
+        <omgdi:waypoint x="2490.0" y="90.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="flow16" id="BPMNEdge_flow16">
+        <omgdi:waypoint x="1990.0" y="290.0"/>
+        <omgdi:waypoint x="2040.0" y="290.0"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge bpmnElement="flow17" id="BPMNEdge_flow17">
+        <omgdi:waypoint x="2140.0" y="290.0"/>
+        <omgdi:waypoint x="2190.0" y="290.0"/>
+      </bpmndi:BPMNEdge>
+
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 

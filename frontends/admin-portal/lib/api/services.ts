@@ -140,16 +140,9 @@ export class NetworkError extends ServiceRegistryError {
 // ==================== ERROR HANDLER ====================
 
 function handleApiError(error: any, context: string): never {
-  if (!error.response && !error.request) {
-    // Network error (no response, no request sent)
-    throw new NetworkError()
-  }
-
-  if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
-    throw new NetworkError('Cannot connect to Service Registry API. Please ensure the backend service is running.')
-  }
-
+  // Check for axios error structure
   if (error.response) {
+    // Server responded with error status
     const status = error.response.status
     const data = error.response.data
 
@@ -182,9 +175,14 @@ function handleApiError(error: any, context: string): never {
     }
   }
 
-  // Request made but no response
+  // Request made but no response received (network error, timeout, CORS)
   if (error.request) {
-    throw new NetworkError('No response from Service Registry API. Please check your network connection.')
+    throw new NetworkError('Cannot connect to Service Registry API. Please ensure the backend service is running.')
+  }
+
+  // Network error codes
+  if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK' || error.code === 'ETIMEDOUT') {
+    throw new NetworkError('Cannot connect to Service Registry API. Please ensure the backend service is running.')
   }
 
   // Unknown error
@@ -202,7 +200,8 @@ function handleApiError(error: any, context: string): never {
 export async function getServices(): Promise<Service[]> {
   try {
     const response = await apiClient.get('/api/services')
-    return response.data.map((service: any) => ({
+    const services = Array.isArray(response.data) ? response.data : response.data.content || []
+    return services.map((service: any) => ({
       ...service,
       lastChecked: service.lastChecked ? new Date(service.lastChecked) : undefined,
       createdAt: service.createdAt ? new Date(service.createdAt) : undefined,
@@ -361,7 +360,7 @@ export async function testServiceConnectivity(serviceUrl: string): Promise<Servi
 export async function getServiceEndpoints(serviceId: string): Promise<ServiceEndpoint[]> {
   try {
     const response = await apiClient.get(`/api/services/${serviceId}/endpoints`)
-    return response.data
+    return Array.isArray(response.data) ? response.data : response.data.content || []
   } catch (error: any) {
     handleApiError(error, serviceId)
   }
@@ -376,7 +375,8 @@ export async function getServiceEndpoints(serviceId: string): Promise<ServiceEnd
 export async function getServiceUrls(serviceId: string): Promise<ServiceEnvironmentUrl[]> {
   try {
     const response = await apiClient.get(`/api/services/${serviceId}/urls`)
-    return response.data.map((url: any) => ({
+    const urls = Array.isArray(response.data) ? response.data : response.data.content || []
+    return urls.map((url: any) => ({
       ...url,
       createdAt: url.createdAt ? new Date(url.createdAt) : undefined,
       updatedAt: url.updatedAt ? new Date(url.updatedAt) : undefined

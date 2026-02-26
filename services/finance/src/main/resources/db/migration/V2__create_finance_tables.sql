@@ -1,5 +1,5 @@
 -- Budget Plans (department budgets for fiscal periods)
-CREATE TABLE budget_plans (
+CREATE TABLE IF NOT EXISTS budget_plans (
     id BIGSERIAL PRIMARY KEY,
     department_id BIGINT NOT NULL, -- FK to admin_service.departments
     fiscal_year INTEGER NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE budget_plans (
 );
 
 -- Budget Categories (expense categories for budgeting)
-CREATE TABLE budget_categories (
+CREATE TABLE IF NOT EXISTS budget_categories (
     id BIGSERIAL PRIMARY KEY,
     parent_category_id BIGINT REFERENCES budget_categories(id),
     name VARCHAR(100) NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE budget_categories (
 );
 
 -- Budget Line Items
-CREATE TABLE budget_line_items (
+CREATE TABLE IF NOT EXISTS budget_line_items (
     id BIGSERIAL PRIMARY KEY,
     budget_plan_id BIGINT NOT NULL REFERENCES budget_plans(id),
     category_id BIGINT NOT NULL REFERENCES budget_categories(id),
@@ -46,7 +46,7 @@ CREATE TABLE budget_line_items (
 );
 
 -- Expenses
-CREATE TABLE expenses (
+CREATE TABLE IF NOT EXISTS expenses (
     id BIGSERIAL PRIMARY KEY,
     budget_line_item_id BIGINT REFERENCES budget_line_items(id),
     department_id BIGINT NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE expenses (
 );
 
 -- Approval Thresholds (amount-based approval rules)
-CREATE TABLE approval_thresholds (
+CREATE TABLE IF NOT EXISTS approval_thresholds (
     id BIGSERIAL PRIMARY KEY,
     min_amount DECIMAL(15, 2) NOT NULL,
     max_amount DECIMAL(15, 2),
@@ -84,13 +84,13 @@ CREATE TABLE approval_thresholds (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_budget_plan_dept ON budget_plans(department_id);
-CREATE INDEX idx_budget_plan_fiscal ON budget_plans(fiscal_year);
-CREATE INDEX idx_budget_plan_status ON budget_plans(status);
-CREATE INDEX idx_budget_line_plan ON budget_line_items(budget_plan_id);
-CREATE INDEX idx_budget_line_category ON budget_line_items(category_id);
-CREATE INDEX idx_expense_dept ON expenses(department_id);
-CREATE INDEX idx_expense_date ON expenses(expense_date);
-CREATE INDEX idx_expense_status ON expenses(status);
-CREATE INDEX idx_expense_line_item ON expenses(budget_line_item_id);
-CREATE INDEX idx_expense_submitter ON expenses(submitted_by_user_id);
+CREATE INDEX IF NOT EXISTS idx_budget_plan_dept ON budget_plans(department_id);
+CREATE INDEX IF NOT EXISTS idx_budget_plan_fiscal ON budget_plans(fiscal_year);
+CREATE INDEX IF NOT EXISTS idx_budget_plan_status ON budget_plans(status);
+CREATE INDEX IF NOT EXISTS idx_budget_line_plan ON budget_line_items(budget_plan_id);
+CREATE INDEX IF NOT EXISTS idx_budget_line_category ON budget_line_items(category_id);
+CREATE INDEX IF NOT EXISTS idx_expense_dept ON expenses(department_id);
+CREATE INDEX IF NOT EXISTS idx_expense_date ON expenses(expense_date);
+CREATE INDEX IF NOT EXISTS idx_expense_status ON expenses(status);
+CREATE INDEX IF NOT EXISTS idx_expense_line_item ON expenses(budget_line_item_id);
+CREATE INDEX IF NOT EXISTS idx_expense_submitter ON expenses(submitted_by_user_id);

@@ -1,6 +1,12 @@
 import axios from 'axios'
 
-// Engine service base URL - supports both Werkflow custom APIs (/werkflow/api/*) and Flowable APIs (/api/*)
+// Engine service base URL - supports both Werkflow custom APIs and Flowable APIs
+// NOTE: Do not include /api suffix here - different endpoints use different base paths:
+// - Flowable APIs: /api/*
+// - Werkflow Task APIs: /api/v1/*
+// - Service Registry: /werkflow/api/services/*
+// - Process Definitions: /werkflow/api/process-definitions/*
+// - Forms: /werkflow/api/forms/*
 const API_BASE_URL = process.env.NEXT_PUBLIC_ENGINE_API_URL || 'http://localhost:8081'
 
 export const apiClient = axios.create({
@@ -9,6 +15,10 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
   timeout: 30000, // 30 seconds
+  validateStatus: (status) => {
+    // Accept 2xx and 3xx status codes as successful
+    return status >= 200 && status < 400
+  },
 })
 
 // Token storage for the interceptor

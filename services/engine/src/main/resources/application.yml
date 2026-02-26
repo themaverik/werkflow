@@ -92,12 +92,13 @@ flowable:
   # Set to true only if all BPMN files have complete bpmndi:BPMNDiagram sections
   create-diagram-on-deploy: ${FLOWABLE_CREATE_DIAGRAM_ON_DEPLOY:false}
 
-  # Mail server configuration (if needed)
-  mail-server-host: ${SMTP_HOST:smtp.example.com}
-  mail-server-port: ${SMTP_PORT:587}
-  mail-server-username: ${SMTP_USERNAME:}
-  mail-server-password: ${SMTP_PASSWORD:}
-  mail-server-use-tls: true
+  # Mail server configuration - disabled, using Spring Mail via NotificationService instead
+  # Flowable's built-in mail service is not used; all notifications go through NotificationService
+  # Set host to empty to prevent Flowable from trying to connect to SMTP servers
+  mail-server-host: ""
+  mail-server-port: 25
+  mail-server-default-from: ${MAIL_FROM:noreply@werkflow.local}
+  mail-server-use-tls: false
 
 # Management & Monitoring
 management:
@@ -109,6 +110,9 @@ management:
   endpoint:
     health:
       show-details: ${MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS:always}
+  health:
+    mail:
+      enabled: false  # Disable mail health check since we're not using Spring Mail for Flowable
   metrics:
     export:
       prometheus:
@@ -162,13 +166,36 @@ app:
     enabled: ${SERVICE_REGISTRY_ENABLED:true}
     url: ${SERVICE_REGISTRY_URL:http://localhost:8083/api/services}
 
-  # Service URLs for delegates (fallback URLs when service registry is unavailable)
+  # Service URLs for workflow BPMN processes (injected as process variables)
+  # These URLs are used in Groovy script tasks within BPMN workflows
+  # Each workflow receives the appropriate service URL as a process variable
+  # Example: financeServiceUrl, hrServiceUrl, procurementServiceUrl, inventoryServiceUrl
+  # Override via environment variables for different deployment environments
   services:
-    hr-url: ${HR_SERVICE_URL:http://localhost:8082}
-    admin-url: ${ADMIN_SERVICE_URL:http://localhost:8083}
-    finance-url: ${FINANCE_SERVICE_URL:http://localhost:8084}
-    procurement-url: ${PROCUREMENT_SERVICE_URL:http://localhost:8085}
-    inventory-url: ${INVENTORY_SERVICE_URL:http://localhost:8086}
+    # HR Service - Employee management, leave requests, onboarding
+    hr:
+      url: ${HR_SERVICE_URL:http://localhost:8082}
+
+    # Admin Service - Service registry, system configuration
+    admin:
+      url: ${ADMIN_SERVICE_URL:http://localhost:8083}
+
+    # Finance Service - CapEx approvals, budget management, financial workflows
+    finance:
+      url: ${FINANCE_SERVICE_URL:http://localhost:8084}
+
+    # Procurement Service - Purchase requests, vendor management, PO creation
+    procurement:
+      url: ${PROCUREMENT_SERVICE_URL:http://localhost:8085}
+
+    # Inventory Service - Asset tracking, transfers, custody management
+    inventory:
+      url: ${INVENTORY_SERVICE_URL:http://localhost:8086}
+
+# Admin Service Configuration (for service registry redirection)
+admin:
+  service:
+    url: ${ADMIN_SERVICE_URL:http://admin-service:8083}
 
   # Mail configuration for notification service
   mail:

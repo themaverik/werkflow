@@ -49,8 +49,7 @@ export default function FormJsViewer({
 
     // Initialize form-js
     const form = new Form({
-      container: containerRef.current,
-      readonly
+      container: containerRef.current
     });
 
     formRef.current = form;
@@ -59,6 +58,11 @@ export default function FormJsViewer({
     form.importSchema(schema, data).catch((err) => {
       console.error('Failed to import form schema:', err);
     });
+
+    // Apply readonly mode if specified
+    if (readonly && containerRef.current) {
+      containerRef.current.classList.add('form-js-readonly');
+    }
 
     // Listen to form changes
     form.on('changed', (event: any) => {

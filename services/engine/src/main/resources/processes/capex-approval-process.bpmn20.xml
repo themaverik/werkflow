@@ -36,6 +36,9 @@
     <!-- User Task: Department Manager Approval -->
     <userTask id="managerApproval" name="Manager Review" flowable:candidateGroups="FINANCE_MANAGER" flowable:formKey="capex-approval">
       <documentation>Department manager reviews and approves/rejects the CapEx request</documentation>
+      <extensionElements>
+        <flowable:taskListener event="complete" delegateExpression="${approvalTaskCompletionListener}" />
+      </extensionElements>
     </userTask>
 
     <!-- Exclusive Gateway: Check Amount for VP Approval -->
@@ -44,6 +47,9 @@
     <!-- User Task: VP Approval (for amounts > $50k) -->
     <userTask id="vpApproval" name="VP Review" flowable:candidateGroups="FINANCE_VP" flowable:formKey="capex-approval">
       <documentation>VP reviews high-value CapEx requests exceeding $50,000</documentation>
+      <extensionElements>
+        <flowable:taskListener event="complete" delegateExpression="${approvalTaskCompletionListener}" />
+      </extensionElements>
     </userTask>
 
     <!-- Exclusive Gateway: Check Amount for CFO Approval -->
@@ -52,6 +58,9 @@
     <!-- User Task: CFO Approval (for amounts > $250k) -->
     <userTask id="cfoApproval" name="CFO Review" flowable:candidateGroups="FINANCE_CFO" flowable:formKey="capex-approval">
       <documentation>CFO reviews very high-value CapEx requests exceeding $250,000</documentation>
+      <extensionElements>
+        <flowable:taskListener event="complete" delegateExpression="${approvalTaskCompletionListener}" />
+      </extensionElements>
     </userTask>
 
     <!-- Merge Gateway: Collect all approval paths -->
@@ -108,35 +117,65 @@
       <conditionExpression xsi:type="tFormalExpression">${budgetAvailable == false}</conditionExpression>
     </sequenceFlow>
 
+    <!-- After manager approval, check if rejected or continue to amount-based routing -->
     <sequenceFlow id="flow4" sourceRef="managerApproval" targetRef="amountGateway" />
 
     <!-- Amount Gateway Flows -->
-    <sequenceFlow id="amountLow" sourceRef="amountGateway" targetRef="mergeGateway">
-      <conditionExpression xsi:type="tFormalExpression">${requestAmount &lt;= 50000}</conditionExpression>
+    <!-- If manager rejected, skip further approvals and go to merge -->
+    <sequenceFlow id="managerRejected" sourceRef="amountGateway" targetRef="mergeGateway">
+      <conditionExpression xsi:type="tFormalExpression">${managerApproved == false}</conditionExpression>
     </sequenceFlow>
+    <!-- If amount <= 50k and manager approved, proceed to final decision -->
+    <sequenceFlow id="amountLow" sourceRef="amountGateway" targetRef="mergeGateway">
+      <conditionExpression xsi:type="tFormalExpression">${managerApproved == true &amp;&amp; requestAmount &lt;= 50000}</conditionExpression>
+    </sequenceFlow>
+    <!-- If amount > 50k and manager approved, get VP approval -->
     <sequenceFlow id="amountHigh" sourceRef="amountGateway" targetRef="vpApproval">
-      <conditionExpression xsi:type="tFormalExpression">${requestAmount &gt; 50000}</conditionExpression>
+      <conditionExpression xsi:type="tFormalExpression">${managerApproved == true &amp;&amp; requestAmount &gt; 50000}</conditionExpression>
     </sequenceFlow>
 
+    <!-- After VP approval, check if rejected or continue to CFO routing -->
     <sequenceFlow id="flow5" sourceRef="vpApproval" targetRef="cfoGateway" />
 
     <!-- CFO Gateway Flows -->
-    <sequenceFlow id="cfoNotNeeded" sourceRef="cfoGateway" targetRef="mergeGateway">
-      <conditionExpression xsi:type="tFormalExpression">${requestAmount &lt;= 250000}</conditionExpression>
+    <!-- If VP rejected, skip CFO approval and go to merge -->
+    <sequenceFlow id="vpRejected" sourceRef="cfoGateway" targetRef="mergeGateway">
+      <conditionExpression xsi:type="tFormalExpression">${vpApproved == false}</conditionExpression>
     </sequenceFlow>
+    <!-- If amount <= 250k and VP approved, proceed to final decision -->
+    <sequenceFlow id="cfoNotNeeded" sourceRef="cfoGateway" targetRef="mergeGateway">
+      <conditionExpression xsi:type="tFormalExpression">${vpApproved == true &amp;&amp; requestAmount &lt;= 250000}</conditionExpression>
+    </sequenceFlow>
+    <!-- If amount > 250k and VP approved, get CFO approval -->
     <sequenceFlow id="cfoNeeded" sourceRef="cfoGateway" targetRef="cfoApproval">
-      <conditionExpression xsi:type="tFormalExpression">${requestAmount &gt; 250000}</conditionExpression>
+      <conditionExpression xsi:type="tFormalExpression">${vpApproved == true &amp;&amp; requestAmount &gt; 250000}</conditionExpression>
     </sequenceFlow>
 
     <sequenceFlow id="flow6" sourceRef="cfoApproval" targetRef="mergeGateway" />
     <sequenceFlow id="flow7" sourceRef="mergeGateway" targetRef="decisionGateway" />
 
     <!-- Decision Gateway Flows -->
+    <!-- All required approvals must be true for approval -->
+    <!-- Logic: Check that all approval levels that were required returned true -->
+    <!-- For amounts <= 50k: only managerApproved needed -->
+    <!-- For amounts > 50k and <= 250k: managerApproved AND vpApproved needed -->
+    <!-- For amounts > 250k: managerApproved AND vpApproved AND cfoApproved needed -->
     <sequenceFlow id="approved" sourceRef="decisionGateway" targetRef="updateApproved">
-      <conditionExpression xsi:type="tFormalExpression">${approvalDecision == 'APPROVED'}</conditionExpression>
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[
+        ${
+          (managerApproved == true) &&
+          (requestAmount <= 50000 || (vpApproved == true && (requestAmount <= 250000 || cfoApproved == true)))
+        }
+      ]]></conditionExpression>
     </sequenceFlow>
     <sequenceFlow id="rejected" sourceRef="decisionGateway" targetRef="updateRejected">
-      <conditionExpression xsi:type="tFormalExpression">${approvalDecision == 'REJECTED'}</conditionExpression>
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[
+        ${
+          (managerApproved == false) ||
+          (requestAmount > 50000 && vpApproved == false) ||
+          (requestAmount > 250000 && cfoApproved == false)
+        }
+      ]]></conditionExpression>
     </sequenceFlow>
 
     <!-- Approval Path -->

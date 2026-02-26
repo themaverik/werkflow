@@ -2,7 +2,7 @@
 -- This script creates all tables for the HR management system
 
 -- Create departments table
-CREATE TABLE departments (
+CREATE TABLE IF NOT EXISTS departments (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     description VARCHAR(500),
@@ -18,7 +18,7 @@ CREATE TABLE departments (
 );
 
 -- Create employees table
-CREATE TABLE employees (
+CREATE TABLE IF NOT EXISTS employees (
     id BIGSERIAL PRIMARY KEY,
     employee_code VARCHAR(50) NOT NULL UNIQUE,
     first_name VARCHAR(100) NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE employees (
 );
 
 -- Create leaves table
-CREATE TABLE leaves (
+CREATE TABLE IF NOT EXISTS leaves (
     id BIGSERIAL PRIMARY KEY,
     employee_id BIGINT NOT NULL,
     leave_type VARCHAR(20) NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE leaves (
 );
 
 -- Create attendances table
-CREATE TABLE attendances (
+CREATE TABLE IF NOT EXISTS attendances (
     id BIGSERIAL PRIMARY KEY,
     employee_id BIGINT NOT NULL,
     attendance_date DATE NOT NULL,
@@ -90,7 +90,7 @@ CREATE TABLE attendances (
 );
 
 -- Create performance_reviews table
-CREATE TABLE performance_reviews (
+CREATE TABLE IF NOT EXISTS performance_reviews (
     id BIGSERIAL PRIMARY KEY,
     employee_id BIGINT NOT NULL,
     review_date DATE NOT NULL,
@@ -118,7 +118,7 @@ CREATE TABLE performance_reviews (
 );
 
 -- Create payrolls table
-CREATE TABLE payrolls (
+CREATE TABLE IF NOT EXISTS payrolls (
     id BIGSERIAL PRIMARY KEY,
     employee_id BIGINT NOT NULL,
     payment_month INTEGER NOT NULL,
@@ -147,25 +147,25 @@ CREATE TABLE payrolls (
 );
 
 -- Create indexes for better query performance
-CREATE INDEX idx_employee_email ON employees(email);
-CREATE INDEX idx_employee_code ON employees(employee_code);
-CREATE INDEX idx_employee_department ON employees(department_id);
-CREATE INDEX idx_employee_manager ON employees(manager_id);
+CREATE INDEX IF NOT EXISTS idx_employee_email ON employees(email);
+CREATE INDEX IF NOT EXISTS idx_employee_code ON employees(employee_code);
+CREATE INDEX IF NOT EXISTS idx_employee_department ON employees(department_id);
+CREATE INDEX IF NOT EXISTS idx_employee_manager ON employees(manager_id);
 
-CREATE INDEX idx_leave_employee ON leaves(employee_id);
-CREATE INDEX idx_leave_status ON leaves(status);
-CREATE INDEX idx_leave_dates ON leaves(start_date, end_date);
+CREATE INDEX IF NOT EXISTS idx_leave_employee ON leaves(employee_id);
+CREATE INDEX IF NOT EXISTS idx_leave_status ON leaves(status);
+CREATE INDEX IF NOT EXISTS idx_leave_dates ON leaves(start_date, end_date);
 
-CREATE INDEX idx_attendance_employee ON attendances(employee_id);
-CREATE INDEX idx_attendance_date ON attendances(attendance_date);
+CREATE INDEX IF NOT EXISTS idx_attendance_employee ON attendances(employee_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_date ON attendances(attendance_date);
 
-CREATE INDEX idx_review_employee ON performance_reviews(employee_id);
-CREATE INDEX idx_review_date ON performance_reviews(review_date);
-CREATE INDEX idx_review_reviewer ON performance_reviews(reviewer_id);
+CREATE INDEX IF NOT EXISTS idx_review_employee ON performance_reviews(employee_id);
+CREATE INDEX IF NOT EXISTS idx_review_date ON performance_reviews(review_date);
+CREATE INDEX IF NOT EXISTS idx_review_reviewer ON performance_reviews(reviewer_id);
 
-CREATE INDEX idx_payroll_employee ON payrolls(employee_id);
-CREATE INDEX idx_payroll_date ON payrolls(payment_date);
-CREATE INDEX idx_payroll_period ON payrolls(payment_year, payment_month);
+CREATE INDEX IF NOT EXISTS idx_payroll_employee ON payrolls(employee_id);
+CREATE INDEX IF NOT EXISTS idx_payroll_date ON payrolls(payment_date);
+CREATE INDEX IF NOT EXISTS idx_payroll_period ON payrolls(payment_year, payment_month);
 
 -- Add comments to tables for documentation
 COMMENT ON TABLE departments IS 'Organizational departments';

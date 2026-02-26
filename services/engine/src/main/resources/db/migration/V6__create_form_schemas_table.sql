@@ -8,7 +8,7 @@
 -- ================================================================================================
 
 -- Create form_schemas table to store form-js schema definitions
-CREATE TABLE form_schemas (
+CREATE TABLE IF NOT EXISTS form_schemas (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     form_key VARCHAR(255) NOT NULL,
     version INT NOT NULL DEFAULT 1,
@@ -24,28 +24,28 @@ CREATE TABLE form_schemas (
 );
 
 -- Create index on form_key for faster lookups
-CREATE INDEX idx_form_schemas_form_key ON form_schemas(form_key);
+CREATE INDEX IF NOT EXISTS idx_form_schemas_form_key ON form_schemas(form_key);
 
 -- Create index on form_type for filtering
-CREATE INDEX idx_form_schemas_form_type ON form_schemas(form_type);
+CREATE INDEX IF NOT EXISTS idx_form_schemas_form_type ON form_schemas(form_type);
 
 -- Create index on is_active for filtering active forms
-CREATE INDEX idx_form_schemas_is_active ON form_schemas(is_active);
+CREATE INDEX IF NOT EXISTS idx_form_schemas_is_active ON form_schemas(is_active);
 
 -- Create partial index for latest active version
-CREATE INDEX idx_form_schemas_latest_active
+CREATE INDEX IF NOT EXISTS idx_form_schemas_latest_active
 ON form_schemas(form_key, version DESC)
 WHERE is_active = true;
 
 -- Create GIN index on schema_json for JSONB queries
-CREATE INDEX idx_form_schemas_schema_json ON form_schemas USING GIN (schema_json);
+CREATE INDEX IF NOT EXISTS idx_form_schemas_schema_json ON form_schemas USING GIN (schema_json);
 
 -- ================================================================================================
 -- Form Submissions History
 -- ================================================================================================
 
 -- Create form_submissions table to track all form submissions
-CREATE TABLE form_submissions (
+CREATE TABLE IF NOT EXISTS form_submissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     form_schema_id UUID NOT NULL REFERENCES form_schemas(id),
     task_id VARCHAR(255),
@@ -59,19 +59,19 @@ CREATE TABLE form_submissions (
 );
 
 -- Create index on task_id for task-based queries
-CREATE INDEX idx_form_submissions_task_id ON form_submissions(task_id);
+CREATE INDEX IF NOT EXISTS idx_form_submissions_task_id ON form_submissions(task_id);
 
 -- Create index on process_instance_id for process-based queries
-CREATE INDEX idx_form_submissions_process_instance_id ON form_submissions(process_instance_id);
+CREATE INDEX IF NOT EXISTS idx_form_submissions_process_instance_id ON form_submissions(process_instance_id);
 
 -- Create index on submitted_by for user-based queries
-CREATE INDEX idx_form_submissions_submitted_by ON form_submissions(submitted_by);
+CREATE INDEX IF NOT EXISTS idx_form_submissions_submitted_by ON form_submissions(submitted_by);
 
 -- Create index on submitted_at for chronological queries
-CREATE INDEX idx_form_submissions_submitted_at ON form_submissions(submitted_at DESC);
+CREATE INDEX IF NOT EXISTS idx_form_submissions_submitted_at ON form_submissions(submitted_at DESC);
 
 -- Create GIN index on form_data for JSONB queries
-CREATE INDEX idx_form_submissions_form_data ON form_submissions USING GIN (form_data);
+CREATE INDEX IF NOT EXISTS idx_form_submissions_form_data ON form_submissions USING GIN (form_data);
 
 -- ================================================================================================
 -- Comments

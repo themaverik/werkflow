@@ -63,13 +63,13 @@ export default function FormJsEditor({
 
     // Listen to schema changes
     editor.on('changed', () => {
-      editor.saveSchema().then((updatedSchema) => {
+      editor.saveSchema().then((updatedSchema: any) => {
         setCurrentSchema(updatedSchema);
 
         if (onSchemaChange) {
           onSchemaChange(updatedSchema);
         }
-      }).catch((err) => {
+      }).catch((err: any) => {
         console.error('Failed to save schema:', err);
       });
     });

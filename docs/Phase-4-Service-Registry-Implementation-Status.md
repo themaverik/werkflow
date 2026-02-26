@@ -186,34 +186,36 @@
 - Swagger/OpenAPI annotations (@Operation, @ApiResponse, @ApiParam)
 - Security configuration (role-based access)
 
-### Day 5: ProcessVariableInjector Integration (TO BE COMPLETED)
-**Estimated Time**: 8 hours
+### Day 5: ProcessVariableInjector Integration (COMPLETED)
+**Status**: COMPLETE
+**Location**: `/services/engine/src/main/java/com/werkflow/engine/service/ProcessVariableInjector.java`
 
-#### Required Components:
-1. **ProcessVariableInjector.java** (engine service)
+#### Implemented Components:
+1. **ProcessVariableInjector.java** (engine service) - COMPLETE
    - RestTemplate to call admin-service
-   - `injectServiceUrls(processInstanceId)` method
-   - Service URL resolution
-   - Process variable injection
-   - Fallback to application.yml
-   - Error handling
+   - `injectServiceUrls(processInstanceId)` method - Implemented
+   - Service URL resolution via `/api/services/resolve/{serviceName}?environment={env}`
+   - Process variable injection for 5 services (hr, finance, procurement, inventory, admin)
+   - Fallback to application.yml configuration
+   - Comprehensive error handling with fallback URLs
 
-2. **Caching Configuration**
-   - @EnableCaching
-   - @Cacheable on service URL resolution
-   - 30-second TTL
-   - Cache key: service_name:environment
+2. **Caching Configuration** - COMPLETE
+   - @Cacheable annotation applied
+   - Cache name: "serviceUrls"
+   - Cache key: `serviceName:environment`
+   - Configured in application.yml
 
-3. **Flowable Event Listener**
-   - FlowableEngineEventListener implementation
-   - Listen for PROCESS_STARTED event
-   - Call ProcessVariableInjector.injectServiceUrls()
-   - Graceful error handling
+3. **Auto-Registration Status**
+   - **NO AUTO-REGISTRATION IMPLEMENTED**
+   - Services are registered via Flyway migrations (V4__seed_service_registry.sql)
+   - Services DO NOT auto-register on startup
+   - This is by design - manual registration via seed data ensures consistency
 
-4. **Application.yml Updates**
-   - Admin service: service registry configuration
-   - Engine service: service registry URL configuration
-   - Feature flag: serviceRegistry.enabled=true
+4. **Application.yml Configuration** - COMPLETE
+   - Admin service: Service registry tables and seed data configured
+   - Engine service: ProcessVariableInjector configured with fallback URLs
+   - Feature flag: `serviceRegistry.enabled=true`
+   - Environment: `app.environment=${APP_ENVIRONMENT:development}`
 
 ## Deployment Readiness
 
@@ -322,3 +324,143 @@ With Day 1-2 complete, Days 3-5 are on track for on-time delivery.
 
 ### Ready for Phase 5: YES
 Once controllers and ProcessVariableInjector are complete, Phase 5 (RBAC) can proceed immediately.
+
+## Auto-Registration Analysis (Phase 6 Update - 2025-12-30)
+
+### Current Implementation Status
+
+**Service Registry Auto-Registration**: NOT IMPLEMENTED
+
+The Werkflow platform uses a **manual registration approach** via Flyway database migrations, which is a deliberate architectural decision.
+
+### Why No Auto-Registration?
+
+1. **Consistency Across Environments**
+   - Services are registered via versioned Flyway migrations (V4__seed_service_registry.sql)
+   - Same service definitions across dev, staging, and production
+   - No risk of services registering with incorrect metadata
+
+2. **Centralized Control**
+   - All service definitions in one place (Admin Service database)
+   - Easy to review and audit service configurations
+   - Changes tracked via git version control
+
+3. **Environment URL Management**
+   - Each service has environment-specific URLs (dev, staging, prod, local)
+   - URLs configured centrally in service_environment_urls table
+   - No need for services to know their own URLs
+
+4. **Zero Service Dependencies**
+   - Individual services (HR, Finance, etc.) don't depend on Admin Service at startup
+   - Faster startup times
+   - No circular dependency issues
+
+### How Services Are Registered
+
+#### Step 1: Flyway Migration (Admin Service)
+Location: `/services/admin/src/main/resources/db/migration/V4__seed_service_registry.sql`
+
+```sql
+INSERT INTO service_registry (
+    service_name,
+    display_name,
+    description,
+    service_type,
+    base_path,
+    version,
+    health_check_url,
+    health_status,
+    active
+) VALUES (
+    'hr-service',
+    'Human Resources Service',
+    'Employee management, leave requests, payroll',
+    'INTERNAL',
+    '/api/v1',
+    '1.0.0',
+    '/actuator/health',
+    'UNKNOWN',
+    true
+);
+```
+
+#### Step 2: Environment URLs Configured
+```sql
+INSERT INTO service_environment_urls (
+    service_id,
+    environment,
+    base_url,
+    priority,
+    active
+) VALUES (
+    (SELECT id FROM service_registry WHERE service_name = 'hr-service'),
+    'development',
+    'http://localhost:8082',
+    1,
+    true
+);
+```
+
+#### Step 3: Engine Service Resolves URLs at Runtime
+Location: `/services/engine/src/main/java/com/werkflow/engine/service/ProcessVariableInjector.java`
+
+- When workflow starts, ProcessVariableInjector calls Admin Service
+- Admin Service returns correct URL based on environment
+- URL injected as process variable: `hr_service_url = http://localhost:8082`
+
+### Alternative: Auto-Registration (If Needed)
+
+If auto-registration is required in the future, here's how it would work:
+
+#### Option 1: Spring Boot CommandLineRunner
+Each service would implement:
+```java
+@Component
+public class ServiceAutoRegistration implements CommandLineRunner {
+    @Value("${spring.application.name}")
+    private String serviceName;
+
+    @Value("${server.port}")
+    private String port;
+
+    @Value("${admin.service.url}")
+    private String adminServiceUrl;
+
+    private final RestTemplate restTemplate;
+
+    @Override
+    public void run(String... args) {
+        ServiceRegistryRequest request = ServiceRegistryRequest.builder()
+            .serviceName(serviceName)
+            .displayName(serviceName)
+            .serviceType(ServiceType.INTERNAL)
+            .baseUrl("http://localhost:" + port)
+            .build();
+
+        restTemplate.postForEntity(
+            adminServiceUrl + "/api/services",
+            request,
+            ServiceRegistryResponse.class
+        );
+    }
+}
+```
+
+#### Option 2: Spring Cloud Service Discovery
+- Use Spring Cloud Netflix Eureka
+- Services register with Eureka server
+- Admin Service queries Eureka for service list
+- Sync Eureka registry to service_registry table
+
+### Recommendation
+
+**Keep current manual registration approach** because:
+1. Werkflow is a low-code platform, not a microservices mesh
+2. Number of services is relatively small (5-10 services)
+3. Manual registration provides better control and consistency
+4. No need for complex service discovery infrastructure
+
+Only implement auto-registration if:
+- Service count exceeds 20+ services
+- Services are deployed dynamically (e.g., Kubernetes auto-scaling)
+- Multi-tenant architecture with tenant-specific services

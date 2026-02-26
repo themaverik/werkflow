@@ -33,6 +33,9 @@ spring:
     schemas: ${SPRING_DATASOURCE_SCHEMA:inventory_service}
     default-schema: ${SPRING_DATASOURCE_SCHEMA:inventory_service}
 
+  liquibase:
+    enabled: false
+
   security:
     oauth2:
       resourceserver:

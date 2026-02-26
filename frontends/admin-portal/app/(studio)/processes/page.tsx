@@ -3,20 +3,23 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { FileText, Plus, Trash2, Download, Eye } from "lucide-react"
+import { FileText, Plus, Trash2, Download, Eye, Activity, ExternalLink } from "lucide-react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getProcessDefinitions, deleteDeployment, getProcessDefinitionXml } from "@/lib/api/flowable"
 import { downloadBpmn } from "@/lib/bpmn/utils"
 import { useState } from "react"
+import { ErrorDisplay, LoadingState } from "@/components/ui/error-display"
 
 export default function ProcessesPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
   // Fetch process definitions
-  const { data: processes, isLoading } = useQuery({
+  const { data: processes, isLoading, error, refetch } = useQuery({
     queryKey: ['processDefinitions'],
-    queryFn: getProcessDefinitions
+    queryFn: getProcessDefinitions,
+    retry: 2,
+    retryDelay: 1000,
   })
 
   // Delete deployment mutation
@@ -70,12 +73,16 @@ export default function ProcessesPage() {
       </div>
 
       {/* Loading state */}
-      {isLoading && (
-        <Card className="mb-6">
-          <CardContent className="py-8 text-center">
-            <p className="text-muted-foreground">Loading process definitions...</p>
-          </CardContent>
-        </Card>
+      {isLoading && <LoadingState message="Loading process definitions..." className="mb-6" />}
+
+      {/* Error state */}
+      {error && !isLoading && (
+        <ErrorDisplay
+          error={error as Error}
+          onRetry={() => refetch()}
+          title="Failed to load processes"
+          className="mb-6"
+        />
       )}
 
       {/* Deployed Processes */}
@@ -216,48 +223,159 @@ export default function ProcessesPage() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>✅ Phase 2 Week 4: Process Management & Properties Panel!</CardTitle>
+      {/* How to Create a Process Guide */}
+      <Card className="border-2">
+        <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950 dark:to-teal-950">
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+            How to Create a Process
+          </CardTitle>
           <CardDescription>
-            Full BPMN process lifecycle management
+            Follow these steps to design and deploy a BPMN workflow process
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="text-sm">
-              <p className="font-semibold mb-2">Week 3 Features:</p>
-              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li>✅ Visual BPMN editor with bpmn-js</li>
-                <li>✅ Drag-and-drop workflow designer</li>
-                <li>✅ Blank process template generator</li>
-                <li>✅ Load BPMN from file</li>
-                <li>✅ Download BPMN as XML file</li>
-                <li>✅ Zoom controls (in, out, fit viewport)</li>
-                <li>✅ One-click deployment to Flowable backend</li>
-                <li>✅ Real-time change detection</li>
-              </ul>
+        <CardContent className="pt-6">
+          <div className="space-y-6">
+            {/* Step 1 */}
+            <div className="flex gap-4">
+              <div className="flex-shrink-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900 dark:text-emerald-400 font-bold">
+                  1
+                </div>
+              </div>
+              <div className="flex-1 pt-1">
+                <h3 className="font-semibold text-lg mb-2">Start with a Blank Process</h3>
+                <p className="text-muted-foreground mb-3">
+                  Click "Create New Process" to open the BPMN designer. Start with a blank canvas or import an existing BPMN file.
+                </p>
+                <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
+                  <Plus className="h-4 w-4" />
+                  <span>Visual BPMN editor powered by bpmn-js</span>
+                </div>
+              </div>
             </div>
-            <div className="text-sm">
-              <p className="font-semibold mb-2">Week 4 Features (In Progress):</p>
-              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li>✅ Properties panel for element configuration</li>
-                <li>✅ Flowable-specific properties (assignee, groups, form keys)</li>
-                <li>✅ Process definition list with versions</li>
-                <li>🔄 Load and edit existing processes from backend</li>
-                <li>✅ Process delete functionality</li>
-                <li>✅ Version history display</li>
-              </ul>
+
+            {/* Step 2 */}
+            <div className="flex gap-4">
+              <div className="flex-shrink-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-100 text-teal-600 dark:bg-teal-900 dark:text-teal-400 font-bold">
+                  2
+                </div>
+              </div>
+              <div className="flex-1 pt-1">
+                <h3 className="font-semibold text-lg mb-2">Design Your Workflow</h3>
+                <p className="text-muted-foreground mb-3">
+                  Use drag-and-drop to add BPMN elements: tasks, gateways, events, and connectors. Build your process flow visually.
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="h-2 w-2 rounded-full bg-teal-500" />
+                    <span>User tasks with forms</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="h-2 w-2 rounded-full bg-teal-500" />
+                    <span>Service tasks for automation</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="h-2 w-2 rounded-full bg-teal-500" />
+                    <span>Gateways for decision logic</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="h-2 w-2 rounded-full bg-teal-500" />
+                    <span>Events for start/end points</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="text-sm">
-              <p className="font-semibold mb-2">Coming in Phase 3 (Weeks 5-6):</p>
-              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li>Form.io form builder integration</li>
-                <li>Dynamic form renderer for tasks</li>
-                <li>Form-task linking via form keys</li>
-                <li>Form deployment to backend</li>
-              </ul>
+
+            {/* Step 3 */}
+            <div className="flex gap-4">
+              <div className="flex-shrink-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-100 text-cyan-600 dark:bg-cyan-900 dark:text-cyan-400 font-bold">
+                  3
+                </div>
+              </div>
+              <div className="flex-1 pt-1">
+                <h3 className="font-semibold text-lg mb-2">Configure Task Properties</h3>
+                <p className="text-muted-foreground mb-3">
+                  Select each task to configure properties like assignees, candidate groups, forms, and execution listeners. Define task routing and authorization rules.
+                </p>
+                <div className="flex items-center gap-2 text-sm text-cyan-600 dark:text-cyan-400">
+                  <Activity className="h-4 w-4" />
+                  <span>Role-based task assignment with DOA levels</span>
+                </div>
+              </div>
             </div>
+
+            {/* Step 4 */}
+            <div className="flex gap-4">
+              <div className="flex-shrink-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400 font-bold">
+                  4
+                </div>
+              </div>
+              <div className="flex-1 pt-1">
+                <h3 className="font-semibold text-lg mb-2">Add Gateway Conditions</h3>
+                <p className="text-muted-foreground mb-3">
+                  Configure gateway conditions for decision logic. Use process variables to route the workflow based on approval status, amounts, or other criteria.
+                </p>
+                <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
+                  <Eye className="h-4 w-4" />
+                  <span>Expression builder for conditions</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 5 */}
+            <div className="flex gap-4">
+              <div className="flex-shrink-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-900 dark:text-violet-400 font-bold">
+                  5
+                </div>
+              </div>
+              <div className="flex-1 pt-1">
+                <h3 className="font-semibold text-lg mb-2">Validate and Deploy</h3>
+                <p className="text-muted-foreground mb-3">
+                  Validate your BPMN diagram for errors, then deploy it to the Flowable engine with one click. The process becomes immediately available for execution.
+                </p>
+                <div className="flex items-center gap-2 text-sm text-violet-600 dark:text-violet-400">
+                  <Download className="h-4 w-4" />
+                  <span>Download as .bpmn20.xml file</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 6 */}
+            <div className="flex gap-4">
+              <div className="flex-shrink-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-900 dark:text-rose-400 font-bold">
+                  6
+                </div>
+              </div>
+              <div className="flex-1 pt-1">
+                <h3 className="font-semibold text-lg mb-2">Monitor and Optimize</h3>
+                <p className="text-muted-foreground mb-3">
+                  Track process instances, monitor task completion times, and view process history. Use insights to optimize your workflow over time.
+                </p>
+                <div className="flex items-center gap-2 text-sm text-rose-600 dark:text-rose-400">
+                  <ExternalLink className="h-4 w-4" />
+                  <span>Real-time process monitoring</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Call to Action */}
+          <div className="mt-8 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950 dark:to-teal-950 rounded-lg border border-emerald-200 dark:border-emerald-800">
+            <p className="text-sm text-muted-foreground mb-3">
+              Ready to design your first workflow? Click the button below to launch the BPMN designer.
+            </p>
+            <Button asChild className="w-full sm:w-auto">
+              <Link href="/studio/processes/new">
+                <Plus className="h-4 w-4 mr-2" />
+                Create New Process
+              </Link>
+            </Button>
           </div>
         </CardContent>
       </Card>

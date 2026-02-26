@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { getFormDefinition } from '@/lib/api/flowable'
-import DynamicFormBuilder from '@/components/forms/FormBuilder'
+import FormJsBuilder from '@/components/forms/FormJsBuilder'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
@@ -54,7 +54,7 @@ export default function EditFormPage() {
 
   return (
     <div className="h-screen flex flex-col">
-      <DynamicFormBuilder
+      <FormJsBuilder
         initialForm={formDef?.formJson}
         formKey={formKey}
       />

@@ -2,7 +2,7 @@
 -- This script creates all tables for the Finance management system
 
 -- Create CapEx Requests table
-CREATE TABLE capex_requests (
+CREATE TABLE IF NOT EXISTS capex_requests (
     id BIGSERIAL PRIMARY KEY,
     request_number VARCHAR(50) NOT NULL UNIQUE,
     title VARCHAR(255) NOT NULL,
@@ -39,15 +39,15 @@ CREATE TABLE capex_requests (
 );
 
 -- Create indexes for CapEx Requests
-CREATE INDEX idx_capex_request_number ON capex_requests(request_number);
-CREATE INDEX idx_capex_status ON capex_requests(status);
-CREATE INDEX idx_capex_category ON capex_requests(category);
-CREATE INDEX idx_capex_requested_by ON capex_requests(requested_by);
-CREATE INDEX idx_capex_department ON capex_requests(department_name);
-CREATE INDEX idx_capex_budget_year ON capex_requests(budget_year);
+CREATE INDEX IF NOT EXISTS idx_capex_request_number ON capex_requests(request_number);
+CREATE INDEX IF NOT EXISTS idx_capex_status ON capex_requests(status);
+CREATE INDEX IF NOT EXISTS idx_capex_category ON capex_requests(category);
+CREATE INDEX IF NOT EXISTS idx_capex_requested_by ON capex_requests(requested_by);
+CREATE INDEX IF NOT EXISTS idx_capex_department ON capex_requests(department_name);
+CREATE INDEX IF NOT EXISTS idx_capex_budget_year ON capex_requests(budget_year);
 
 -- Create CapEx Approvals table
-CREATE TABLE capex_approvals (
+CREATE TABLE IF NOT EXISTS capex_approvals (
     id BIGSERIAL PRIMARY KEY,
     capex_request_id BIGINT NOT NULL,
     approval_level VARCHAR(30) NOT NULL,
@@ -68,13 +68,13 @@ CREATE TABLE capex_approvals (
 );
 
 -- Create indexes for CapEx Approvals
-CREATE INDEX idx_capex_approval_request_id ON capex_approvals(capex_request_id);
-CREATE INDEX idx_capex_approval_level ON capex_approvals(approval_level);
-CREATE INDEX idx_capex_approval_approver ON capex_approvals(approver);
-CREATE INDEX idx_capex_approval_status ON capex_approvals(approval_status);
+CREATE INDEX IF NOT EXISTS idx_capex_approval_request_id ON capex_approvals(capex_request_id);
+CREATE INDEX IF NOT EXISTS idx_capex_approval_level ON capex_approvals(approval_level);
+CREATE INDEX IF NOT EXISTS idx_capex_approval_approver ON capex_approvals(approver);
+CREATE INDEX IF NOT EXISTS idx_capex_approval_status ON capex_approvals(approval_status);
 
 -- Create Budgets table
-CREATE TABLE budgets (
+CREATE TABLE IF NOT EXISTS budgets (
     id BIGSERIAL PRIMARY KEY,
     budget_year INTEGER NOT NULL,
     category VARCHAR(30) NOT NULL,
@@ -94,7 +94,7 @@ CREATE TABLE budgets (
 );
 
 -- Create indexes for Budgets
-CREATE INDEX idx_budget_year ON budgets(budget_year);
-CREATE INDEX idx_budget_category ON budgets(category);
-CREATE INDEX idx_budget_department ON budgets(department_name);
-CREATE INDEX idx_budget_active ON budgets(is_active);
+CREATE INDEX IF NOT EXISTS idx_budget_year ON budgets(budget_year);
+CREATE INDEX IF NOT EXISTS idx_budget_category ON budgets(category);
+CREATE INDEX IF NOT EXISTS idx_budget_department ON budgets(department_name);
+CREATE INDEX IF NOT EXISTS idx_budget_active ON budgets(is_active);

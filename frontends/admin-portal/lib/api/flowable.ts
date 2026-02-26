@@ -34,52 +34,52 @@ export interface FormDefinitionResponse {
 
 // Deploy BPMN process
 export async function deployBpmn(data: BpmnDeploymentRequest): Promise<DeploymentResponse> {
-  const response = await apiClient.post('/deployments', data)
+  const response = await apiClient.post('/api/process-definitions/deploy', data)
   return response.data
 }
 
 // Get all process definitions
 export async function getProcessDefinitions(): Promise<ProcessDefinitionResponse[]> {
-  const response = await apiClient.get('/process-definitions')
+  const response = await apiClient.get('/api/process-definitions')
   return response.data
 }
 
 // Get BPMN XML for a process definition
 export async function getProcessDefinitionXml(processDefinitionId: string): Promise<string> {
-  const response = await apiClient.get(`/process-definitions/${processDefinitionId}/xml`)
+  const response = await apiClient.get(`/api/process-definitions/${processDefinitionId}/xml`)
   return response.data
 }
 
 // Delete a deployment (includes all process definitions within it)
 export async function deleteDeployment(deploymentId: string): Promise<void> {
-  await apiClient.delete(`/deployments/${deploymentId}`)
+  await apiClient.delete(`/api/process-definitions/deployment/${deploymentId}`)
 }
 
 // Deploy form definition
 export async function deployForm(data: FormDeploymentRequest): Promise<DeploymentResponse> {
-  const response = await apiClient.post('/forms', data)
+  const response = await apiClient.post('/api/forms', data)
   return response.data
 }
 
 // Get all form definitions
 export async function getFormDefinitions(): Promise<FormDefinitionResponse[]> {
-  const response = await apiClient.get('/forms')
+  const response = await apiClient.get('/api/forms')
   return response.data
 }
 
 // Get form definition by key
 export async function getFormDefinition(formKey: string): Promise<FormDefinitionResponse> {
-  const response = await apiClient.get(`/forms/${formKey}`)
+  const response = await apiClient.get(`/api/forms/${formKey}`)
   return response.data
 }
 
 // Delete a form definition
 export async function deleteFormDefinition(formKey: string): Promise<void> {
-  await apiClient.delete(`/forms/${formKey}`)
+  await apiClient.delete(`/api/forms/${formKey}`)
 }
 
 // Get form data for a task
 export async function getTaskFormData(taskId: string): Promise<any> {
-  const response = await apiClient.get(`/tasks/${taskId}/form`)
+  const response = await apiClient.get(`/api/v1/tasks/${taskId}/form`)
   return response.data
 }

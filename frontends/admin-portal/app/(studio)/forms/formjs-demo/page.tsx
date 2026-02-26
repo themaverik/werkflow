@@ -1,13 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import FormJsViewer from '@/components/forms/FormJsViewer';
 import FormJsEditor from '@/components/forms/FormJsEditor';
-
-// Import form schemas
-import capexRequestSchema from '@/../../../services/finance/src/main/resources/forms/formjs/capex-request-form.json';
-import leaveRequestSchema from '@/../../../services/hr/src/main/resources/forms/formjs/leave-request-form.json';
-import prSchema from '@/../../../services/procurement/src/main/resources/forms/formjs/purchase-requisition-form.json';
 
 /**
  * Form.js Demo Page
@@ -16,12 +11,63 @@ import prSchema from '@/../../../services/procurement/src/main/resources/forms/f
  * - CapEx Request Form
  * - Leave Request Form
  * - Purchase Requisition Form
+ *
+ * Form schemas are fetched from the backend API at runtime
  */
 export default function FormJsDemoPage() {
   const [activeTab, setActiveTab] = useState<'capex' | 'leave' | 'pr' | 'editor'>('capex');
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [submittedData, setSubmittedData] = useState<Record<string, any> | null>(null);
-  const [editorSchema, setEditorSchema] = useState<any>(capexRequestSchema);
+  const [editorSchema, setEditorSchema] = useState<any>(null);
+
+  // Form schemas state
+  const [capexRequestSchema, setCapexRequestSchema] = useState<any>(null);
+  const [leaveRequestSchema, setLeaveRequestSchema] = useState<any>(null);
+  const [prSchema, setPrSchema] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch form schemas from API
+  useEffect(() => {
+    const fetchSchemas = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch all form schemas from the backend
+        const [capexRes, leaveRes, prRes] = await Promise.all([
+          fetch('/api/forms/capex-request-form'),
+          fetch('/api/forms/leave-request-form'),
+          fetch('/api/forms/purchase-requisition-form'),
+        ]);
+
+        if (!capexRes.ok || !leaveRes.ok || !prRes.ok) {
+          throw new Error('Failed to load form schemas');
+        }
+
+        const capexData = await capexRes.json();
+        const leaveData = await leaveRes.json();
+        const prData = await prRes.json();
+
+        setCapexRequestSchema(capexData);
+        setLeaveRequestSchema(leaveData);
+        setPrSchema(prData);
+        setEditorSchema(capexData);
+      } catch (err) {
+        console.error('Error fetching schemas:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load form schemas');
+        // Set default empty schemas on error
+        setCapexRequestSchema({ type: 'default', components: [] });
+        setLeaveRequestSchema({ type: 'default', components: [] });
+        setPrSchema({ type: 'default', components: [] });
+        setEditorSchema({ type: 'default', components: [] });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSchemas();
+  }, []);
 
   const handleSubmit = (data: Record<string, any>) => {
     console.log('Form submitted:', data);
@@ -42,6 +88,37 @@ export default function FormJsDemoPage() {
     // In production, save to backend
     return Promise.resolve();
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <h1 className="text-3xl font-bold mb-6">Form.js Integration Demo</h1>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading form schemas...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <h1 className="text-3xl font-bold mb-6">Form.js Integration Demo</h1>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+          <h2 className="text-red-800 font-semibold mb-2">Error Loading Forms</h2>
+          <p className="text-red-700">{error}</p>
+          <p className="text-red-600 text-sm mt-2">
+            Make sure the backend API is running and accessible at /api/forms/
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8 px-4">

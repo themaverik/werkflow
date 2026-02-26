@@ -1,5 +1,5 @@
-import DynamicFormBuilder from '@/components/forms/FormBuilder'
+import FormJsBuilder from '@/components/forms/FormJsBuilder'
 
 export default function NewFormPage() {
-  return <DynamicFormBuilder />
+  return <FormJsBuilder />
 }

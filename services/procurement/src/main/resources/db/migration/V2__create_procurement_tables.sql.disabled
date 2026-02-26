@@ -1,26 +1,6 @@
--- Vendors
-CREATE TABLE vendors (
-    id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(200) NOT NULL,
-    code VARCHAR(50) UNIQUE,
-    contact_person VARCHAR(100),
-    email VARCHAR(100),
-    phone VARCHAR(20),
-    address VARCHAR(500),
-    tax_id VARCHAR(50),
-    payment_terms VARCHAR(100),
-    rating DECIMAL(3, 2),
-    status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
-    notes VARCHAR(2000),
-    metadata JSONB,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT chk_vendor_status CHECK (status IN ('ACTIVE', 'INACTIVE', 'BLACKLISTED')),
-    CONSTRAINT chk_vendor_rating CHECK (rating IS NULL OR (rating >= 0 AND rating <= 5))
-);
-
+-- Vendors table is created in V1__Initial_Schema.sql
 -- Purchase Requests
-CREATE TABLE purchase_requests (
+CREATE TABLE IF NOT EXISTS purchase_requests (
     id BIGSERIAL PRIMARY KEY,
     request_number VARCHAR(50) UNIQUE NOT NULL,
     department_id BIGINT NOT NULL, -- FK to admin_service.departments
@@ -41,7 +21,7 @@ CREATE TABLE purchase_requests (
 );
 
 -- Purchase Request Line Items
-CREATE TABLE pr_line_items (
+CREATE TABLE IF NOT EXISTS pr_line_items (
     id BIGSERIAL PRIMARY KEY,
     purchase_request_id BIGINT NOT NULL REFERENCES purchase_requests(id),
     asset_definition_id BIGINT, -- FK to inventory_service.asset_definitions
@@ -57,7 +37,7 @@ CREATE TABLE pr_line_items (
 );
 
 -- Purchase Orders
-CREATE TABLE purchase_orders (
+CREATE TABLE IF NOT EXISTS purchase_orders (
     id BIGSERIAL PRIMARY KEY,
     po_number VARCHAR(50) UNIQUE NOT NULL,
     purchase_request_id BIGINT REFERENCES purchase_requests(id),
@@ -80,7 +60,7 @@ CREATE TABLE purchase_orders (
 );
 
 -- Purchase Order Line Items
-CREATE TABLE po_line_items (
+CREATE TABLE IF NOT EXISTS po_line_items (
     id BIGSERIAL PRIMARY KEY,
     purchase_order_id BIGINT NOT NULL REFERENCES purchase_orders(id),
     pr_line_item_id BIGINT REFERENCES pr_line_items(id),
@@ -95,7 +75,7 @@ CREATE TABLE po_line_items (
 );
 
 -- Receipts (goods receipt)
-CREATE TABLE receipts (
+CREATE TABLE IF NOT EXISTS receipts (
     id BIGSERIAL PRIMARY KEY,
     receipt_number VARCHAR(50) UNIQUE NOT NULL,
     purchase_order_id BIGINT NOT NULL REFERENCES purchase_orders(id),
@@ -106,7 +86,7 @@ CREATE TABLE receipts (
 );
 
 -- Receipt Line Items
-CREATE TABLE receipt_line_items (
+CREATE TABLE IF NOT EXISTS receipt_line_items (
     id BIGSERIAL PRIMARY KEY,
     receipt_id BIGINT NOT NULL REFERENCES receipts(id),
     po_line_item_id BIGINT NOT NULL REFERENCES po_line_items(id),
@@ -119,14 +99,14 @@ CREATE TABLE receipt_line_items (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_vendor_status ON vendors(status);
-CREATE INDEX idx_pr_dept ON purchase_requests(department_id);
-CREATE INDEX idx_pr_status ON purchase_requests(status);
-CREATE INDEX idx_pr_requester ON purchase_requests(requested_by_user_id);
-CREATE INDEX idx_pr_line_pr ON pr_line_items(purchase_request_id);
-CREATE INDEX idx_po_vendor ON purchase_orders(vendor_id);
-CREATE INDEX idx_po_pr ON purchase_orders(purchase_request_id);
-CREATE INDEX idx_po_status ON purchase_orders(status);
-CREATE INDEX idx_po_line_po ON po_line_items(purchase_order_id);
-CREATE INDEX idx_receipt_po ON receipts(purchase_order_id);
-CREATE INDEX idx_receipt_line_receipt ON receipt_line_items(receipt_id);
+CREATE INDEX IF NOT EXISTS idx_vendor_status ON vendors(status);
+CREATE INDEX IF NOT EXISTS idx_pr_dept ON purchase_requests(department_id);
+CREATE INDEX IF NOT EXISTS idx_pr_status ON purchase_requests(status);
+CREATE INDEX IF NOT EXISTS idx_pr_requester ON purchase_requests(requested_by_user_id);
+CREATE INDEX IF NOT EXISTS idx_pr_line_pr ON pr_line_items(purchase_request_id);
+CREATE INDEX IF NOT EXISTS idx_po_vendor ON purchase_orders(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_po_pr ON purchase_orders(purchase_request_id);
+CREATE INDEX IF NOT EXISTS idx_po_status ON purchase_orders(status);
+CREATE INDEX IF NOT EXISTS idx_po_line_po ON po_line_items(purchase_order_id);
+CREATE INDEX IF NOT EXISTS idx_receipt_po ON receipts(purchase_order_id);
+CREATE INDEX IF NOT EXISTS idx_receipt_line_receipt ON receipt_line_items(receipt_id);

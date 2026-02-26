@@ -47,7 +47,7 @@ public class NotificationService {
      * @param taskName Name of the task
      * @param processName Name of the workflow process
      */
-    @Async("taskExecutor")
+    @Async("asyncTaskExecutor")
     @Retryable(
         retryFor = {MailException.class, MessagingException.class},
         maxAttempts = 3,
@@ -67,7 +67,7 @@ public class NotificationService {
      * @param processName Name of the workflow process
      * @param deadline Task deadline
      */
-    @Async("taskExecutor")
+    @Async("asyncTaskExecutor")
     @Retryable(
         retryFor = {MailException.class, MessagingException.class},
         maxAttempts = 3,
@@ -97,10 +97,15 @@ public class NotificationService {
 
             log.info("Task assigned notification sent successfully: taskId={}, assignee={}",
                     taskId, assigneeEmail);
+        } catch (MailException e) {
+            log.warn("Failed to send task assigned notification due to mail server error: " +
+                    "taskId={}, assignee={}. This is non-fatal, workflow will continue.",
+                    taskId, assigneeEmail);
+            log.debug("Mail error details:", e);
         } catch (Exception e) {
-            log.error("Failed to send task assigned notification: taskId={}, assignee={}",
+            log.error("Unexpected error sending task assigned notification: taskId={}, assignee={}. " +
+                    "This is non-fatal, workflow will continue.",
                     taskId, assigneeEmail, e);
-            throw e;
         }
     }
 
@@ -112,7 +117,7 @@ public class NotificationService {
      * @param decision Approval decision (approved/rejected)
      * @param comments Comments from the approver
      */
-    @Async("taskExecutor")
+    @Async("asyncTaskExecutor")
     @Retryable(
         retryFor = {MailException.class, MessagingException.class},
         maxAttempts = 3,
@@ -136,7 +141,7 @@ public class NotificationService {
      * @param completedBy Name of the person who completed the task
      * @param processInstanceId Process instance identifier
      */
-    @Async("taskExecutor")
+    @Async("asyncTaskExecutor")
     @Retryable(
         retryFor = {MailException.class, MessagingException.class},
         maxAttempts = 3,
@@ -170,9 +175,13 @@ public class NotificationService {
 
             log.info("Task completed notification sent successfully: taskId={}, recipients={}",
                     taskId, approverEmails.size());
+        } catch (MailException e) {
+            log.warn("Failed to send task completed notification due to mail server error: " +
+                    "taskId={}. This is non-fatal, workflow will continue.", taskId);
+            log.debug("Mail error details:", e);
         } catch (Exception e) {
-            log.error("Failed to send task completed notification: taskId={}", taskId, e);
-            throw e;
+            log.error("Unexpected error sending task completed notification: taskId={}. " +
+                    "This is non-fatal, workflow will continue.", taskId, e);
         }
     }
 
@@ -183,7 +192,7 @@ public class NotificationService {
      * @param delegateEmail Email address of the delegate
      * @param delegatorName Name of the person delegating the task
      */
-    @Async("taskExecutor")
+    @Async("asyncTaskExecutor")
     @Retryable(
         retryFor = {MailException.class, MessagingException.class},
         maxAttempts = 3,
@@ -205,7 +214,7 @@ public class NotificationService {
      * @param processName Name of the workflow process
      * @param reason Reason for delegation
      */
-    @Async("taskExecutor")
+    @Async("asyncTaskExecutor")
     @Retryable(
         retryFor = {MailException.class, MessagingException.class},
         maxAttempts = 3,
@@ -238,10 +247,15 @@ public class NotificationService {
 
             log.info("Task delegated notification sent successfully: taskId={}, delegate={}",
                     taskId, delegateEmail);
+        } catch (MailException e) {
+            log.warn("Failed to send task delegated notification due to mail server error: " +
+                    "taskId={}, delegate={}. This is non-fatal, workflow will continue.",
+                    taskId, delegateEmail);
+            log.debug("Mail error details:", e);
         } catch (Exception e) {
-            log.error("Failed to send task delegated notification: taskId={}, delegate={}",
+            log.error("Unexpected error sending task delegated notification: taskId={}, delegate={}. " +
+                    "This is non-fatal, workflow will continue.",
                     taskId, delegateEmail, e);
-            throw e;
         }
     }
 
@@ -250,7 +264,7 @@ public class NotificationService {
      *
      * @param request Notification request with recipients and context
      */
-    @Async("taskExecutor")
+    @Async("asyncTaskExecutor")
     @Retryable(
         retryFor = {MailException.class, MessagingException.class},
         maxAttempts = 3,
@@ -301,15 +315,21 @@ public class NotificationService {
 
             log.info("Bulk notification sent successfully: type={}, recipients={}",
                     request.getNotificationType(), request.getRecipients().size());
+        } catch (MailException e) {
+            log.warn("Failed to send bulk notification due to mail server error: " +
+                    "type={}. This is non-fatal, workflow will continue.",
+                    request.getNotificationType());
+            log.debug("Mail error details:", e);
         } catch (Exception e) {
-            log.error("Failed to send bulk notification: type={}",
+            log.error("Unexpected error sending bulk notification: type={}. " +
+                    "This is non-fatal, workflow will continue.",
                     request.getNotificationType(), e);
-            throw e;
         }
     }
 
     /**
      * Internal method to send email with HTML and plain text content
+     * Includes graceful error handling to prevent SMTP failures from crashing the application
      */
     private void sendEmail(List<String> recipients, String subject, String htmlContent,
                           String plainTextContent) {
@@ -330,9 +350,24 @@ public class NotificationService {
 
             mailSender.send(message);
             log.debug("Email sent successfully to {} recipients", recipients.size());
+        } catch (MailException e) {
+            // SMTP/Mail server errors - log warning but don't crash the application
+            log.warn("Failed to send email to recipients due to mail server error: {}. " +
+                    "Recipients: {}. This is non-fatal, workflow will continue.",
+                    e.getMessage(), recipients);
+            log.debug("Mail error details:", e);
+        } catch (MessagingException e) {
+            // Email formatting/content errors - log warning but don't crash
+            log.warn("Failed to send email to recipients due to message formatting error: {}. " +
+                    "Recipients: {}. This is non-fatal, workflow will continue.",
+                    e.getMessage(), recipients);
+            log.debug("Messaging error details:", e);
         } catch (Exception e) {
-            log.error("Failed to send email to recipients: {}", recipients, e);
-            throw new RuntimeException("Failed to send email notification", e);
+            // Unexpected errors - log error but still don't crash the workflow
+            log.error("Unexpected error while sending email to recipients: {}. " +
+                    "This is non-fatal, workflow will continue. Error: {}",
+                    recipients, e.getMessage());
+            log.debug("Unexpected error details:", e);
         }
     }
 

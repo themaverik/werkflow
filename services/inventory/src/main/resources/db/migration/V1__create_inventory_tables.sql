@@ -1,5 +1,5 @@
 -- Asset Categories (hierarchical)
-CREATE TABLE asset_categories (
+CREATE TABLE IF NOT EXISTS asset_categories (
     id BIGSERIAL PRIMARY KEY,
     parent_category_id BIGINT REFERENCES asset_categories(id),
     name VARCHAR(100) NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE asset_categories (
 );
 
 -- Asset Definitions (catalog)
-CREATE TABLE asset_definitions (
+CREATE TABLE IF NOT EXISTS asset_definitions (
     id BIGSERIAL PRIMARY KEY,
     category_id BIGINT NOT NULL REFERENCES asset_categories(id),
     sku VARCHAR(100) UNIQUE,
@@ -31,7 +31,7 @@ CREATE TABLE asset_definitions (
 );
 
 -- Asset Instances (physical items)
-CREATE TABLE asset_instances (
+CREATE TABLE IF NOT EXISTS asset_instances (
     id BIGSERIAL PRIMARY KEY,
     asset_definition_id BIGINT NOT NULL REFERENCES asset_definitions(id),
     asset_tag VARCHAR(100) UNIQUE NOT NULL,
@@ -51,7 +51,7 @@ CREATE TABLE asset_instances (
 );
 
 -- Custody Records (who has what)
-CREATE TABLE custody_records (
+CREATE TABLE IF NOT EXISTS custody_records (
     id BIGSERIAL PRIMARY KEY,
     asset_instance_id BIGINT NOT NULL REFERENCES asset_instances(id),
     custodian_dept_id BIGINT NOT NULL, -- FK to admin_service.departments
@@ -68,7 +68,7 @@ CREATE TABLE custody_records (
 );
 
 -- Transfer Requests (workflow-driven)
-CREATE TABLE transfer_requests (
+CREATE TABLE IF NOT EXISTS transfer_requests (
     id BIGSERIAL PRIMARY KEY,
     asset_instance_id BIGINT NOT NULL REFERENCES asset_instances(id),
     from_dept_id BIGINT NOT NULL,
@@ -93,7 +93,7 @@ CREATE TABLE transfer_requests (
 );
 
 -- Maintenance Records
-CREATE TABLE maintenance_records (
+CREATE TABLE IF NOT EXISTS maintenance_records (
     id BIGSERIAL PRIMARY KEY,
     asset_instance_id BIGINT NOT NULL REFERENCES asset_instances(id),
     maintenance_type VARCHAR(50) NOT NULL,
@@ -108,15 +108,15 @@ CREATE TABLE maintenance_records (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_asset_def_category ON asset_definitions(category_id);
-CREATE INDEX idx_asset_inst_definition ON asset_instances(asset_definition_id);
-CREATE INDEX idx_asset_inst_status ON asset_instances(status);
-CREATE INDEX idx_custody_asset ON custody_records(asset_instance_id);
-CREATE INDEX idx_custody_dept ON custody_records(custodian_dept_id);
-CREATE INDEX idx_custody_user ON custody_records(custodian_user_id);
-CREATE INDEX idx_custody_current ON custody_records(asset_instance_id, end_date) WHERE end_date IS NULL;
-CREATE INDEX idx_transfer_asset ON transfer_requests(asset_instance_id);
-CREATE INDEX idx_transfer_status ON transfer_requests(status);
-CREATE INDEX idx_transfer_from_dept ON transfer_requests(from_dept_id);
-CREATE INDEX idx_transfer_to_dept ON transfer_requests(to_dept_id);
-CREATE INDEX idx_maintenance_asset ON maintenance_records(asset_instance_id);
+CREATE INDEX IF NOT EXISTS idx_asset_def_category ON asset_definitions(category_id);
+CREATE INDEX IF NOT EXISTS idx_asset_inst_definition ON asset_instances(asset_definition_id);
+CREATE INDEX IF NOT EXISTS idx_asset_inst_status ON asset_instances(status);
+CREATE INDEX IF NOT EXISTS idx_custody_asset ON custody_records(asset_instance_id);
+CREATE INDEX IF NOT EXISTS idx_custody_dept ON custody_records(custodian_dept_id);
+CREATE INDEX IF NOT EXISTS idx_custody_user ON custody_records(custodian_user_id);
+CREATE INDEX IF NOT EXISTS idx_custody_current ON custody_records(asset_instance_id, end_date) WHERE end_date IS NULL;
+CREATE INDEX IF NOT EXISTS idx_transfer_asset ON transfer_requests(asset_instance_id);
+CREATE INDEX IF NOT EXISTS idx_transfer_status ON transfer_requests(status);
+CREATE INDEX IF NOT EXISTS idx_transfer_from_dept ON transfer_requests(from_dept_id);
+CREATE INDEX IF NOT EXISTS idx_transfer_to_dept ON transfer_requests(to_dept_id);
+CREATE INDEX IF NOT EXISTS idx_maintenance_asset ON maintenance_records(asset_instance_id);

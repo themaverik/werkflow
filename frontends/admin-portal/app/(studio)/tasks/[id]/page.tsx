@@ -8,11 +8,13 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, CheckCircle2, XCircle, UserPlus, Clock, User, Calendar } from "lucide-react"
 import Link from "next/link"
-import { useTask, useTaskFormData, useTaskHistory, useCompleteTask, useClaimTask, useDelegateTask } from '@/lib/hooks/useTasks'
+import { useTask, useTaskFormData, useTaskHistory, useCompleteTask, useClaimTask, useUnclaimTask, useDelegateTask } from '@/lib/hooks/useTasks'
 import { getTokenFromStorage, extractUserClaims } from '@/lib/utils/jwt'
 import { useToast } from "@/hooks/use-toast"
 import { ApprovalPanel } from '../components/ApprovalPanel'
 import { DelegationModal } from '../components/DelegationModal'
+import { FormSection } from '../components/FormSection'
+import { ProcessTimeline } from '../components/ProcessTimeline'
 import type { UserClaims } from '@/lib/types/task'
 
 export default function TaskDetailPage() {
@@ -30,6 +32,7 @@ export default function TaskDetailPage() {
 
   const completeTaskMutation = useCompleteTask()
   const claimTaskMutation = useClaimTask()
+  const unclaimTaskMutation = useUnclaimTask()
   const delegateTaskMutation = useDelegateTask()
 
   useEffect(() => {
@@ -212,6 +215,39 @@ export default function TaskDetailPage() {
     }
   }
 
+  const handleUnclaim = async () => {
+    try {
+      await unclaimTaskMutation.mutateAsync(taskId)
+      toast({
+        title: 'Task Unclaimed',
+        description: 'Task has been returned to the queue.',
+      })
+    } catch (error: any) {
+      toast({
+        title: 'Failed to Unclaim',
+        description: error.message || 'An error occurred.',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handleFormSubmit = async (data: Record<string, any>) => {
+    try {
+      await completeTaskMutation.mutateAsync({
+        taskId,
+        data: { variables: data },
+      })
+      toast({ title: 'Task Completed', description: 'Form submitted successfully.' })
+      router.push('/tasks')
+    } catch (error: any) {
+      toast({
+        title: 'Submission Failed',
+        description: error.message || 'Failed to submit form.',
+        variant: 'destructive',
+      })
+    }
+  }
+
   if (isLoadingTask) {
     return (
       <div className="container py-6">
@@ -389,85 +425,21 @@ export default function TaskDetailPage() {
             </TabsContent>
 
             <TabsContent value="form" className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Task Form</CardTitle>
-                  <CardDescription>
-                    {task.formKey ? `Form Key: ${task.formKey}` : 'No form associated with this task'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {isLoadingForm && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Loading form...
-                    </div>
-                  )}
-
-                  {!isLoadingForm && !formData && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No form data available for this task.
-                    </div>
-                  )}
-
-                  {formData && (
-                    <div className="bg-muted p-4 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Form rendering will be implemented in the next phase.
-                      </p>
-                      <pre className="text-xs overflow-auto">
-                        {JSON.stringify(formData, null, 2)}
-                      </pre>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <FormSection
+                formData={formData}
+                isLoading={isLoadingForm}
+                onSubmit={handleFormSubmit}
+                isSubmitting={completeTaskMutation.isPending}
+                readonly={!canComplete}
+              />
             </TabsContent>
 
             <TabsContent value="history" className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Task History</CardTitle>
-                  <CardDescription>Timeline of actions performed on this task</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {isLoadingHistory && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Loading history...
-                    </div>
-                  )}
-
-                  {!isLoadingHistory && (!history || history.length === 0) && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No history available for this task.
-                    </div>
-                  )}
-
-                  {history && history.length > 0 && (
-                    <div className="space-y-4">
-                      {history.map((item) => (
-                        <div key={item.id} className="flex gap-4 pb-4 border-b last:border-b-0">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-semibold text-sm">
-                                {item.userName || item.userId}
-                              </span>
-                              <Badge variant="outline" className="text-xs">
-                                {item.action}
-                              </Badge>
-                            </div>
-                            {item.comment && (
-                              <p className="text-sm text-muted-foreground">{item.comment}</p>
-                            )}
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {formatDate(item.timestamp)}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <ProcessTimeline
+                processInstanceId={task.processInstanceId}
+                taskHistory={history}
+                isLoading={isLoadingHistory}
+              />
             </TabsContent>
           </Tabs>
           )}
@@ -502,9 +474,14 @@ export default function TaskDetailPage() {
                       {completeTaskMutation.isPending ? 'Completing...' : 'Complete Task'}
                     </Button>
 
-                    <Button variant="outline" className="w-full">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleUnclaim}
+                      disabled={unclaimTaskMutation.isPending}
+                    >
                       <XCircle className="h-4 w-4 mr-2" />
-                      Reject Task
+                      {unclaimTaskMutation.isPending ? 'Unclaiming...' : 'Unclaim Task'}
                     </Button>
 
                     <Button

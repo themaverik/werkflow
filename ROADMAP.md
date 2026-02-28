@@ -32,10 +32,10 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 
 ## Current Session State
 
-**Active Phase**: S1 — Critical Fixes
-**Current Task**: S4.1 — Task Detail Page (next actionable phase)
-**Last Commit**: *(S2.1 committed this session)*
-**Stopped At**: S1 and S2 complete
+**Active Phase**: S4 — Frontend Completion
+**Current Task**: S4.2 — Request Tracking Page
+**Last Commit**: *(S4.1 committed this session)*
+**Stopped At**: S4.1 complete, S4.2 next
 
 > Update this section at the start and end of every session.
 
@@ -341,15 +341,15 @@ Tasks:
 #### S4.1 — Task Detail Page (2 days)
 
 Tasks:
-- [ ] Brainstorm *(complete feature brainstorm and get user confirmation before starting)*
-- [ ] Create `TaskDetailsPage` component
-- [ ] Wire `ApprovalPanel`, `DOAIndicator`, `DelegationModal` into page
-- [ ] Load task data from `GET /workflows/tasks/my-tasks`
-- [ ] Load task form from `GET /api/tasks/{taskId}/form`
-- [ ] Render form-js form with data binding
-- [ ] Submit form via `POST /api/tasks/{taskId}/form/submit`
-- [ ] Show process timeline from `GET /workflows/processes/{id}/history`
-- [ ] Handle claim, unclaim, and complete actions
+- [x] Brainstorm *(incremental extraction approach confirmed)*
+- [x] Create `TaskDetailsPage` component *(existing page enhanced, not rewritten)*
+- [x] Wire `ApprovalPanel`, `DOAIndicator`, `DelegationModal` into page *(already wired from prior work)*
+- [x] Load task data from `GET /api/v1/tasks/{taskId}` *(useTask hook)*
+- [x] Load task form from `GET /api/v1/tasks/{taskId}/form` *(useTaskFormData hook)*
+- [x] Render form-js form with data binding *(FormSection + FormJsViewer)*
+- [x] Submit form via `POST /api/tasks/{taskId}/form/submit` *(submitTaskForm API + handleFormSubmit)*
+- [x] Show process timeline from `GET /workflows/processes/{id}/history` *(ProcessTimeline component)*
+- [x] Handle claim, unclaim, and complete actions *(unclaim added this session)*
 
 ---
 

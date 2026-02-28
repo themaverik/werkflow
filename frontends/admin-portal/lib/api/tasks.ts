@@ -314,3 +314,20 @@ export async function searchTasks(searchText: string, params?: TaskQueryParams):
     handleApiError(error, 'task search')
   }
 }
+
+export async function submitTaskForm(taskId: string, formData: Record<string, any>): Promise<void> {
+  try {
+    await apiClient.post(`/api/tasks/${taskId}/form/submit`, formData)
+  } catch (error: any) {
+    handleApiError(error, `submit form for task ${taskId}`)
+  }
+}
+
+export async function getProcessHistory(processInstanceId: string): Promise<any> {
+  try {
+    const response = await apiClient.get(`/workflows/processes/${processInstanceId}/history`)
+    return response.data
+  } catch (error: any) {
+    handleApiError(error, `get process history ${processInstanceId}`)
+  }
+}

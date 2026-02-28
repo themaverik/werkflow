@@ -10,6 +10,8 @@ import {
   getTaskHistory,
   getTaskSummary,
   searchTasks,
+  submitTaskForm,
+  getProcessHistory,
 } from '@/lib/api/tasks'
 import type {
   Task,
@@ -203,5 +205,32 @@ export function useDelegateTask() {
       queryClient.invalidateQueries({ queryKey: TASK_QUERY_KEYS.summary() })
       queryClient.invalidateQueries({ queryKey: TASK_QUERY_KEYS.history(variables.taskId) })
     },
+  })
+}
+
+export function useSubmitTaskForm() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ taskId, formData }: { taskId: string; formData: Record<string, any> }) =>
+      submitTaskForm(taskId, formData),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: TASK_QUERY_KEYS.formData(variables.taskId) })
+      queryClient.invalidateQueries({ queryKey: TASK_QUERY_KEYS.detail(variables.taskId) })
+      queryClient.invalidateQueries({ queryKey: TASK_QUERY_KEYS.lists() })
+    },
+  })
+}
+
+export function useProcessHistory(
+  processInstanceId: string | undefined,
+  options?: UseQueryOptions<any, Error>
+) {
+  return useQuery<any, Error>({
+    queryKey: ['processes', 'history', processInstanceId],
+    queryFn: () => getProcessHistory(processInstanceId!),
+    enabled: !!processInstanceId,
+    staleTime: 60000,
+    ...options,
   })
 }

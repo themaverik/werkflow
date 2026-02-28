@@ -24,7 +24,7 @@
         <spring-boot.version>3.3.2</spring-boot.version>
 
         <!-- Flowable -->
-        <flowable.version>7.0.1</flowable.version>
+        <flowable.version>7.1.0</flowable.version>
 
         <!-- Database -->
         <postgresql.version>42.7.3</postgresql.version>

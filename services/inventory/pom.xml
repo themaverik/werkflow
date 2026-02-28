@@ -21,7 +21,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <spring-boot.version>3.3.2</spring-boot.version>
-        <flowable.version>7.0.1</flowable.version>
+        <flowable.version>7.1.0</flowable.version>
         <postgresql.version>42.7.3</postgresql.version>
         <flyway.version>10.15.0</flyway.version>
         <springdoc.version>2.5.0</springdoc.version>

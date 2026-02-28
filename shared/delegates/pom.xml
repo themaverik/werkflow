@@ -24,7 +24,7 @@
         <spring-boot.version>3.3.2</spring-boot.version>
 
         <!-- Flowable -->
-        <flowable.version>7.0.1</flowable.version>
+        <flowable.version>7.1.0</flowable.version>
 
         <!-- Utilities -->
         <lombok.version>1.18.32</lombok.version>

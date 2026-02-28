@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -190,12 +189,9 @@ public class TaskService {
             .assignee(task.getAssignee())
             .owner(task.getOwner())
             .priority(task.getPriority())
-            .createTime(task.getCreateTime() != null ?
-                task.getCreateTime().toInstant().atZone(ZoneId.systemDefault()).toInstant() : null)
-            .dueDate(task.getDueDate() != null ?
-                task.getDueDate().toInstant().atZone(ZoneId.systemDefault()).toInstant() : null)
-            .claimTime(task.getClaimTime() != null ?
-                task.getClaimTime().toInstant().atZone(ZoneId.systemDefault()).toInstant() : null)
+            .createTime(task.getCreateTime() != null ? task.getCreateTime().toInstant() : null)
+            .dueDate(task.getDueDate() != null ? task.getDueDate().toInstant() : null)
+            .claimTime(task.getClaimTime() != null ? task.getClaimTime().toInstant() : null)
             .suspended(task.isSuspended())
             .formKey(task.getFormKey())
             .category(task.getCategory())

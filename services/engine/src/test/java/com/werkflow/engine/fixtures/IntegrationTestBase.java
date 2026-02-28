@@ -1,6 +1,7 @@
 package com.werkflow.engine.fixtures;
 
 import com.werkflow.engine.dto.JwtUserContext;
+import org.flowable.engine.ManagementService;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
 import org.flowable.engine.HistoryService;
@@ -48,6 +49,9 @@ public abstract class IntegrationTestBase {
 
     @Autowired
     protected RepositoryService repositoryService;
+
+    @Autowired
+    protected ManagementService managementService;
 
     @MockBean
     protected JavaMailSender mailSender;
@@ -150,10 +154,14 @@ public abstract class IntegrationTestBase {
      * @throws InterruptedException if interrupted while waiting
      */
     protected void waitForAsyncJobs(long maxWaitMs) throws InterruptedException {
-        // Simplified wait for async operations
-        // In Flowable 7.0.1, async jobs are managed differently
-        // For tests, we just wait a reasonable time for async operations to complete
-        Thread.sleep(Math.min(maxWaitMs, 1000));
+        long start = System.currentTimeMillis();
+        while (System.currentTimeMillis() - start < maxWaitMs) {
+            long jobCount = managementService.createJobQuery().count();
+            if (jobCount == 0) {
+                return;
+            }
+            Thread.sleep(100);
+        }
     }
 
     /**

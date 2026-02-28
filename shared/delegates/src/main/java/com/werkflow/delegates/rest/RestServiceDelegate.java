@@ -30,6 +30,11 @@ import java.util.Map;
  * - body: Request body object (optional, for POST/PUT/PATCH)
  * - responseVariable: Variable name to store response (default: "restResponse")
  *
+ * JWT Propagation:
+ * If the process variable "authorizationToken" is set, the delegate automatically
+ * forwards it as an Authorization header to downstream services. This enables
+ * cross-service JWT propagation without BPMN configuration.
+ *
  * Example MODE 1 - Field Injection (RECOMMENDED):
  * <serviceTask id="createCapEx" flowable:delegateExpression="${restServiceDelegate}">
  *   <extensionElements>
@@ -53,14 +58,6 @@ import java.util.Map;
  *     </flowable:field>
  *   </extensionElements>
  * </serviceTask>
- *
- * Example MODE 2 - Process Variables (Legacy):
- * Use a script task before the service task:
- * <scriptTask scriptFormat="groovy">
- *   execution.setVariable('url', 'http://service/api')
- *   execution.setVariable('body', [title: title, amount: amount])
- * </scriptTask>
- * <serviceTask flowable:delegateExpression="${restServiceDelegate}" />
  */
 @Slf4j
 @Component("restServiceDelegate")
@@ -105,6 +102,17 @@ public class RestServiceDelegate implements JavaDelegate {
                 .uri(urlValue)
                 .contentType(MediaType.APPLICATION_JSON)
                 .headers(httpHeaders -> {
+                    // Forward JWT token if available in process variables
+                    Object authToken = execution.getVariable("authorizationToken");
+                    if (authToken != null) {
+                        String token = authToken.toString();
+                        if (!token.toLowerCase().startsWith("bearer ")) {
+                            token = "Bearer " + token;
+                        }
+                        httpHeaders.set("Authorization", token);
+                        log.debug("Forwarding Authorization header to downstream service");
+                    }
+                    // Apply any explicit headers (override auth if provided)
                     if (headersValue != null) {
                         headersValue.forEach(httpHeaders::add);
                     }

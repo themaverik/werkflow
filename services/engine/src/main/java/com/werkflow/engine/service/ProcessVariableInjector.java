@@ -38,19 +38,19 @@ public class ProcessVariableInjector {
     @Value("${app.environment:development}")
     private String environment;
 
-    @Value("${app.services.admin-url:http://localhost:8083}")
+    @Value("${app.services.admin.url:http://localhost:8083}")
     private String adminServiceUrl;
 
-    @Value("${app.services.hr-url:http://localhost:8082}")
+    @Value("${app.services.hr.url:http://localhost:8082}")
     private String hrServiceFallbackUrl;
 
-    @Value("${app.services.finance-url:http://localhost:8084}")
+    @Value("${app.services.finance.url:http://localhost:8084}")
     private String financeServiceFallbackUrl;
 
-    @Value("${app.services.procurement-url:http://localhost:8085}")
+    @Value("${app.services.procurement.url:http://localhost:8085}")
     private String procurementServiceFallbackUrl;
 
-    @Value("${app.services.inventory-url:http://localhost:8086}")
+    @Value("${app.services.inventory.url:http://localhost:8086}")
     private String inventoryServiceFallbackUrl;
 
     @Value("${app.serviceRegistry.enabled:true}")
@@ -75,13 +75,18 @@ public class ProcessVariableInjector {
                 String serviceUrl = resolveServiceUrl(serviceName, environment);
                 String variableName = serviceName.replace("-", "_") + "_url";
                 variables.put(variableName, serviceUrl);
-                log.debug("Injected variable: {} = {}", variableName, serviceUrl);
+                // Also inject camelCase variant used by BPMN expressions (e.g. financeServiceUrl)
+                String camelName = toCamelCase(serviceName) + "Url";
+                variables.put(camelName, serviceUrl);
+                log.debug("Injected variable: {} / {} = {}", variableName, camelName, serviceUrl);
             } catch (Exception e) {
                 log.warn("Failed to resolve URL for service: {}, using fallback", serviceName, e);
                 String fallbackUrl = getFallbackUrl(serviceName);
                 String variableName = serviceName.replace("-", "_") + "_url";
                 variables.put(variableName, fallbackUrl);
-                log.debug("Injected fallback variable: {} = {}", variableName, fallbackUrl);
+                String camelName = toCamelCase(serviceName) + "Url";
+                variables.put(camelName, fallbackUrl);
+                log.debug("Injected fallback variable: {} / {} = {}", variableName, camelName, fallbackUrl);
             }
         }
 
@@ -158,6 +163,19 @@ public class ProcessVariableInjector {
      *
      * @param serviceName The service name
      */
+    /**
+     * Convert kebab-case service name to camelCase (e.g. "finance-service" -> "financeService")
+     */
+    private String toCamelCase(String kebab) {
+        String[] parts = kebab.split("-");
+        StringBuilder sb = new StringBuilder(parts[0]);
+        for (int i = 1; i < parts.length; i++) {
+            sb.append(Character.toUpperCase(parts[i].charAt(0)));
+            sb.append(parts[i].substring(1));
+        }
+        return sb.toString();
+    }
+
     public void clearCache(String serviceName) {
         log.info("Clearing cache for service: {}", serviceName);
         // Cache is automatically cleared after 30 seconds

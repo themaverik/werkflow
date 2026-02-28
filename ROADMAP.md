@@ -33,9 +33,9 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 ## Current Session State
 
 **Active Phase**: S1 — Critical Fixes
-**Current Task**: S2.1 — Migrate CapEx Approval Process v2 to RestServiceDelegate
-**Last Commit**: *(S1.4 committed this session)*
-**Stopped At**: S1 complete, starting S2
+**Current Task**: S4.1 — Task Detail Page (next actionable phase)
+**Last Commit**: *(S2.1 committed this session)*
+**Stopped At**: S1 and S2 complete
 
 > Update this section at the start and end of every session.
 
@@ -219,7 +219,7 @@ Tasks:
 **Goal**: Make at least one workflow use RestServiceDelegate end-to-end.
 **Duration**: 3-4 hours
 **Prerequisite**: S1.1 must be complete
-**Status**: NOT STARTED
+**Status**: COMPLETED
 
 ---
 
@@ -243,13 +243,15 @@ Tasks:
 ```
 
 Tasks:
-- [ ] Map all Groovy HTTP tasks in `capex-approval-process-v2.bpmn20.xml`
-- [ ] Rewrite each as `<serviceTask flowable:delegateExpression="${restServiceDelegate}">` with `<flowable:field>` configuration
-- [ ] Verify Finance service exposes required endpoints: `POST /api/capex/create-request`, `POST /api/budget/check`, `POST /api/budget/allocate`, `PUT /api/capex/{id}/status`
-- [ ] Create any missing Finance endpoints
-- [ ] Ensure `RestServiceDelegate` forwards `Authorization` header for JWT propagation
-- [ ] Deploy updated BPMN to Flowable
-- [ ] Test execution with at least one DOA approval scenario
+- [x] Map all Groovy HTTP tasks in `capex-approval-process-v2.bpmn20.xml` (5 script tasks: createCapExRequest, checkBudget, updateApproved, reserveBudget, updateRejected)
+- [x] Rewrite each as `<serviceTask flowable:delegateExpression="${restServiceDelegate}">` with `<flowable:field>` configuration
+- [x] Added extract response script tasks to unpack Map response into individual process variables (capexId, requestNumber, budgetAvailable)
+- [x] Created Finance workflow endpoints: `POST /api/workflow/capex/create-request`, `POST /api/workflow/capex/check-budget`, `PUT /api/workflow/capex/update-status`, `POST /api/workflow/capex/allocate` (MVP stubs in CapExWorkflowController + CapExWorkflowService)
+- [x] Added JWT propagation to RestServiceDelegate via `authorizationToken` process variable (auto-forwards as Authorization header)
+- [x] Fixed ProcessVariableInjector @Value property paths to match application.yml (`app.services.finance.url` not `app.services.finance-url`)
+- [x] Added camelCase variable injection (e.g. `financeServiceUrl`) alongside snake_case (`finance_service_url`) for BPMN expression compatibility
+- [x] All 3 modules compile clean (delegates, finance, engine)
+- [ ] Deploy and test execution with DOA approval scenario (requires running Docker — deferred to S5)
 
 ---
 

@@ -18,90 +18,88 @@
       <documentation>Employee submits a capital expenditure request</documentation>
     </startEvent>
 
-    <!-- Script Task: Create CapEx Request via REST API -->
-    <scriptTask id="createCapExRequest" name="Create CapEx Request" scriptFormat="groovy">
+    <!-- Service Task: Create CapEx Request via RestServiceDelegate -->
+    <serviceTask id="createCapExRequest" name="Create CapEx Request"
+                 flowable:delegateExpression="${restServiceDelegate}">
       <documentation>Creates CapEx request record in Finance Service via REST API</documentation>
+      <extensionElements>
+        <flowable:field name="url">
+          <flowable:expression>${financeServiceUrl}/api/workflow/capex/create-request</flowable:expression>
+        </flowable:field>
+        <flowable:field name="method">
+          <flowable:string>POST</flowable:string>
+        </flowable:field>
+        <flowable:field name="body">
+          <flowable:expression>#{
+            {
+              'title': title,
+              'description': description,
+              'category': category,
+              'amount': requestAmount,
+              'priority': priority,
+              'approvalLevel': approvalLevel,
+              'businessJustification': businessJustification,
+              'expectedBenefits': expectedBenefits,
+              'expectedCompletionDate': expectedCompletionDate,
+              'budgetYear': budgetYear,
+              'departmentName': departmentName,
+              'requestedBy': requestedBy
+            }
+          }</flowable:expression>
+        </flowable:field>
+        <flowable:field name="responseVariable">
+          <flowable:string>createRequestResponse</flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- Script Task: Extract response variables from createRequestResponse -->
+    <scriptTask id="extractCreateResponse" name="Extract Create Response" scriptFormat="groovy">
       <script>
         <![CDATA[
-          import groovy.json.JsonBuilder
-          import groovy.json.JsonSlurper
-          import java.net.HttpURLConnection
-
-          def financeServiceUrl = execution.getVariable('financeServiceUrl')
-          def url = new URL("${financeServiceUrl}/api/workflow/capex/create-request")
-          def connection = url.openConnection() as HttpURLConnection
-
-          connection.setRequestMethod('POST')
-          connection.setDoOutput(true)
-          connection.setRequestProperty('Content-Type', 'application/json')
-          connection.setConnectTimeout(15000)
-          connection.setReadTimeout(15000)
-
-          def requestBody = [
-            title: execution.getVariable('title'),
-            description: execution.getVariable('description'),
-            category: execution.getVariable('category'),
-            amount: execution.getVariable('requestAmount'),
-            priority: execution.getVariable('priority'),
-            approvalLevel: execution.getVariable('approvalLevel'),
-            businessJustification: execution.getVariable('businessJustification'),
-            expectedBenefits: execution.getVariable('expectedBenefits'),
-            expectedCompletionDate: execution.getVariable('expectedCompletionDate'),
-            budgetYear: execution.getVariable('budgetYear'),
-            departmentName: execution.getVariable('departmentName'),
-            requestedBy: execution.getVariable('requestedBy')
-          ]
-
-          def jsonBody = new JsonBuilder(requestBody).toString()
-          connection.outputStream.withWriter { it.write(jsonBody) }
-
-          def responseCode = connection.responseCode
-          if (responseCode == 200 || responseCode == 201) {
-            def response = new JsonSlurper().parseText(connection.inputStream.text)
-            execution.setVariable('capexId', response.capexId)
-            execution.setVariable('requestNumber', response.requestNumber)
-          } else {
-            throw new RuntimeException("Failed to create CapEx request: HTTP ${responseCode}")
+          def response = execution.getVariable('createRequestResponse')
+          if (response != null) {
+            execution.setVariable('capexId', response.get('capexId'))
+            execution.setVariable('requestNumber', response.get('requestNumber'))
           }
         ]]>
       </script>
     </scriptTask>
 
-    <!-- Script Task: Check Budget Availability via REST API -->
-    <scriptTask id="checkBudget" name="Check Budget Availability" scriptFormat="groovy">
+    <!-- Service Task: Check Budget Availability via RestServiceDelegate -->
+    <serviceTask id="checkBudget" name="Check Budget Availability"
+                 flowable:delegateExpression="${restServiceDelegate}">
       <documentation>Verifies if budget is available for the requested amount</documentation>
+      <extensionElements>
+        <flowable:field name="url">
+          <flowable:expression>${financeServiceUrl}/api/workflow/capex/check-budget</flowable:expression>
+        </flowable:field>
+        <flowable:field name="method">
+          <flowable:string>POST</flowable:string>
+        </flowable:field>
+        <flowable:field name="body">
+          <flowable:expression>#{
+            {
+              'capexId': capexId,
+              'requestAmount': requestAmount,
+              'departmentName': departmentName
+            }
+          }</flowable:expression>
+        </flowable:field>
+        <flowable:field name="responseVariable">
+          <flowable:string>budgetCheckResponse</flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
+
+    <!-- Script Task: Extract budget check response variables -->
+    <scriptTask id="extractBudgetResponse" name="Extract Budget Response" scriptFormat="groovy">
       <script>
         <![CDATA[
-          import groovy.json.JsonBuilder
-          import groovy.json.JsonSlurper
-          import java.net.HttpURLConnection
-
-          def financeServiceUrl = execution.getVariable('financeServiceUrl')
-          def url = new URL("${financeServiceUrl}/api/workflow/capex/check-budget")
-          def connection = url.openConnection() as HttpURLConnection
-
-          connection.setRequestMethod('POST')
-          connection.setDoOutput(true)
-          connection.setRequestProperty('Content-Type', 'application/json')
-          connection.setConnectTimeout(15000)
-          connection.setReadTimeout(15000)
-
-          def requestBody = [
-            capexId: execution.getVariable('capexId'),
-            requestAmount: execution.getVariable('requestAmount'),
-            departmentName: execution.getVariable('departmentName')
-          ]
-
-          def jsonBody = new JsonBuilder(requestBody).toString()
-          connection.outputStream.withWriter { it.write(jsonBody) }
-
-          def responseCode = connection.responseCode
-          if (responseCode == 200 || responseCode == 201) {
-            def response = new JsonSlurper().parseText(connection.inputStream.text)
-            execution.setVariable('budgetAvailable', response.budgetAvailable)
-            execution.setVariable('availableBudget', response.availableBudget)
-          } else {
-            throw new RuntimeException("Failed to check budget: HTTP ${responseCode}")
+          def response = execution.getVariable('budgetCheckResponse')
+          if (response != null) {
+            execution.setVariable('budgetAvailable', response.get('budgetAvailable'))
+            execution.setVariable('availableBudget', response.get('availableBudget'))
           }
         ]]>
       </script>
@@ -146,75 +144,57 @@
     <!-- Exclusive Gateway: Final Decision -->
     <exclusiveGateway id="decisionGateway" name="Approved?" />
 
-    <!-- Script Task: Update CapEx Status - Approved via REST API -->
-    <scriptTask id="updateApproved" name="Update Status: Approved" scriptFormat="groovy">
+    <!-- Service Task: Update CapEx Status - Approved via RestServiceDelegate -->
+    <serviceTask id="updateApproved" name="Update Status: Approved"
+                 flowable:delegateExpression="${restServiceDelegate}">
       <documentation>Updates CapEx request status to APPROVED in Finance Service</documentation>
-      <script>
-        <![CDATA[
-          import groovy.json.JsonBuilder
-          import java.net.HttpURLConnection
+      <extensionElements>
+        <flowable:field name="url">
+          <flowable:expression>${financeServiceUrl}/api/workflow/capex/update-status</flowable:expression>
+        </flowable:field>
+        <flowable:field name="method">
+          <flowable:string>PUT</flowable:string>
+        </flowable:field>
+        <flowable:field name="body">
+          <flowable:expression>#{
+            {
+              'capexId': capexId,
+              'status': 'APPROVED',
+              'comments': approvalComments
+            }
+          }</flowable:expression>
+        </flowable:field>
+        <flowable:field name="responseVariable">
+          <flowable:string>updateStatusResponse</flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
 
-          def financeServiceUrl = execution.getVariable('financeServiceUrl')
-          def url = new URL("${financeServiceUrl}/api/workflow/capex/update-status")
-          def connection = url.openConnection() as HttpURLConnection
-
-          connection.setRequestMethod('PUT')
-          connection.setDoOutput(true)
-          connection.setRequestProperty('Content-Type', 'application/json')
-          connection.setConnectTimeout(15000)
-          connection.setReadTimeout(15000)
-
-          def requestBody = [
-            capexId: execution.getVariable('capexId'),
-            status: 'APPROVED',
-            comments: execution.getVariable('approvalComments')
-          ]
-
-          def jsonBody = new JsonBuilder(requestBody).toString()
-          connection.outputStream.withWriter { it.write(jsonBody) }
-
-          def responseCode = connection.responseCode
-          if (responseCode != 200 && responseCode != 204) {
-            throw new RuntimeException("Failed to update status: HTTP ${responseCode}")
-          }
-        ]]>
-      </script>
-    </scriptTask>
-
-    <!-- Script Task: Reserve Budget via REST API -->
-    <scriptTask id="reserveBudget" name="Reserve Budget" scriptFormat="groovy">
+    <!-- Service Task: Reserve Budget via RestServiceDelegate -->
+    <serviceTask id="reserveBudget" name="Reserve Budget"
+                 flowable:delegateExpression="${restServiceDelegate}">
       <documentation>Reserves the approved budget amount in the Finance Service</documentation>
-      <script>
-        <![CDATA[
-          import groovy.json.JsonBuilder
-          import java.net.HttpURLConnection
-
-          def financeServiceUrl = execution.getVariable('financeServiceUrl')
-          def url = new URL("${financeServiceUrl}/api/workflow/capex/allocate")
-          def connection = url.openConnection() as HttpURLConnection
-
-          connection.setRequestMethod('POST')
-          connection.setDoOutput(true)
-          connection.setRequestProperty('Content-Type', 'application/json')
-          connection.setConnectTimeout(15000)
-          connection.setReadTimeout(15000)
-
-          def requestBody = [
-            capexId: execution.getVariable('capexId'),
-            requestAmount: execution.getVariable('requestAmount'),
-            departmentName: execution.getVariable('departmentName')
-          ]
-
-          def jsonBody = new JsonBuilder(requestBody).toString()
-          connection.outputStream.withWriter { it.write(jsonBody) }
-
-          def responseCode = connection.responseCode
-          if (responseCode != 200 && responseCode != 201) {
-            throw new RuntimeException("Failed to allocate budget: HTTP ${responseCode}")
-          }
-        ]]>
-      </script>
-    </scriptTask>
+      <extensionElements>
+        <flowable:field name="url">
+          <flowable:expression>${financeServiceUrl}/api/workflow/capex/allocate</flowable:expression>
+        </flowable:field>
+        <flowable:field name="method">
+          <flowable:string>POST</flowable:string>
+        </flowable:field>
+        <flowable:field name="body">
+          <flowable:expression>#{
+            {
+              'capexId': capexId,
+              'requestAmount': requestAmount,
+              'departmentName': departmentName
+            }
+          }</flowable:expression>
+        </flowable:field>
+        <flowable:field name="responseVariable">
+          <flowable:string>budgetAllocationResponse</flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
 
     <!-- Service Task: Send Approval Notification -->
     <serviceTask id="sendApprovalNotification" name="Send Approval Notification"
@@ -227,40 +207,31 @@
       </extensionElements>
     </serviceTask>
 
-    <!-- Script Task: Update CapEx Status - Rejected via REST API -->
-    <scriptTask id="updateRejected" name="Update Status: Rejected" scriptFormat="groovy">
+    <!-- Service Task: Update CapEx Status - Rejected via RestServiceDelegate -->
+    <serviceTask id="updateRejected" name="Update Status: Rejected"
+                 flowable:delegateExpression="${restServiceDelegate}">
       <documentation>Updates CapEx request status to REJECTED in Finance Service</documentation>
-      <script>
-        <![CDATA[
-          import groovy.json.JsonBuilder
-          import java.net.HttpURLConnection
-
-          def financeServiceUrl = execution.getVariable('financeServiceUrl')
-          def url = new URL("${financeServiceUrl}/api/workflow/capex/update-status")
-          def connection = url.openConnection() as HttpURLConnection
-
-          connection.setRequestMethod('PUT')
-          connection.setDoOutput(true)
-          connection.setRequestProperty('Content-Type', 'application/json')
-          connection.setConnectTimeout(15000)
-          connection.setReadTimeout(15000)
-
-          def requestBody = [
-            capexId: execution.getVariable('capexId'),
-            status: 'REJECTED',
-            comments: execution.getVariable('rejectionReason')
-          ]
-
-          def jsonBody = new JsonBuilder(requestBody).toString()
-          connection.outputStream.withWriter { it.write(jsonBody) }
-
-          def responseCode = connection.responseCode
-          if (responseCode != 200 && responseCode != 204) {
-            throw new RuntimeException("Failed to update status: HTTP ${responseCode}")
-          }
-        ]]>
-      </script>
-    </scriptTask>
+      <extensionElements>
+        <flowable:field name="url">
+          <flowable:expression>${financeServiceUrl}/api/workflow/capex/update-status</flowable:expression>
+        </flowable:field>
+        <flowable:field name="method">
+          <flowable:string>PUT</flowable:string>
+        </flowable:field>
+        <flowable:field name="body">
+          <flowable:expression>#{
+            {
+              'capexId': capexId,
+              'status': 'REJECTED',
+              'comments': rejectionReason
+            }
+          }</flowable:expression>
+        </flowable:field>
+        <flowable:field name="responseVariable">
+          <flowable:string>updateStatusResponse</flowable:string>
+        </flowable:field>
+      </extensionElements>
+    </serviceTask>
 
     <!-- Service Task: Send Rejection Notification -->
     <serviceTask id="sendRejectionNotification" name="Send Rejection Notification"
@@ -280,8 +251,10 @@
 
     <!-- Sequence Flows -->
     <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="createCapExRequest" />
-    <sequenceFlow id="flow2" sourceRef="createCapExRequest" targetRef="checkBudget" />
-    <sequenceFlow id="flow3" sourceRef="checkBudget" targetRef="budgetGateway" />
+    <sequenceFlow id="flow1b" sourceRef="createCapExRequest" targetRef="extractCreateResponse" />
+    <sequenceFlow id="flow2" sourceRef="extractCreateResponse" targetRef="checkBudget" />
+    <sequenceFlow id="flow2b" sourceRef="checkBudget" targetRef="extractBudgetResponse" />
+    <sequenceFlow id="flow3" sourceRef="extractBudgetResponse" targetRef="budgetGateway" />
 
     <!-- Budget Gateway Flows -->
     <sequenceFlow id="budgetYes" sourceRef="budgetGateway" targetRef="managerApproval">
@@ -295,15 +268,12 @@
     <sequenceFlow id="flow4" sourceRef="managerApproval" targetRef="amountGateway" />
 
     <!-- Amount Gateway Flows -->
-    <!-- If manager rejected, skip further approvals and go to merge -->
     <sequenceFlow id="managerRejected" sourceRef="amountGateway" targetRef="mergeGateway">
       <conditionExpression xsi:type="tFormalExpression">${managerApproved == false}</conditionExpression>
     </sequenceFlow>
-    <!-- If amount <= 50k and manager approved, proceed to final decision -->
     <sequenceFlow id="amountLow" sourceRef="amountGateway" targetRef="mergeGateway">
       <conditionExpression xsi:type="tFormalExpression">${managerApproved == true &amp;&amp; requestAmount &lt;= 50000}</conditionExpression>
     </sequenceFlow>
-    <!-- If amount > 50k and manager approved, get VP approval -->
     <sequenceFlow id="amountHigh" sourceRef="amountGateway" targetRef="vpApproval">
       <conditionExpression xsi:type="tFormalExpression">${managerApproved == true &amp;&amp; requestAmount &gt; 50000}</conditionExpression>
     </sequenceFlow>
@@ -312,15 +282,12 @@
     <sequenceFlow id="flow5" sourceRef="vpApproval" targetRef="cfoGateway" />
 
     <!-- CFO Gateway Flows -->
-    <!-- If VP rejected, skip CFO approval and go to merge -->
     <sequenceFlow id="vpRejected" sourceRef="cfoGateway" targetRef="mergeGateway">
       <conditionExpression xsi:type="tFormalExpression">${vpApproved == false}</conditionExpression>
     </sequenceFlow>
-    <!-- If amount <= 250k and VP approved, proceed to final decision -->
     <sequenceFlow id="cfoNotNeeded" sourceRef="cfoGateway" targetRef="mergeGateway">
       <conditionExpression xsi:type="tFormalExpression">${vpApproved == true &amp;&amp; requestAmount &lt;= 250000}</conditionExpression>
     </sequenceFlow>
-    <!-- If amount > 250k and VP approved, get CFO approval -->
     <sequenceFlow id="cfoNeeded" sourceRef="cfoGateway" targetRef="cfoApproval">
       <conditionExpression xsi:type="tFormalExpression">${vpApproved == true &amp;&amp; requestAmount &gt; 250000}</conditionExpression>
     </sequenceFlow>
@@ -329,11 +296,6 @@
     <sequenceFlow id="flow7" sourceRef="mergeGateway" targetRef="decisionGateway" />
 
     <!-- Decision Gateway Flows -->
-    <!-- All required approvals must be true for approval -->
-    <!-- Logic: Check that all approval levels that were required returned true -->
-    <!-- For amounts <= 50k: only managerApproved needed -->
-    <!-- For amounts > 50k and <= 250k: managerApproved AND vpApproved needed -->
-    <!-- For amounts > 250k: managerApproved AND vpApproved AND cfoApproved needed -->
     <sequenceFlow id="approved" sourceRef="decisionGateway" targetRef="updateApproved">
       <conditionExpression xsi:type="tFormalExpression"><![CDATA[
         ${
@@ -367,26 +329,30 @@
   <bpmndi:BPMNDiagram id="BPMNDiagram_capex-approval-process-v2">
     <bpmndi:BPMNPlane bpmnElement="capex-approval-process-v2" id="BPMNPlane_capex-approval-process-v2">
 
-      <!-- Start Event -->
       <bpmndi:BPMNShape bpmnElement="startEvent" id="BPMNShape_startEvent">
         <omgdc:Bounds height="30.0" width="30.0" x="100.0" y="163.0"/>
       </bpmndi:BPMNShape>
 
-      <!-- Service Tasks -->
       <bpmndi:BPMNShape bpmnElement="createCapExRequest" id="BPMNShape_createCapExRequest">
         <omgdc:Bounds height="80.0" width="100.0" x="180.0" y="138.0"/>
       </bpmndi:BPMNShape>
 
-      <bpmndi:BPMNShape bpmnElement="checkBudget" id="BPMNShape_checkBudget">
+      <bpmndi:BPMNShape bpmnElement="extractCreateResponse" id="BPMNShape_extractCreateResponse">
         <omgdc:Bounds height="80.0" width="100.0" x="330.0" y="138.0"/>
       </bpmndi:BPMNShape>
 
-      <!-- Gateways -->
-      <bpmndi:BPMNShape bpmnElement="budgetGateway" id="BPMNShape_budgetGateway">
-        <omgdc:Bounds height="40.0" width="40.0" x="480.0" y="158.0"/>
+      <bpmndi:BPMNShape bpmnElement="checkBudget" id="BPMNShape_checkBudget">
+        <omgdc:Bounds height="80.0" width="100.0" x="480.0" y="138.0"/>
       </bpmndi:BPMNShape>
 
-      <!-- User Tasks -->
+      <bpmndi:BPMNShape bpmnElement="extractBudgetResponse" id="BPMNShape_extractBudgetResponse">
+        <omgdc:Bounds height="80.0" width="100.0" x="630.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="budgetGateway" id="BPMNShape_budgetGateway">
+        <omgdc:Bounds height="40.0" width="40.0" x="780.0" y="158.0"/>
+      </bpmndi:BPMNShape>
+
       <bpmndi:BPMNShape bpmnElement="managerApproval" id="BPMNShape_managerApproval">
         <omgdc:Bounds height="80.0" width="100.0" x="870.0" y="138.0"/>
       </bpmndi:BPMNShape>
@@ -415,7 +381,6 @@
         <omgdc:Bounds height="40.0" width="40.0" x="1590.0" y="158.0"/>
       </bpmndi:BPMNShape>
 
-      <!-- Approval Path -->
       <bpmndi:BPMNShape bpmnElement="updateApproved" id="BPMNShape_updateApproved">
         <omgdc:Bounds height="80.0" width="100.0" x="1680.0" y="50.0"/>
       </bpmndi:BPMNShape>
@@ -428,7 +393,6 @@
         <omgdc:Bounds height="80.0" width="100.0" x="1980.0" y="50.0"/>
       </bpmndi:BPMNShape>
 
-      <!-- Rejection Path -->
       <bpmndi:BPMNShape bpmnElement="updateRejected" id="BPMNShape_updateRejected">
         <omgdc:Bounds height="80.0" width="100.0" x="1680.0" y="250.0"/>
       </bpmndi:BPMNShape>
@@ -437,7 +401,6 @@
         <omgdc:Bounds height="80.0" width="100.0" x="1830.0" y="250.0"/>
       </bpmndi:BPMNShape>
 
-      <!-- End Events -->
       <bpmndi:BPMNShape bpmnElement="endEventApproved" id="BPMNShape_endEventApproved">
         <omgdc:Bounds height="28.0" width="28.0" x="2130.0" y="76.0"/>
       </bpmndi:BPMNShape>
@@ -447,129 +410,8 @@
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape bpmnElement="endEventNoBudget" id="BPMNShape_endEventNoBudget">
-        <omgdc:Bounds height="28.0" width="28.0" x="486.0" y="250.0"/>
+        <omgdc:Bounds height="28.0" width="28.0" x="786.0" y="250.0"/>
       </bpmndi:BPMNShape>
-
-      <!-- Sequence Flow Edges -->
-      <bpmndi:BPMNEdge bpmnElement="flow1" id="BPMNEdge_flow1">
-        <omgdi:waypoint x="130.0" y="178.0"/>
-        <omgdi:waypoint x="180.0" y="178.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="flow2" id="BPMNEdge_flow2">
-        <omgdi:waypoint x="280.0" y="178.0"/>
-        <omgdi:waypoint x="330.0" y="178.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="flow3" id="BPMNEdge_flow3">
-        <omgdi:waypoint x="430.0" y="178.0"/>
-        <omgdi:waypoint x="480.0" y="178.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="budgetYes" id="BPMNEdge_budgetYes">
-        <omgdi:waypoint x="520.0" y="178.0"/>
-        <omgdi:waypoint x="870.0" y="178.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="budgetNo" id="BPMNEdge_budgetNo">
-        <omgdi:waypoint x="500.0" y="198.0"/>
-        <omgdi:waypoint x="500.0" y="250.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="flow4" id="BPMNEdge_flow4">
-        <omgdi:waypoint x="970.0" y="178.0"/>
-        <omgdi:waypoint x="1020.0" y="178.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="managerRejected" id="BPMNEdge_managerRejected">
-        <omgdi:waypoint x="1040.0" y="198.0"/>
-        <omgdi:waypoint x="1040.0" y="320.0"/>
-        <omgdi:waypoint x="1520.0" y="320.0"/>
-        <omgdi:waypoint x="1520.0" y="198.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="amountLow" id="BPMNEdge_amountLow">
-        <omgdi:waypoint x="1040.0" y="198.0"/>
-        <omgdi:waypoint x="1040.0" y="240.0"/>
-        <omgdi:waypoint x="1520.0" y="240.0"/>
-        <omgdi:waypoint x="1520.0" y="198.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="amountHigh" id="BPMNEdge_amountHigh">
-        <omgdi:waypoint x="1060.0" y="178.0"/>
-        <omgdi:waypoint x="1110.0" y="178.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="flow5" id="BPMNEdge_flow5">
-        <omgdi:waypoint x="1210.0" y="178.0"/>
-        <omgdi:waypoint x="1260.0" y="178.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="vpRejected" id="BPMNEdge_vpRejected">
-        <omgdi:waypoint x="1280.0" y="198.0"/>
-        <omgdi:waypoint x="1280.0" y="300.0"/>
-        <omgdi:waypoint x="1520.0" y="300.0"/>
-        <omgdi:waypoint x="1520.0" y="198.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="cfoNotNeeded" id="BPMNEdge_cfoNotNeeded">
-        <omgdi:waypoint x="1280.0" y="198.0"/>
-        <omgdi:waypoint x="1280.0" y="260.0"/>
-        <omgdi:waypoint x="1520.0" y="260.0"/>
-        <omgdi:waypoint x="1520.0" y="198.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="cfoNeeded" id="BPMNEdge_cfoNeeded">
-        <omgdi:waypoint x="1300.0" y="178.0"/>
-        <omgdi:waypoint x="1350.0" y="178.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="flow6" id="BPMNEdge_flow6">
-        <omgdi:waypoint x="1450.0" y="178.0"/>
-        <omgdi:waypoint x="1500.0" y="178.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="flow7" id="BPMNEdge_flow7">
-        <omgdi:waypoint x="1540.0" y="178.0"/>
-        <omgdi:waypoint x="1590.0" y="178.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="approved" id="BPMNEdge_approved">
-        <omgdi:waypoint x="1610.0" y="158.0"/>
-        <omgdi:waypoint x="1610.0" y="90.0"/>
-        <omgdi:waypoint x="1680.0" y="90.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="rejected" id="BPMNEdge_rejected">
-        <omgdi:waypoint x="1610.0" y="198.0"/>
-        <omgdi:waypoint x="1610.0" y="290.0"/>
-        <omgdi:waypoint x="1680.0" y="290.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="flow8" id="BPMNEdge_flow8">
-        <omgdi:waypoint x="1780.0" y="90.0"/>
-        <omgdi:waypoint x="1830.0" y="90.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="flow9" id="BPMNEdge_flow9">
-        <omgdi:waypoint x="1930.0" y="90.0"/>
-        <omgdi:waypoint x="1980.0" y="90.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="flow10" id="BPMNEdge_flow10">
-        <omgdi:waypoint x="2080.0" y="90.0"/>
-        <omgdi:waypoint x="2130.0" y="90.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="flow11" id="BPMNEdge_flow11">
-        <omgdi:waypoint x="1780.0" y="290.0"/>
-        <omgdi:waypoint x="1830.0" y="290.0"/>
-      </bpmndi:BPMNEdge>
-
-      <bpmndi:BPMNEdge bpmnElement="flow12" id="BPMNEdge_flow12">
-        <omgdi:waypoint x="1930.0" y="290.0"/>
-        <omgdi:waypoint x="1980.0" y="290.0"/>
-      </bpmndi:BPMNEdge>
 
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

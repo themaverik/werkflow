@@ -5,12 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.flowable.common.engine.api.delegate.Expression;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
+import org.springframework.web.client.RestClient;
 
 import java.util.Map;
 
@@ -31,7 +29,6 @@ import java.util.Map;
  * - headers: Map of HTTP headers (optional)
  * - body: Request body object (optional, for POST/PUT/PATCH)
  * - responseVariable: Variable name to store response (default: "restResponse")
- * - timeoutSeconds: Request timeout in seconds (default: 30)
  *
  * Example MODE 1 - Field Injection (RECOMMENDED):
  * <serviceTask id="createCapEx" flowable:delegateExpression="${restServiceDelegate}">
@@ -69,7 +66,7 @@ import java.util.Map;
 @Component("restServiceDelegate")
 public class RestServiceDelegate implements JavaDelegate {
 
-    private final WebClient webClient;
+    private final RestClient restClient;
     private final ObjectMapper objectMapper;
 
     // Field injection support (MODE 1 - RECOMMENDED)
@@ -78,10 +75,9 @@ public class RestServiceDelegate implements JavaDelegate {
     private Expression headers;
     private Expression body;
     private Expression responseVariable;
-    private Expression timeoutSeconds;
 
-    public RestServiceDelegate(WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
-        this.webClient = webClientBuilder.build();
+    public RestServiceDelegate(RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
+        this.restClient = restClientBuilder.build();
         this.objectMapper = objectMapper;
     }
 
@@ -99,37 +95,29 @@ public class RestServiceDelegate implements JavaDelegate {
         Map<String, String> headersValue = getFieldOrVariable(execution, this.headers, "headers", null);
         Object bodyValue = getFieldOrVariable(execution, this.body, "body", null);
         String responseVariableValue = getFieldOrVariable(execution, this.responseVariable, "responseVariable", "restResponse");
-        Integer timeoutSecondsValue = getFieldOrVariable(execution, this.timeoutSeconds, "timeoutSeconds", 30);
 
         log.debug("REST call configuration: url={}, method={}, responseVariable={}",
             urlValue, methodValue, responseVariableValue);
 
         try {
-            // Build request
-            WebClient.RequestBodySpec requestSpec = webClient
+            RestClient.RequestBodySpec requestSpec = restClient
                 .method(HttpMethod.valueOf(methodValue.toUpperCase()))
                 .uri(urlValue)
+                .contentType(MediaType.APPLICATION_JSON)
                 .headers(httpHeaders -> {
-                    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
                     if (headersValue != null) {
                         headersValue.forEach(httpHeaders::add);
                     }
                 });
 
-            // Add body if present
-            Mono<?> responseMono;
+            Map<String, Object> response;
             if (bodyValue != null && (methodValue.equalsIgnoreCase("POST") ||
                                  methodValue.equalsIgnoreCase("PUT") ||
                                  methodValue.equalsIgnoreCase("PATCH"))) {
-                responseMono = requestSpec.bodyValue(bodyValue).retrieve().bodyToMono(Map.class);
+                response = requestSpec.body(bodyValue).retrieve().body(Map.class);
             } else {
-                responseMono = requestSpec.retrieve().bodyToMono(Map.class);
+                response = requestSpec.retrieve().body(Map.class);
             }
-
-            // Execute request and get response
-            Map<String, Object> response = (Map<String, Object>) responseMono
-                .timeout(java.time.Duration.ofSeconds(timeoutSecondsValue))
-                .block();
 
             // Store response in process variable
             execution.setVariable(responseVariableValue, response);
@@ -169,20 +157,6 @@ public class RestServiceDelegate implements JavaDelegate {
             }
         }
 
-        return value != null ? (T) value : defaultValue;
-    }
-
-    private String getRequiredVariable(DelegateExecution execution, String variableName) {
-        Object value = execution.getVariable(variableName);
-        if (value == null) {
-            throw new IllegalArgumentException("Required variable '" + variableName + "' is not set");
-        }
-        return value.toString();
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> T getVariable(DelegateExecution execution, String variableName, T defaultValue) {
-        Object value = execution.getVariable(variableName);
         return value != null ? (T) value : defaultValue;
     }
 }

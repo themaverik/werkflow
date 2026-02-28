@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
+import org.springframework.web.client.RestClient;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -77,7 +77,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FormRequestDelegate implements JavaDelegate {
 
-    private final WebClient.Builder webClientBuilder;
+    private final RestClient.Builder restClientBuilder;
 
     private static final Map<String, String> SERVICE_URL_MAP = new HashMap<>();
 
@@ -134,18 +134,15 @@ public class FormRequestDelegate implements JavaDelegate {
         }
 
         try {
-            // Submit request to department service
-            WebClient webClient = webClientBuilder.build();
+            RestClient restClient = restClientBuilder.build();
 
-            Map<String, Object> response = webClient
+            Map<String, Object> response = restClient
                 .post()
                 .uri(serviceUrl)
-                .header("Content-Type", "application/json")
-                .bodyValue(requestPayload)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(requestPayload)
                 .retrieve()
-                .bodyToMono(Map.class)
-                .timeout(java.time.Duration.ofSeconds(30))
-                .block();
+                .body(Map.class);
 
             log.info("Form request submitted successfully. Request ID: {}", response.get("requestId"));
 

@@ -33,9 +33,9 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 ## Current Session State
 
 **Active Phase**: S1 — Critical Fixes
-**Current Task**: S1.3 — Delete Dual Package Trees
-**Last Commit**: *(S1.2 committed this session)*
-**Stopped At**: S1.2 complete, starting S1.3
+**Current Task**: S1.4 — Remove Unnecessary Flowable Dependencies
+**Last Commit**: *(S1.3 committed this session)*
+**Stopped At**: S1.3 complete, starting S1.4
 
 > Update this section at the start and end of every session.
 
@@ -188,12 +188,13 @@ Tasks:
 - Same pattern — old `VendorController`, `ProcurementController` and supporting classes
 
 Tasks:
-- [ ] Verify Finance `@SpringBootApplication` scans `com.werkflow.finance` as base package
-- [ ] Delete legacy `com.werkflow.*` packages from Finance
-- [ ] Verify Procurement `@SpringBootApplication` scans `com.werkflow.procurement` as base package
-- [ ] Delete legacy `com.werkflow.*` packages from Procurement
-- [ ] Compile and verify both services start cleanly
-- [ ] Check BPMN files for any `delegateExpression` referencing old bean names from deleted classes
+- [x] Verify Finance `@SpringBootApplication` scans `com.werkflow.finance` as base package (default scan, no explicit scanBasePackages)
+- [x] Delete legacy `com.werkflow.*` packages from Finance (20 files: config, controller, dto, entity, repository, service)
+- [x] Verify Procurement `@SpringBootApplication` scans `com.werkflow.procurement` as base package (default scan)
+- [x] Delete legacy `com.werkflow.*` packages from Procurement (23 files: config, controller, dto, entity, repository, service)
+- [x] Compile and verify both services start cleanly (both compile clean after deleting CapExWorkflowController which depended on legacy types)
+- [x] Check BPMN files for any `delegateExpression` referencing old bean names from deleted classes (none found — all BPMN refs point to correct packages)
+- [x] Deleted CapExWorkflowController (used legacy CapExService/DTOs/entities) — must be rewritten in S2.1 against new Finance domain model
 
 ---
 

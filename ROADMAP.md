@@ -33,9 +33,9 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 ## Current Session State
 
 **Active Phase**: S1 — Critical Fixes
-**Current Task**: S1.4 — Remove Unnecessary Flowable Dependencies
-**Last Commit**: *(S1.3 committed this session)*
-**Stopped At**: S1.3 complete, starting S1.4
+**Current Task**: S2.1 — Migrate CapEx Approval Process v2 to RestServiceDelegate
+**Last Commit**: *(S1.4 committed this session)*
+**Stopped At**: S1 complete, starting S2
 
 > Update this section at the start and end of every session.
 
@@ -119,7 +119,7 @@ Total to MVP (with S3):      ~11-13 days
 **Goal**: Fix verified technical debt before any new feature work.
 **Duration**: 2-3 hours
 **Prerequisite**: None
-**Status**: NOT STARTED
+**Status**: COMPLETED
 
 ---
 
@@ -203,12 +203,14 @@ Tasks:
 **Problem**: 4 domain services include Flowable dependencies they do not use. HR has one embedded `WorkflowService` — all workflow execution must go through the Engine service.
 
 Tasks:
-- [ ] Remove `flowable-spring-boot-starter` and `flowable-spring-boot-starter-rest` from Finance `pom.xml`
-- [ ] Remove `flowable-engine` from Inventory `pom.xml`
-- [ ] Remove `flowable-spring-boot-starter` and `flowable-spring-boot-starter-rest` from Procurement `pom.xml`; delete `ProcessVariableInjector` if unused
-- [ ] Remove `flowable-spring-boot-starter` and `flowable-spring-boot-starter-rest` from HR `pom.xml`; delete entire `com.werkflow.workflow.*` package
-- [ ] Compile and verify all 4 services start without Flowable auto-configuration
-- [ ] Test HR leave approval still works via Engine service after removal
+- [x] Remove `flowable-spring-boot-starter` and `flowable-spring-boot-starter-rest` from Finance `pom.xml`; deleted `delegate/` package (BudgetAvailabilityDelegate, NotificationDelegate)
+- [x] Remove `flowable-engine` from Inventory `pom.xml`; deleted `delegate/` package (InventoryAvailabilityDelegate, ReservationDelegate)
+- [x] Remove `flowable-spring-boot-starter` and `flowable-spring-boot-starter-rest` from Procurement `pom.xml`; deleted `delegate/PurchaseOrderCreationDelegate` and `config/ProcessVariableInjector`
+- [x] Remove `flowable-spring-boot-starter` and `flowable-spring-boot-starter-rest` from HR `pom.xml`; deleted entire `com.werkflow.workflow.*` package (8 delegates + WorkflowService) and `com.werkflow.config/`
+- [x] Removed Flowable config from application.yml (Finance, Procurement, HR) and application-test.yml (HR)
+- [x] Removed unused `flowable.version` property from all 4 service pom.xml files
+- [x] Compile and verify all 4 services compile without Flowable (all pass)
+- [ ] Test HR leave approval still works via Engine service after removal (requires running Docker — deferred to S5)
 
 ---
 

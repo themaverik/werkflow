@@ -51,21 +51,6 @@ spring:
     time-zone: UTC
     default-property-inclusion: non_null
 
-# Flowable Configuration
-flowable:
-  async-executor-activate: true
-  database-schema-update: true
-  process-definition-cache-limit: 10
-
-  # Process Engine Configuration
-  process:
-    definition-cache-limit: 100
-    enable-safe-xml-api: true
-
-  # DMN Engine Configuration
-  dmn:
-    enabled: true
-    strict-mode: false
 
   # Form Engine Configuration
   form:
@@ -122,7 +107,6 @@ logging:
     org.springframework.web: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.flowable: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
 

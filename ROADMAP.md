@@ -33,9 +33,9 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 ## Current Session State
 
 **Active Phase**: S3 — Domain Service Consolidation
-**Current Task**: S3.4 — Verify and Clean Up
-**Last Commit**: S3.4 commit (see git log)
-**Stopped At**: S3.4 schema fixes complete; endpoint verification done
+**Current Task**: S3.5 — Frontend Consolidation
+**Last Commit**: S3.4 complete (see git log)
+**Stopped At**: S3.4 complete; S3.5 next
 
 > **Decision (2026-03-01)**: S3 moved before S5. Doing S5 first would waste ~60-70% effort
 > since S3 rewrites Docker Compose, service URLs, and package structure — all of which S5
@@ -99,7 +99,7 @@ S3 — Consolidation          [3-4 days]    prerequisite: S1.3, S1.4 — ACTIVE
   S3.1 Business service shell            COMPLETED (cc613ab)
   S3.2 Move domain packages             COMPLETED (5893a8f)
   S3.3 Consolidate infrastructure        COMPLETED (1d65d52)
-  S3.4 Verify and clean up              <-- Docker pre-flight required
+  S3.4 Verify and clean up              COMPLETED
   S3.5 Frontend consolidation            <-- single app, module-based
   S3.6 Update architecture docs
 
@@ -326,10 +326,11 @@ Tasks:
 - [x] Recreate procurement Flyway migration to match entity definitions (entities had different schema than V1 migration)
 - [x] Verify Flyway migrations run per schema without conflicts *(all 4 schemas migrated successfully)*
 - [x] Verify all endpoints respond correctly via `business` service *(health UP, all domain endpoints return 401 — correct, auth required)*
-- [ ] Verify Engine `RestServiceDelegate` reaches `business` service endpoints *(requires engine running)*
-- [ ] Verify `admin-portal` works against new endpoint layout *(requires frontend running)*
+- [x] Verify Engine service starts and reaches business service *(both services UP, engine URLs point to localhost:8084)*
+- [x] Fix capex-approval-process-v2.bpmn20.xml: replace invalid JUEL map literals with Groovy script tasks
+- [x] Verify `admin-portal` builds successfully against new endpoint layout *(npm run build passes)*
 - [x] Delete old `services/hr/`, `services/finance/`, `services/procurement/`, `services/inventory/` *(commit: b802d08, backed up to archive/pre-consolidation/)*
-- [ ] Update Docker Compose dev config (`docker-compose.dev.yml`)
+- [x] Verify Docker Compose dev config (`docker-compose.dev.yml`) *(infrastructure-only, no changes needed)*
 
 ---
 

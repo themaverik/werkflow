@@ -18,6 +18,26 @@
       <documentation>Employee submits a capital expenditure request</documentation>
     </startEvent>
 
+    <!-- Script Task: Build create request body -->
+    <scriptTask id="buildCreateBody" name="Build Create Body" scriptFormat="groovy">
+      <script><![CDATA[
+def body = new java.util.LinkedHashMap()
+body.put('title', execution.getVariable('title'))
+body.put('description', execution.getVariable('description'))
+body.put('category', execution.getVariable('category'))
+body.put('amount', execution.getVariable('requestAmount'))
+body.put('priority', execution.getVariable('priority'))
+body.put('approvalLevel', execution.getVariable('approvalLevel'))
+body.put('businessJustification', execution.getVariable('businessJustification'))
+body.put('expectedBenefits', execution.getVariable('expectedBenefits'))
+body.put('expectedCompletionDate', execution.getVariable('expectedCompletionDate'))
+body.put('budgetYear', execution.getVariable('budgetYear'))
+body.put('departmentName', execution.getVariable('departmentName'))
+body.put('requestedBy', execution.getVariable('requestedBy'))
+execution.setVariable('createRequestBody', body)
+      ]]></script>
+    </scriptTask>
+
     <!-- Service Task: Create CapEx Request via RestServiceDelegate -->
     <serviceTask id="createCapExRequest" name="Create CapEx Request"
                  flowable:delegateExpression="${restServiceDelegate}">
@@ -30,22 +50,7 @@
           <flowable:string>POST</flowable:string>
         </flowable:field>
         <flowable:field name="body">
-          <flowable:expression>#{
-            {
-              'title': title,
-              'description': description,
-              'category': category,
-              'amount': requestAmount,
-              'priority': priority,
-              'approvalLevel': approvalLevel,
-              'businessJustification': businessJustification,
-              'expectedBenefits': expectedBenefits,
-              'expectedCompletionDate': expectedCompletionDate,
-              'budgetYear': budgetYear,
-              'departmentName': departmentName,
-              'requestedBy': requestedBy
-            }
-          }</flowable:expression>
+          <flowable:expression>${createRequestBody}</flowable:expression>
         </flowable:field>
         <flowable:field name="responseVariable">
           <flowable:string>createRequestResponse</flowable:string>
@@ -66,6 +71,17 @@
       </script>
     </scriptTask>
 
+    <!-- Script Task: Build budget check body -->
+    <scriptTask id="buildBudgetCheckBody" name="Build Budget Check Body" scriptFormat="groovy">
+      <script><![CDATA[
+def body = new java.util.LinkedHashMap()
+body.put('capexId', execution.getVariable('capexId'))
+body.put('requestAmount', execution.getVariable('requestAmount'))
+body.put('departmentName', execution.getVariable('departmentName'))
+execution.setVariable('budgetCheckBody', body)
+      ]]></script>
+    </scriptTask>
+
     <!-- Service Task: Check Budget Availability via RestServiceDelegate -->
     <serviceTask id="checkBudget" name="Check Budget Availability"
                  flowable:delegateExpression="${restServiceDelegate}">
@@ -78,13 +94,7 @@
           <flowable:string>POST</flowable:string>
         </flowable:field>
         <flowable:field name="body">
-          <flowable:expression>#{
-            {
-              'capexId': capexId,
-              'requestAmount': requestAmount,
-              'departmentName': departmentName
-            }
-          }</flowable:expression>
+          <flowable:expression>${budgetCheckBody}</flowable:expression>
         </flowable:field>
         <flowable:field name="responseVariable">
           <flowable:string>budgetCheckResponse</flowable:string>
@@ -144,6 +154,17 @@
     <!-- Exclusive Gateway: Final Decision -->
     <exclusiveGateway id="decisionGateway" name="Approved?" />
 
+    <!-- Script Task: Build approved status body -->
+    <scriptTask id="buildApprovedBody" name="Build Approved Body" scriptFormat="groovy">
+      <script><![CDATA[
+def body = new java.util.LinkedHashMap()
+body.put('capexId', execution.getVariable('capexId'))
+body.put('status', 'APPROVED')
+body.put('comments', execution.getVariable('approvalComments'))
+execution.setVariable('approvedStatusBody', body)
+      ]]></script>
+    </scriptTask>
+
     <!-- Service Task: Update CapEx Status - Approved via RestServiceDelegate -->
     <serviceTask id="updateApproved" name="Update Status: Approved"
                  flowable:delegateExpression="${restServiceDelegate}">
@@ -156,19 +177,24 @@
           <flowable:string>PUT</flowable:string>
         </flowable:field>
         <flowable:field name="body">
-          <flowable:expression>#{
-            {
-              'capexId': capexId,
-              'status': 'APPROVED',
-              'comments': approvalComments
-            }
-          }</flowable:expression>
+          <flowable:expression>${approvedStatusBody}</flowable:expression>
         </flowable:field>
         <flowable:field name="responseVariable">
           <flowable:string>updateStatusResponse</flowable:string>
         </flowable:field>
       </extensionElements>
     </serviceTask>
+
+    <!-- Script Task: Build budget allocation body -->
+    <scriptTask id="buildAllocateBody" name="Build Allocate Body" scriptFormat="groovy">
+      <script><![CDATA[
+def body = new java.util.LinkedHashMap()
+body.put('capexId', execution.getVariable('capexId'))
+body.put('requestAmount', execution.getVariable('requestAmount'))
+body.put('departmentName', execution.getVariable('departmentName'))
+execution.setVariable('budgetAllocateBody', body)
+      ]]></script>
+    </scriptTask>
 
     <!-- Service Task: Reserve Budget via RestServiceDelegate -->
     <serviceTask id="reserveBudget" name="Reserve Budget"
@@ -182,13 +208,7 @@
           <flowable:string>POST</flowable:string>
         </flowable:field>
         <flowable:field name="body">
-          <flowable:expression>#{
-            {
-              'capexId': capexId,
-              'requestAmount': requestAmount,
-              'departmentName': departmentName
-            }
-          }</flowable:expression>
+          <flowable:expression>${budgetAllocateBody}</flowable:expression>
         </flowable:field>
         <flowable:field name="responseVariable">
           <flowable:string>budgetAllocationResponse</flowable:string>
@@ -207,6 +227,17 @@
       </extensionElements>
     </serviceTask>
 
+    <!-- Script Task: Build rejected status body -->
+    <scriptTask id="buildRejectedBody" name="Build Rejected Body" scriptFormat="groovy">
+      <script><![CDATA[
+def body = new java.util.LinkedHashMap()
+body.put('capexId', execution.getVariable('capexId'))
+body.put('status', 'REJECTED')
+body.put('comments', execution.getVariable('rejectionReason'))
+execution.setVariable('rejectedStatusBody', body)
+      ]]></script>
+    </scriptTask>
+
     <!-- Service Task: Update CapEx Status - Rejected via RestServiceDelegate -->
     <serviceTask id="updateRejected" name="Update Status: Rejected"
                  flowable:delegateExpression="${restServiceDelegate}">
@@ -219,13 +250,7 @@
           <flowable:string>PUT</flowable:string>
         </flowable:field>
         <flowable:field name="body">
-          <flowable:expression>#{
-            {
-              'capexId': capexId,
-              'status': 'REJECTED',
-              'comments': rejectionReason
-            }
-          }</flowable:expression>
+          <flowable:expression>${rejectedStatusBody}</flowable:expression>
         </flowable:field>
         <flowable:field name="responseVariable">
           <flowable:string>updateStatusResponse</flowable:string>
@@ -250,9 +275,11 @@
     <endEvent id="endEventNoBudget" name="Insufficient Budget" />
 
     <!-- Sequence Flows -->
-    <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="createCapExRequest" />
+    <sequenceFlow id="flow0" sourceRef="startEvent" targetRef="buildCreateBody" />
+    <sequenceFlow id="flow1" sourceRef="buildCreateBody" targetRef="createCapExRequest" />
     <sequenceFlow id="flow1b" sourceRef="createCapExRequest" targetRef="extractCreateResponse" />
-    <sequenceFlow id="flow2" sourceRef="extractCreateResponse" targetRef="checkBudget" />
+    <sequenceFlow id="flow2" sourceRef="extractCreateResponse" targetRef="buildBudgetCheckBody" />
+    <sequenceFlow id="flow2a" sourceRef="buildBudgetCheckBody" targetRef="checkBudget" />
     <sequenceFlow id="flow2b" sourceRef="checkBudget" targetRef="extractBudgetResponse" />
     <sequenceFlow id="flow3" sourceRef="extractBudgetResponse" targetRef="budgetGateway" />
 
@@ -296,7 +323,7 @@
     <sequenceFlow id="flow7" sourceRef="mergeGateway" targetRef="decisionGateway" />
 
     <!-- Decision Gateway Flows -->
-    <sequenceFlow id="approved" sourceRef="decisionGateway" targetRef="updateApproved">
+    <sequenceFlow id="approved" sourceRef="decisionGateway" targetRef="buildApprovedBody">
       <conditionExpression xsi:type="tFormalExpression"><![CDATA[
         ${
           (managerApproved == true) &&
@@ -304,7 +331,7 @@
         }
       ]]></conditionExpression>
     </sequenceFlow>
-    <sequenceFlow id="rejected" sourceRef="decisionGateway" targetRef="updateRejected">
+    <sequenceFlow id="rejected" sourceRef="decisionGateway" targetRef="buildRejectedBody">
       <conditionExpression xsi:type="tFormalExpression"><![CDATA[
         ${
           (managerApproved == false) ||
@@ -315,11 +342,14 @@
     </sequenceFlow>
 
     <!-- Approval Path -->
-    <sequenceFlow id="flow8" sourceRef="updateApproved" targetRef="reserveBudget" />
+    <sequenceFlow id="flow7a" sourceRef="buildApprovedBody" targetRef="updateApproved" />
+    <sequenceFlow id="flow8" sourceRef="updateApproved" targetRef="buildAllocateBody" />
+    <sequenceFlow id="flow8a" sourceRef="buildAllocateBody" targetRef="reserveBudget" />
     <sequenceFlow id="flow9" sourceRef="reserveBudget" targetRef="sendApprovalNotification" />
     <sequenceFlow id="flow10" sourceRef="sendApprovalNotification" targetRef="endEventApproved" />
 
     <!-- Rejection Path -->
+    <sequenceFlow id="flow10a" sourceRef="buildRejectedBody" targetRef="updateRejected" />
     <sequenceFlow id="flow11" sourceRef="updateRejected" targetRef="sendRejectionNotification" />
     <sequenceFlow id="flow12" sourceRef="sendRejectionNotification" targetRef="endEventRejected" />
 
@@ -333,16 +363,24 @@
         <omgdc:Bounds height="30.0" width="30.0" x="100.0" y="163.0"/>
       </bpmndi:BPMNShape>
 
+      <bpmndi:BPMNShape bpmnElement="buildCreateBody" id="BPMNShape_buildCreateBody">
+        <omgdc:Bounds height="80.0" width="100.0" x="150.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+
       <bpmndi:BPMNShape bpmnElement="createCapExRequest" id="BPMNShape_createCapExRequest">
-        <omgdc:Bounds height="80.0" width="100.0" x="180.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="280.0" y="138.0"/>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape bpmnElement="extractCreateResponse" id="BPMNShape_extractCreateResponse">
         <omgdc:Bounds height="80.0" width="100.0" x="330.0" y="138.0"/>
       </bpmndi:BPMNShape>
 
+      <bpmndi:BPMNShape bpmnElement="buildBudgetCheckBody" id="BPMNShape_buildBudgetCheckBody">
+        <omgdc:Bounds height="80.0" width="100.0" x="560.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+
       <bpmndi:BPMNShape bpmnElement="checkBudget" id="BPMNShape_checkBudget">
-        <omgdc:Bounds height="80.0" width="100.0" x="480.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="690.0" y="138.0"/>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape bpmnElement="extractBudgetResponse" id="BPMNShape_extractBudgetResponse">
@@ -381,20 +419,32 @@
         <omgdc:Bounds height="40.0" width="40.0" x="1590.0" y="158.0"/>
       </bpmndi:BPMNShape>
 
-      <bpmndi:BPMNShape bpmnElement="updateApproved" id="BPMNShape_updateApproved">
+      <bpmndi:BPMNShape bpmnElement="buildApprovedBody" id="BPMNShape_buildApprovedBody">
         <omgdc:Bounds height="80.0" width="100.0" x="1680.0" y="50.0"/>
       </bpmndi:BPMNShape>
 
+      <bpmndi:BPMNShape bpmnElement="updateApproved" id="BPMNShape_updateApproved">
+        <omgdc:Bounds height="80.0" width="100.0" x="1810.0" y="50.0"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="buildAllocateBody" id="BPMNShape_buildAllocateBody">
+        <omgdc:Bounds height="80.0" width="100.0" x="1940.0" y="50.0"/>
+      </bpmndi:BPMNShape>
+
       <bpmndi:BPMNShape bpmnElement="reserveBudget" id="BPMNShape_reserveBudget">
-        <omgdc:Bounds height="80.0" width="100.0" x="1830.0" y="50.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="2070.0" y="50.0"/>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape bpmnElement="sendApprovalNotification" id="BPMNShape_sendApprovalNotification">
         <omgdc:Bounds height="80.0" width="100.0" x="1980.0" y="50.0"/>
       </bpmndi:BPMNShape>
 
-      <bpmndi:BPMNShape bpmnElement="updateRejected" id="BPMNShape_updateRejected">
+      <bpmndi:BPMNShape bpmnElement="buildRejectedBody" id="BPMNShape_buildRejectedBody">
         <omgdc:Bounds height="80.0" width="100.0" x="1680.0" y="250.0"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="updateRejected" id="BPMNShape_updateRejected">
+        <omgdc:Bounds height="80.0" width="100.0" x="1810.0" y="250.0"/>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape bpmnElement="sendRejectionNotification" id="BPMNShape_sendRejectionNotification">

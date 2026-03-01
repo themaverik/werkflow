@@ -34,8 +34,8 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 
 **Active Phase**: S3 — Domain Service Consolidation
 **Current Task**: S3.4 — Verify and Clean Up
-**Last Commit**: S3.3 commit (see git log)
-**Stopped At**: S3.3 complete; S3.4 next
+**Last Commit**: S3.4 commit (see git log)
+**Stopped At**: S3.4 schema fixes complete; endpoint verification done
 
 > **Decision (2026-03-01)**: S3 moved before S5. Doing S5 first would waste ~60-70% effort
 > since S3 rewrites Docker Compose, service URLs, and package structure — all of which S5
@@ -321,11 +321,13 @@ Tasks:
 > **Docker pre-flight check required** before running containers.
 
 Tasks:
-- [ ] Docker pre-flight check *(run: `docker info` — stop and prompt user if not running)*
-- [ ] Verify all endpoints respond correctly via `business` service
-- [ ] Verify Flyway migrations run per schema without conflicts
-- [ ] Verify Engine `RestServiceDelegate` reaches `business` service endpoints
-- [ ] Verify `admin-portal` works against new endpoint layout
+- [x] Docker pre-flight check *(Docker running, infra verified)*
+- [x] Add `@Table(schema = "...")` annotations to all 24 entity classes across 4 domains
+- [x] Recreate procurement Flyway migration to match entity definitions (entities had different schema than V1 migration)
+- [x] Verify Flyway migrations run per schema without conflicts *(all 4 schemas migrated successfully)*
+- [x] Verify all endpoints respond correctly via `business` service *(health UP, all domain endpoints return 401 — correct, auth required)*
+- [ ] Verify Engine `RestServiceDelegate` reaches `business` service endpoints *(requires engine running)*
+- [ ] Verify `admin-portal` works against new endpoint layout *(requires frontend running)*
 - [x] Delete old `services/hr/`, `services/finance/`, `services/procurement/`, `services/inventory/` *(commit: b802d08, backed up to archive/pre-consolidation/)*
 - [ ] Update Docker Compose dev config (`docker-compose.dev.yml`)
 

@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "budget_categories")
+@Table(name = "budget_categories", schema = "finance_service")
 @Data
 @Builder
 @NoArgsConstructor

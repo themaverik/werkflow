@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "asset_categories")
+@Table(name = "asset_categories", schema = "inventory_service")
 @Data
 @Builder
 @NoArgsConstructor

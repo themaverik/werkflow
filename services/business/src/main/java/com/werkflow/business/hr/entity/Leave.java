@@ -13,7 +13,7 @@ import java.time.LocalDate;
  * Represents employee leave requests
  */
 @Entity
-@Table(name = "leaves", indexes = {
+@Table(name = "leaves", schema = "hr_service", indexes = {
     @Index(name = "idx_leave_employee", columnList = "employee_id"),
     @Index(name = "idx_leave_status", columnList = "status")
 })

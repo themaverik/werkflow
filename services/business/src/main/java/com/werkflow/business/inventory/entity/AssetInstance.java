@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @Entity
-@Table(name = "asset_instances")
+@Table(name = "asset_instances", schema = "inventory_service")
 @Data
 @Builder
 @NoArgsConstructor

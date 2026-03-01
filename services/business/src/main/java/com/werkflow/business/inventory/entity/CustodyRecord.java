@@ -11,7 +11,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "custody_records")
+@Table(name = "custody_records", schema = "inventory_service")
 @Data
 @Builder
 @NoArgsConstructor

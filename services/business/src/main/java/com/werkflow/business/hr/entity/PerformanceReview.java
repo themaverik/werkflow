@@ -12,7 +12,7 @@ import java.time.LocalDate;
  * Represents employee performance evaluations
  */
 @Entity
-@Table(name = "performance_reviews", indexes = {
+@Table(name = "performance_reviews", schema = "hr_service", indexes = {
     @Index(name = "idx_review_employee", columnList = "employee_id"),
     @Index(name = "idx_review_date", columnList = "review_date")
 })

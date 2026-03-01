@@ -13,7 +13,7 @@ import java.util.List;
  * Represents organizational departments
  */
 @Entity
-@Table(name = "departments")
+@Table(name = "departments", schema = "hr_service")
 @Getter
 @Setter
 @NoArgsConstructor

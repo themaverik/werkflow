@@ -14,7 +14,7 @@ import java.util.List;
  * Represents employees in the organization
  */
 @Entity
-@Table(name = "employees", indexes = {
+@Table(name = "employees", schema = "hr_service", indexes = {
     @Index(name = "idx_employee_email", columnList = "email"),
     @Index(name = "idx_employee_code", columnList = "employee_code")
 })

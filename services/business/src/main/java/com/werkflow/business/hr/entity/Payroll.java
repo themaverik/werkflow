@@ -14,7 +14,7 @@ import java.time.LocalDate;
  * Represents employee salary payments and deductions
  */
 @Entity
-@Table(name = "payrolls",
+@Table(name = "payrolls", schema = "hr_service",
     indexes = {
         @Index(name = "idx_payroll_employee", columnList = "employee_id"),
         @Index(name = "idx_payroll_date", columnList = "payment_date")

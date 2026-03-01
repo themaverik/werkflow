@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "budget_line_items")
+@Table(name = "budget_line_items", schema = "finance_service")
 @Data
 @Builder
 @NoArgsConstructor

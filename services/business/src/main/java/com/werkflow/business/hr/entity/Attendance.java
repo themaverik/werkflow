@@ -13,7 +13,7 @@ import java.time.LocalTime;
  * Represents daily employee attendance records
  */
 @Entity
-@Table(name = "attendances",
+@Table(name = "attendances", schema = "hr_service",
     indexes = {
         @Index(name = "idx_attendance_employee", columnList = "employee_id"),
         @Index(name = "idx_attendance_date", columnList = "attendance_date")

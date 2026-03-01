@@ -14,7 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "budget_plans")
+@Table(name = "budget_plans", schema = "finance_service")
 @Data
 @Builder
 @NoArgsConstructor

@@ -13,7 +13,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "transfer_requests")
+@Table(name = "transfer_requests", schema = "inventory_service")
 @Data
 @Builder
 @NoArgsConstructor

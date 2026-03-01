@@ -33,9 +33,9 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 ## Current Session State
 
 **Active Phase**: S3 — Domain Service Consolidation
-**Current Task**: S3.2 — Move Domain Packages
-**Last Commit**: S3.1 commit (see git log)
-**Stopped At**: S3.1 complete; S3.2 next
+**Current Task**: S3.3 — Consolidate Infrastructure
+**Last Commit**: S3.2 commit (see git log)
+**Stopped At**: S3.2 complete; S3.3 next
 
 > **Decision (2026-03-01)**: S3 moved before S5. Doing S5 first would waste ~60-70% effort
 > since S3 rewrites Docker Compose, service URLs, and package structure — all of which S5
@@ -292,12 +292,12 @@ Tasks:
 #### S3.2 — Move Domain Packages
 
 Tasks:
-- [ ] Move `com.werkflow.hr.*` → `com.werkflow.business.hr.*`
-- [ ] Move `com.werkflow.finance.*` → `com.werkflow.business.finance.*`
-- [ ] Move `com.werkflow.procurement.*` → `com.werkflow.business.procurement.*`
-- [ ] Move `com.werkflow.inventory.*` → `com.werkflow.business.inventory.*`
-- [ ] Move Flyway migrations into per-domain directories
-- [ ] Update all import statements and compile
+- [x] Move `com.werkflow.hr.*` → `com.werkflow.business.hr.*`
+- [x] Move `com.werkflow.finance.*` → `com.werkflow.business.finance.*`
+- [x] Move `com.werkflow.procurement.*` → `com.werkflow.business.procurement.*`
+- [x] Move `com.werkflow.inventory.*` → `com.werkflow.business.inventory.*`
+- [x] Move Flyway migrations into per-domain directories
+- [x] Update all import statements and compile
 
 ---
 

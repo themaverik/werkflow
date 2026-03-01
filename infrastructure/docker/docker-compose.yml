@@ -146,6 +146,9 @@ services:
       SPRING_DATASOURCE_SCHEMA: flowable
       SERVER_PORT: 8081
 
+      # Service Integration URLs
+      FINANCE_SERVICE_URL: http://finance-service:8084
+
       # Keycloak Configuration for Docker Internal Network
       # Uses keycloak:8080 for container-to-container communication
       KEYCLOAK_ISSUER: http://keycloak:8080/realms/werkflow

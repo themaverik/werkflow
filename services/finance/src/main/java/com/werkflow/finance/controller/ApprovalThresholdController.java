@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/approval-thresholds")
+@RequestMapping("/approval-thresholds")
 @RequiredArgsConstructor
 @Tag(name = "Approval Thresholds", description = "Approval threshold management endpoints")
 public class ApprovalThresholdController {

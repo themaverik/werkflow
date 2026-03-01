@@ -17,7 +17,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/workflow/capex")
+@RequestMapping("/workflow/capex")
 @RequiredArgsConstructor
 @Tag(name = "CapEx Workflow", description = "Workflow integration APIs for CapEx approval process")
 public class CapExWorkflowController {

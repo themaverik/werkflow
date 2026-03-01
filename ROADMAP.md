@@ -33,9 +33,9 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 ## Current Session State
 
 **Active Phase**: S5 — Integration Testing
-**Current Task**: S5 next (requires Docker)
-**Last Commit**: *(S4 review fixes committed this session)*
-**Stopped At**: S4 complete with review fixes applied; S5 next
+**Current Task**: S5.1 — CapEx End-to-End (pre-deployment fixes applied)
+**Last Commit**: *(S5 pre-deployment fixes this session)*
+**Stopped At**: Pre-deployment fixes done; Docker deployment next
 
 > Update this section at the start and end of every session.
 
@@ -394,7 +394,16 @@ Tasks:
 **Goal**: Verify CapEx workflow works end-to-end with no regressions.
 **Duration**: 2-3 days
 **Prerequisite**: S1 and S2 complete
-**Status**: NOT STARTED
+**Status**: IN PROGRESS
+
+---
+
+#### S5.0 — Pre-deployment Fixes
+
+Tasks:
+- [x] Fix double `/api` path in Finance controllers — removed `/api` prefix from 6 controllers (context-path already provides it)
+- [x] Add `FINANCE_SERVICE_URL=http://finance-service:8084` to `.env.engine`
+- [x] Verify Finance service compiles after path fix
 
 ---
 

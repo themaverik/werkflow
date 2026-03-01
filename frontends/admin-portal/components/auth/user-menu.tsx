@@ -52,6 +52,9 @@ export async function UserMenu() {
           <a href="/portal/tasks">My Tasks</a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
+          <a href="/requests">My Requests</a>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <a href="/portal/processes">My Processes</a>
         </DropdownMenuItem>
         {session.user.roles?.includes("HR_ADMIN") && (

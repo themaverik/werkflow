@@ -17,6 +17,12 @@ export function StudioHeader() {
               Processes
             </Link>
             <Link
+              href="/requests"
+              className="transition-colors hover:text-foreground/80 text-foreground/60"
+            >
+              Requests
+            </Link>
+            <Link
               href="/studio/forms"
               className="transition-colors hover:text-foreground/80 text-foreground/60"
             >

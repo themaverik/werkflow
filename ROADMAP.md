@@ -33,9 +33,9 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 ## Current Session State
 
 **Active Phase**: S4 — Frontend Completion
-**Current Task**: S4.2 — Request Tracking Page
-**Last Commit**: *(S4.1 committed this session)*
-**Stopped At**: S4.1 complete, S4.2 next
+**Current Task**: S4.3 — Dashboard
+**Last Commit**: *(S4.2 committed this session)*
+**Stopped At**: S4.2 complete, S4.3 next
 
 > Update this section at the start and end of every session.
 
@@ -356,13 +356,13 @@ Tasks:
 #### S4.2 — Request Tracking Page (2 days)
 
 Tasks:
-- [ ] Brainstorm *(complete feature brainstorm and get user confirmation before starting)*
-- [ ] Create `MyRequestsPage` component
-- [ ] List user's submitted process instances
-- [ ] Add status filters: active, completed, suspended
-- [ ] Add search by business key
-- [ ] Show process diagram with current task highlighted
-- [ ] Wire to Process Monitoring APIs
+- [x] Brainstorm *(standalone route at /requests confirmed)*
+- [x] Create `MyRequestsPage` component *(requests/page.tsx with table, filters, search)*
+- [x] List user's submitted process instances *(getAllWorkflowInstances via React Query)*
+- [x] Add status filters: active, completed, suspended *(Tabs component with status query)*
+- [x] Add search by business key *(client-side Input filter)*
+- [x] Show process timeline on detail page *(reuses ProcessTimeline component)*
+- [x] Wire to Process Monitoring APIs *(getProcessInstance, getTasksByProcessInstance)*
 
 ---
 

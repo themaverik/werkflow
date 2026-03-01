@@ -18,6 +18,12 @@ export function Header() {
               Tasks
             </Link>
             <Link
+              href="/requests"
+              className="transition-colors hover:text-foreground/80 text-foreground/60"
+            >
+              My Requests
+            </Link>
+            <Link
               href="/portal/processes"
               className="transition-colors hover:text-foreground/80 text-foreground/60"
             >

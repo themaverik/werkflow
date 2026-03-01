@@ -32,10 +32,14 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 
 ## Current Session State
 
-**Active Phase**: S5 — Integration Testing
-**Current Task**: S5.1 — CapEx End-to-End (pre-deployment fixes applied)
-**Last Commit**: *(S5 pre-deployment fixes this session)*
-**Stopped At**: Pre-deployment fixes done; Docker deployment next
+**Active Phase**: S3 — Domain Service Consolidation
+**Current Task**: S3.1 — Create Business Service Shell
+**Last Commit**: `1d6b510` fix(finance): remove double /api prefix from controller request mappings
+**Stopped At**: S5 pre-deployment fixes done; pivoting to S3 before S5 to avoid rework
+
+> **Decision (2026-03-01)**: S3 moved before S5. Doing S5 first would waste ~60-70% effort
+> since S3 rewrites Docker Compose, service URLs, and package structure — all of which S5
+> tests against. S3 first means S5 runs once against the final architecture.
 
 > Update this section at the start and end of every session.
 
@@ -91,23 +95,23 @@ S1 — Critical Fixes         [2-3 hours]   <-- ACTIVE
 S2 — BPMN Wiring            [3-4 hours]   prerequisite: S1.1
   S2.1 CapEx RestServiceDelegate
 
-S3 — Consolidation          [1 day]       prerequisite: S1.3, S1.4 — OPTIONAL for MVP
-  S3.1 Business service shell
+S3 — Consolidation          [1 day]       prerequisite: S1.3, S1.4 — ACTIVE
+  S3.1 Business service shell            <-- START HERE
   S3.2 Move domain packages
   S3.3 Consolidate infrastructure       <-- Docker pre-flight required
   S3.4 Verify and clean up              <-- Docker pre-flight required
 
-S4 — Frontend Completion    [5-6 days]    prerequisite: S1
-  S4.1 Task Detail Page                 <-- Brainstorm required
-  S4.2 Request Tracking Page            <-- Brainstorm required
-  S4.3 Dashboard                        <-- Brainstorm required
+S4 — Frontend Completion    [5-6 days]    COMPLETED
+  S4.1 Task Detail Page
+  S4.2 Request Tracking Page
+  S4.3 Dashboard
 
-S5 — Integration Testing    [2-3 days]    prerequisite: S1, S2
+S5 — Integration Testing    [2-3 days]    prerequisite: S1, S2, S3
+  S5.0 Pre-deployment fixes              COMPLETED (commit: 1d6b510)
   S5.1 CapEx end-to-end                 <-- Docker pre-flight required
   S5.2 Regression
 
-Total to MVP (without S3):   ~10-12 days
-Total to MVP (with S3):      ~11-13 days
+Total to MVP:   ~11-13 days
 ```
 
 ---
@@ -255,12 +259,12 @@ Tasks:
 
 ---
 
-### Phase S3 — Domain Service Consolidation (Optional for MVP)
+### Phase S3 — Domain Service Consolidation
 
 **Goal**: Merge HR, Finance, Procurement, Inventory into a single `business` service.
 **Duration**: 1 day
-**Prerequisite**: S1.3 and S1.4 must be complete
-**Status**: PLANNED
+**Prerequisite**: S1.3 and S1.4 must be complete (done)
+**Status**: IN PROGRESS
 
 **Target architecture**:
 ```

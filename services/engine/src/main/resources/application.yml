@@ -172,25 +172,26 @@ app:
   # Example: financeServiceUrl, hrServiceUrl, procurementServiceUrl, inventoryServiceUrl
   # Override via environment variables for different deployment environments
   services:
-    # HR Service - Employee management, leave requests, onboarding
+    # HR domain - Employee management, leave requests, onboarding
+    # All domain services consolidated into business-service on port 8084
     hr:
-      url: ${HR_SERVICE_URL:http://localhost:8082}
+      url: ${HR_SERVICE_URL:http://localhost:8084}
 
     # Admin Service - Service registry, system configuration
     admin:
       url: ${ADMIN_SERVICE_URL:http://localhost:8083}
 
-    # Finance Service - CapEx approvals, budget management, financial workflows
+    # Finance domain - CapEx approvals, budget management, financial workflows
     finance:
       url: ${FINANCE_SERVICE_URL:http://localhost:8084}
 
-    # Procurement Service - Purchase requests, vendor management, PO creation
+    # Procurement domain - Purchase requests, vendor management, PO creation
     procurement:
-      url: ${PROCUREMENT_SERVICE_URL:http://localhost:8085}
+      url: ${PROCUREMENT_SERVICE_URL:http://localhost:8084}
 
-    # Inventory Service - Asset tracking, transfers, custody management
+    # Inventory domain - Asset tracking, transfers, custody management
     inventory:
-      url: ${INVENTORY_SERVICE_URL:http://localhost:8086}
+      url: ${INVENTORY_SERVICE_URL:http://localhost:8084}
 
 # Admin Service Configuration (for service registry redirection)
 admin:

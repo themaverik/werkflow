@@ -33,9 +33,9 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 ## Current Session State
 
 **Active Phase**: S3 — Domain Service Consolidation
-**Current Task**: S3.3 — Consolidate Infrastructure
-**Last Commit**: S3.2 commit (see git log)
-**Stopped At**: S3.2 complete; S3.3 next
+**Current Task**: S3.4 — Verify and Clean Up
+**Last Commit**: S3.3 commit (see git log)
+**Stopped At**: S3.3 complete; S3.4 next
 
 > **Decision (2026-03-01)**: S3 moved before S5. Doing S5 first would waste ~60-70% effort
 > since S3 rewrites Docker Compose, service URLs, and package structure — all of which S5
@@ -306,11 +306,11 @@ Tasks:
 > **Docker pre-flight check required** — verify Docker is running before any `docker` or `docker compose` command (see CLAUDE.md Section 5).
 
 Tasks:
-- [ ] Docker pre-flight check *(run: `docker info` — stop and prompt user if not running)*
-- [ ] Update Docker Compose: remove 4 domain containers, add 1 `business` container
-- [ ] Update Engine service URLs: 4 hosts → 1 host with different API paths
-- [ ] Update frontend API client if any direct domain service calls exist
-- [ ] Optionally rename `services/admin/` to `services/platform/`
+- [x] Docker pre-flight check *(skipped -- no Docker commands run, config-only changes)*
+- [x] Update Docker Compose: remove 4 domain containers, add 1 `business` container
+- [x] Update Engine service URLs: 4 hosts → 1 host (business-service:8084)
+- [x] Update frontend API client: all env files and next.config.mjs updated
+- [ ] Optionally rename `services/admin/` to `services/platform/` *(deferred -- not blocking)*
 
 ---
 

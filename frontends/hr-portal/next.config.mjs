@@ -15,7 +15,7 @@ const nextConfig = {
     return [
       {
         source: '/api/hr/:path*',
-        destination: (process.env.NEXT_PUBLIC_HR_API_URL || 'http://localhost:8082/api') + '/:path*',
+        destination: (process.env.NEXT_PUBLIC_HR_API_URL || 'http://localhost:8084/api') + '/:path*',
       },
       {
         source: '/api/engine/:path*',

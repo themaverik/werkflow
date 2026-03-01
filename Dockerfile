@@ -20,36 +20,17 @@ COPY shared/delegates/src shared/delegates/src
 RUN cd shared/delegates && mvn clean install -DskipTests -B
 
 # Now copy service poms
-COPY services/hr/pom.xml services/hr/pom.xml
 COPY services/engine/pom.xml services/engine/pom.xml
 COPY services/admin/pom.xml services/admin/pom.xml
-COPY services/inventory/pom.xml services/inventory/pom.xml
-COPY services/finance/pom.xml services/finance/pom.xml
-COPY services/procurement/pom.xml services/procurement/pom.xml
+COPY services/business/pom.xml services/business/pom.xml
 
 # Download dependencies for all services (werkflow-delegates now available locally)
-RUN cd services/hr && mvn dependency:go-offline -B
 RUN cd services/engine && mvn dependency:go-offline -B
 RUN cd services/admin && mvn dependency:go-offline -B
-RUN cd services/inventory && mvn dependency:go-offline -B
-RUN cd services/finance && mvn dependency:go-offline -B
-RUN cd services/procurement && mvn dependency:go-offline -B
+RUN cd services/business && mvn dependency:go-offline -B
 
 # ================================================================
-# STAGE 2: HR Service Build
-# ================================================================
-FROM backend-base AS hr-service-build
-
-WORKDIR /build/services/hr
-
-# Copy source code
-COPY services/hr/src ./src
-
-# Build the application
-RUN mvn clean package -DskipTests -B
-
-# ================================================================
-# STAGE 3: Engine Service Build
+# STAGE 2: Engine Service Build
 # ================================================================
 FROM backend-base AS engine-service-build
 
@@ -62,7 +43,7 @@ COPY services/engine/src ./src
 RUN mvn clean package -DskipTests -B
 
 # ================================================================
-# STAGE 4: Admin Service Build
+# STAGE 3: Admin Service Build
 # ================================================================
 FROM backend-base AS admin-service-build
 
@@ -70,6 +51,19 @@ WORKDIR /build/services/admin
 
 # Copy source code
 COPY services/admin/src ./src
+
+# Build the application
+RUN mvn clean package -DskipTests -B
+
+# ================================================================
+# STAGE 4: Business Service Build (consolidated HR + Finance + Procurement + Inventory)
+# ================================================================
+FROM backend-base AS business-service-build
+
+WORKDIR /build/services/business
+
+# Copy source code
+COPY services/business/src ./src
 
 # Build the application
 RUN mvn clean package -DskipTests -B
@@ -139,39 +133,7 @@ COPY frontends/hr-portal/ ./
 RUN npm run build
 
 # ================================================================
-# STAGE 8: HR Service Runtime
-# ================================================================
-FROM eclipse-temurin:21-jre AS hr-service
-
-# Add non-root user
-RUN groupadd -r werkflow && useradd -r -g werkflow werkflow
-
-WORKDIR /app
-
-# Copy JAR from build stage
-COPY --from=hr-service-build /build/services/hr/target/*.jar app.jar
-
-# Create directories
-RUN mkdir -p /app/logs /app/hr-documents && \
-    chown -R werkflow:werkflow /app
-
-USER werkflow
-
-EXPOSE 8082
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8082/actuator/health || exit 1
-
-ENTRYPOINT ["java", \
-    "-Djava.security.egd=file:/dev/./urandom", \
-    "-XX:MaxRAMPercentage=75.0", \
-    "-XX:+UseContainerSupport", \
-    "-jar", \
-    "app.jar"]
-
-# ================================================================
-# STAGE 9: Engine Service Runtime
+# STAGE 8: Engine Service Runtime
 # ================================================================
 FROM eclipse-temurin:21-jre AS engine-service
 
@@ -203,7 +165,7 @@ ENTRYPOINT ["java", \
     "app.jar"]
 
 # ================================================================
-# STAGE 10: Admin Service Runtime
+# STAGE 9: Admin Service Runtime
 # ================================================================
 FROM eclipse-temurin:21-jre AS admin-service
 
@@ -235,22 +197,9 @@ ENTRYPOINT ["java", \
     "app.jar"]
 
 # ================================================================
-# STAGE 11: Inventory Service Build
+# STAGE 10: Business Service Runtime (HR + Finance + Procurement + Inventory)
 # ================================================================
-FROM backend-base AS inventory-service-build
-
-WORKDIR /build/services/inventory
-
-# Copy source code
-COPY services/inventory/src ./src
-
-# Build the application
-RUN mvn clean package -DskipTests -B
-
-# ================================================================
-# STAGE 12: Inventory Service Runtime
-# ================================================================
-FROM eclipse-temurin:21-jre AS inventory-service
+FROM eclipse-temurin:21-jre AS business-service
 
 # Add non-root user
 RUN groupadd -r werkflow && useradd -r -g werkflow werkflow
@@ -258,52 +207,7 @@ RUN groupadd -r werkflow && useradd -r -g werkflow werkflow
 WORKDIR /app
 
 # Copy JAR from build stage
-COPY --from=inventory-service-build /build/services/inventory/target/*.jar app.jar
-
-# Create directories
-RUN mkdir -p /app/logs && \
-    chown -R werkflow:werkflow /app
-
-USER werkflow
-
-EXPOSE 8086
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8086/actuator/health || exit 1
-
-ENTRYPOINT ["java", \
-    "-Djava.security.egd=file:/dev/./urandom", \
-    "-XX:MaxRAMPercentage=75.0", \
-    "-XX:+UseContainerSupport", \
-    "-jar", \
-    "app.jar"]
-
-# ================================================================
-# STAGE 13: Finance Service Build
-# ================================================================
-FROM backend-base AS finance-service-build
-
-WORKDIR /build/services/finance
-
-# Copy source code
-COPY services/finance/src ./src
-
-# Build the application
-RUN mvn clean package -DskipTests -B
-
-# ================================================================
-# STAGE 14: Finance Service Runtime
-# ================================================================
-FROM eclipse-temurin:21-jre AS finance-service
-
-# Add non-root user
-RUN groupadd -r werkflow && useradd -r -g werkflow werkflow
-
-WORKDIR /app
-
-# Copy JAR from build stage
-COPY --from=finance-service-build /build/services/finance/target/*.jar app.jar
+COPY --from=business-service-build /build/services/business/target/*.jar app.jar
 
 # Create directories
 RUN mkdir -p /app/logs && \
@@ -315,7 +219,7 @@ EXPOSE 8084
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8084/actuator/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8084/api/actuator/health || exit 1
 
 ENTRYPOINT ["java", \
     "-Djava.security.egd=file:/dev/./urandom", \
@@ -325,52 +229,7 @@ ENTRYPOINT ["java", \
     "app.jar"]
 
 # ================================================================
-# STAGE 15: Procurement Service Build
-# ================================================================
-FROM backend-base AS procurement-service-build
-
-WORKDIR /build/services/procurement
-
-# Copy source code
-COPY services/procurement/src ./src
-
-# Build the application
-RUN mvn clean package -DskipTests -B
-
-# ================================================================
-# STAGE 16: Procurement Service Runtime
-# ================================================================
-FROM eclipse-temurin:21-jre AS procurement-service
-
-# Add non-root user
-RUN groupadd -r werkflow && useradd -r -g werkflow werkflow
-
-WORKDIR /app
-
-# Copy JAR from build stage
-COPY --from=procurement-service-build /build/services/procurement/target/*.jar app.jar
-
-# Create directories
-RUN mkdir -p /app/logs && \
-    chown -R werkflow:werkflow /app
-
-USER werkflow
-
-EXPOSE 8085
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8085/actuator/health || exit 1
-
-ENTRYPOINT ["java", \
-    "-Djava.security.egd=file:/dev/./urandom", \
-    "-XX:MaxRAMPercentage=75.0", \
-    "-XX:+UseContainerSupport", \
-    "-jar", \
-    "app.jar"]
-
-# ================================================================
-# STAGE 17: Admin Portal Runtime
+# STAGE 11: Admin Portal Runtime
 # ================================================================
 FROM node:20-alpine AS admin-portal
 
@@ -398,7 +257,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
 CMD ["node", "server.js"]
 
 # ================================================================
-# STAGE 18: HR Portal Runtime
+# STAGE 12: HR Portal Runtime
 # ================================================================
 FROM node:20-alpine AS hr-portal
 

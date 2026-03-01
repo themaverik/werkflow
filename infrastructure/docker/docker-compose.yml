@@ -146,8 +146,11 @@ services:
       SPRING_DATASOURCE_SCHEMA: flowable
       SERVER_PORT: 8081
 
-      # Service Integration URLs
-      FINANCE_SERVICE_URL: http://finance-service:8084
+      # Service Integration URLs (all domain services consolidated into business-service)
+      HR_SERVICE_URL: http://business-service:8084
+      FINANCE_SERVICE_URL: http://business-service:8084
+      PROCUREMENT_SERVICE_URL: http://business-service:8084
+      INVENTORY_SERVICE_URL: http://business-service:8084
 
       # Keycloak Configuration for Docker Internal Network
       # Uses keycloak:8080 for container-to-container communication
@@ -166,40 +169,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # HR Service
-  hr-service:
-    build:
-      context: ../..
-      dockerfile: Dockerfile
-      target: hr-service
-    container_name: werkflow-hr
-    env_file:
-      - ../../.env.shared
-      - ../../.env.hr
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/werkflow
-      SPRING_DATASOURCE_USERNAME: werkflow_admin
-      SPRING_DATASOURCE_PASSWORD: werkflow_secure_pass
-      SPRING_DATASOURCE_SCHEMA: hr_service
-      SERVER_PORT: 8082
-
-      # Keycloak Configuration for Docker Internal Network
-      KEYCLOAK_ISSUER: http://keycloak:8080/realms/werkflow
-    ports:
-      - "8082:8082"
-    volumes:
-      - hr_documents:/app/hr-documents
-      - hr_logs:/app/logs
-    networks:
-      - werkflow-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      keycloak:
-        condition: service_healthy
-    restart: unless-stopped
-
-  # Admin Service (Phase 1 - Week 7-8)
+  # Admin Service
   admin-service:
     build:
       context: ../..
@@ -232,32 +202,33 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # Finance Service (Phase 3)
-  finance-service:
+  # Business Service (consolidated HR + Finance + Procurement + Inventory)
+  business-service:
     build:
       context: ../..
       dockerfile: Dockerfile
-      target: finance-service
-    container_name: werkflow-finance
+      target: business-service
+    container_name: werkflow-business
     env_file:
       - ../../.env.shared
-      - ../../.env.finance
+      - ../../.env.business
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/werkflow
-      SPRING_DATASOURCE_USERNAME: werkflow_admin
-      SPRING_DATASOURCE_PASSWORD: werkflow_secure_pass
-      SPRING_DATASOURCE_SCHEMA: finance_service
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: werkflow
+      POSTGRES_USER: werkflow_admin
+      POSTGRES_PASSWORD: werkflow_secure_pass
       SERVER_PORT: 8084
       ENGINE_SERVICE_URL: http://engine-service:8081
       ADMIN_SERVICE_URL: http://admin-service:8083
 
       # Keycloak Configuration for Docker Internal Network
-      KEYCLOAK_ISSUER: http://keycloak:8080/realms/werkflow
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: werkflow
     ports:
       - "8084:8084"
-
     volumes:
-      - finance_logs:/app/logs
+      - business_logs:/app/logs
     networks:
       - werkflow-network
     depends_on:
@@ -269,90 +240,6 @@ services:
         condition: service_started
       engine-service:
         condition: service_started
-
-    restart: unless-stopped
-
-  # Procurement Service (Phase 3)
-  procurement-service:
-    build:
-      context: ../..
-      dockerfile: Dockerfile
-      target: procurement-service
-    container_name: werkflow-procurement
-    env_file:
-      - ../../.env.shared
-      - ../../.env.procurement
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/werkflow
-      SPRING_DATASOURCE_USERNAME: werkflow_admin
-      SPRING_DATASOURCE_PASSWORD: werkflow_secure_pass
-      SPRING_DATASOURCE_SCHEMA: procurement_service
-      SERVER_PORT: 8085
-      ADMIN_SERVICE_URL: http://admin-service:8083
-      ENGINE_SERVICE_URL: http://engine-service:8081
-      FINANCE_SERVICE_URL: http://finance-service:8084
-
-      # Keycloak Configuration for Docker Internal Network
-      KEYCLOAK_ISSUER: http://keycloak:8080/realms/werkflow
-    ports:
-      - "8085:8085"
-
-    volumes:
-      - procurement_logs:/app/logs
-    networks:
-      - werkflow-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      keycloak:
-        condition: service_healthy
-      admin-service:
-        condition: service_started
-      engine-service:
-        condition: service_started
-      finance-service:
-        condition: service_started
-    restart: unless-stopped
-
-  # Inventory Service (Phase 3)
-  inventory-service:
-    build:
-      context: ../..
-      dockerfile: Dockerfile
-      target: inventory-service
-    container_name: werkflow-inventory
-    env_file:
-      - ../../.env.shared
-      - ../../.env.inventory
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/werkflow
-      SPRING_DATASOURCE_USERNAME: werkflow_admin
-      SPRING_DATASOURCE_PASSWORD: werkflow_secure_pass
-      SPRING_DATASOURCE_SCHEMA: inventory_service
-      SERVER_PORT: 8086
-      ENGINE_SERVICE_URL: http://engine-service:8081
-      ADMIN_SERVICE_URL: http://admin-service:8083
-
-      # Keycloak Configuration for Docker Internal Network
-      KEYCLOAK_ISSUER: http://keycloak:8080/realms/werkflow
-    ports:
-      - "8086:8086"
-    volumes:
-      - inventory_logs:/app/logs
-    networks:
-      - werkflow-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      keycloak:
-        condition: service_healthy
-      admin-service:
-        condition: service_started
-      engine-service:
-        condition: service_started
-      finance-service:
-        condition: service_started
-
     restart: unless-stopped
 
   # ================================================================
@@ -371,11 +258,12 @@ services:
       NODE_ENV: production
       # Backend API URLs (internal Docker network)
       NEXT_PUBLIC_ENGINE_API_URL: http://engine-service:8081/api
-      NEXT_PUBLIC_HR_API_URL: http://hr-service:8082/api
       NEXT_PUBLIC_ADMIN_API_URL: http://admin-service:8083/api
-      NEXT_PUBLIC_FINANCE_API_URL: http://finance-service:8084/api
-      NEXT_PUBLIC_PROCUREMENT_API_URL: http://procurement-service:8085/api
-      NEXT_PUBLIC_INVENTORY_API_URL: http://inventory-service:8086/api
+      NEXT_PUBLIC_BUSINESS_API_URL: http://business-service:8084/api
+      NEXT_PUBLIC_HR_API_URL: http://business-service:8084/api
+      NEXT_PUBLIC_FINANCE_API_URL: http://business-service:8084/api
+      NEXT_PUBLIC_PROCUREMENT_API_URL: http://business-service:8084/api
+      NEXT_PUBLIC_INVENTORY_API_URL: http://business-service:8084/api
 
       # NextAuth Configuration
       NEXTAUTH_URL: http://localhost:4000
@@ -404,12 +292,9 @@ services:
     networks:
       - werkflow-network
     depends_on:
-      - hr-service
       - engine-service
       - admin-service
-      - finance-service
-      - procurement-service
-      - inventory-service
+      - business-service
     restart: unless-stopped
 
   # HR Portal (Phase 2)
@@ -424,11 +309,12 @@ services:
       NODE_ENV: production
       # Backend API URLs (internal Docker network)
       NEXT_PUBLIC_ENGINE_API_URL: http://engine-service:8081/api
-      NEXT_PUBLIC_HR_API_URL: http://hr-service:8082/api
       NEXT_PUBLIC_ADMIN_API_URL: http://admin-service:8083/api
-      NEXT_PUBLIC_FINANCE_API_URL: http://finance-service:8084/api
-      NEXT_PUBLIC_PROCUREMENT_API_URL: http://procurement-service:8085/api
-      NEXT_PUBLIC_INVENTORY_API_URL: http://inventory-service:8086/api
+      NEXT_PUBLIC_BUSINESS_API_URL: http://business-service:8084/api
+      NEXT_PUBLIC_HR_API_URL: http://business-service:8084/api
+      NEXT_PUBLIC_FINANCE_API_URL: http://business-service:8084/api
+      NEXT_PUBLIC_PROCUREMENT_API_URL: http://business-service:8084/api
+      NEXT_PUBLIC_INVENTORY_API_URL: http://business-service:8084/api
 
       # NextAuth Configuration
       NEXTAUTH_URL: http://localhost:4001
@@ -456,9 +342,9 @@ services:
     networks:
       - werkflow-network
     depends_on:
-      - hr-service
       - engine-service
       - admin-service
+      - business-service
     restart: unless-stopped
 
 # ================================================================
@@ -475,17 +361,9 @@ volumes:
     driver: local
   engine_logs:
     driver: local
-  hr_documents:
-    driver: local
-  hr_logs:
-    driver: local
   admin_logs:
     driver: local
-  finance_logs:
-    driver: local
-  procurement_logs:
-    driver: local
-  inventory_logs:
+  business_logs:
     driver: local
 
 # ================================================================

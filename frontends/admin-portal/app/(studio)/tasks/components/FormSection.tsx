@@ -108,23 +108,6 @@ export function FormSection({
               onSubmit={onSubmit}
               readonly={readonly}
             />
-            {!readonly && (
-              <Button
-                onClick={() => {}}
-                disabled={isSubmitting || readonly}
-                className="w-full"
-                type="submit"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  'Submit Form'
-                )}
-              </Button>
-            )}
           </div>
         )}
 

@@ -317,7 +317,7 @@ export async function searchTasks(searchText: string, params?: TaskQueryParams):
 
 export async function submitTaskForm(taskId: string, formData: Record<string, any>): Promise<void> {
   try {
-    await apiClient.post(`/api/tasks/${taskId}/form/submit`, formData)
+    await apiClient.post(`/api/v1/tasks/${taskId}/form/submit`, formData)
   } catch (error: any) {
     handleApiError(error, `submit form for task ${taskId}`)
   }

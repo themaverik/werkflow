@@ -17,6 +17,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent } from '@/components/ui/card'
 import { getAllWorkflowInstances, type WorkflowInstance } from '@/lib/api/workflows'
+import { formatDate } from '@/lib/utils/format'
 
 type StatusFilter = 'all' | 'active' | 'completed' | 'suspended'
 
@@ -42,16 +43,6 @@ function statusBadge(status: WorkflowInstance['status']) {
   }
 }
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
 function TableSkeleton() {
   return (
     <div className="space-y-2">
@@ -68,6 +59,9 @@ export default function RequestsPage() {
 
   const queryStatus = statusFilter === 'all' ? undefined : statusFilter
 
+  // TODO: Backend lacks a startedBy/initiator filter on /workflows/instances.
+  // Currently fetches all workflow instances. Scope to current user once
+  // the Engine service adds an initiator query parameter.
   const { data: instances, isLoading } = useQuery({
     queryKey: ['workflow-instances', statusFilter],
     queryFn: () => getAllWorkflowInstances(queryStatus, 100),
@@ -75,15 +69,17 @@ export default function RequestsPage() {
 
   const filtered = (instances ?? []).filter((instance) => {
     if (!search) return true
+    const term = search.toLowerCase()
     const key = (instance.businessKey ?? '').toLowerCase()
-    return key.includes(search.toLowerCase())
+    const name = (instance.processDefinitionName ?? instance.processDefinitionKey ?? '').toLowerCase()
+    return key.includes(term) || name.includes(term) || instance.id.toLowerCase().includes(term)
   })
 
   return (
     <div className="container py-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">My Requests</h1>
-        <p className="text-muted-foreground">Track the status of your submitted workflow requests</p>
+        <p className="text-muted-foreground">Track the status of workflow requests across the organization</p>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
@@ -101,7 +97,7 @@ export default function RequestsPage() {
         </Tabs>
 
         <Input
-          placeholder="Search by business key..."
+          placeholder="Search by business key or process name..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="sm:max-w-xs"

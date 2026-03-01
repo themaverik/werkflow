@@ -108,9 +108,9 @@ function ActivitySkeleton() {
 // ----------------------------------------------------------------
 
 export default function DashboardPage() {
-  const { data: summary, isLoading: isLoadingSummary } = useTaskSummary()
+  const { data: summary, isLoading: isLoadingSummary, isError: isSummaryError } = useTaskSummary()
 
-  const { data: activityLogs, isLoading: isLoadingActivity } = useQuery({
+  const { data: activityLogs, isLoading: isLoadingActivity, isError: isActivityError } = useQuery({
     queryKey: ['dashboard-activity'],
     queryFn: () => getActivityLogs(5),
     staleTime: 30000,
@@ -126,7 +126,13 @@ export default function DashboardPage() {
 
       {/* Stat Cards */}
       <section aria-label="Task summary">
-        {isLoadingSummary ? (
+        {isSummaryError ? (
+          <Card>
+            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              Unable to load task summary. Please try again later.
+            </CardContent>
+          </Card>
+        ) : isLoadingSummary ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCardSkeleton />
             <StatCardSkeleton />
@@ -186,7 +192,9 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoadingActivity ? (
+            {isActivityError ? (
+              <p className="text-sm text-muted-foreground">Unable to load recent activity.</p>
+            ) : isLoadingActivity ? (
               <ActivitySkeleton />
             ) : !activityLogs || activityLogs.length === 0 ? (
               <p className="text-sm text-muted-foreground">No recent activity.</p>

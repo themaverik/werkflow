@@ -1,7 +1,6 @@
 'use client'
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Clock, CheckCircle2, Circle, User, Loader2 } from 'lucide-react'
 import { useProcessHistory } from '@/lib/hooks/useTasks'
 import type { TaskHistory } from '@/lib/types/task'
@@ -48,12 +47,6 @@ function formatTimestamp(ts?: string): string {
   return new Date(ts).toLocaleString()
 }
 
-function statusBadgeVariant(status: ActivityStatus): 'default' | 'secondary' | 'outline' {
-  if (status === 'completed') return 'default'
-  if (status === 'active') return 'default'
-  return 'outline'
-}
-
 function StatusIcon({ status }: { status: ActivityStatus }) {
   if (status === 'completed') {
     return <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
@@ -87,7 +80,7 @@ function StatusBadge({ status }: { status: ActivityStatus }) {
 function mapProcessHistoryToTimeline(rawHistory: any[]): TimelineItem[] {
   if (!Array.isArray(rawHistory)) return []
 
-  return rawHistory.map((item: any) => {
+  return rawHistory.map((item: any, index: number) => {
     const status: ActivityStatus = item.endTime
       ? 'completed'
       : item.startTime
@@ -95,7 +88,7 @@ function mapProcessHistoryToTimeline(rawHistory: any[]): TimelineItem[] {
       : 'pending'
 
     return {
-      id: item.id || item.activityId || String(Math.random()),
+      id: item.id || item.activityId || `activity-${index}`,
       name: item.activityName || item.name || item.activityId || 'Unknown Activity',
       status,
       timestamp: item.endTime || item.startTime || item.timestamp,

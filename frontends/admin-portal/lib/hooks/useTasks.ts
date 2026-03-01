@@ -33,6 +33,7 @@ export const TASK_QUERY_KEYS = {
   formData: (id: string) => [...TASK_QUERY_KEYS.all, 'form', id] as const,
   history: (id: string) => [...TASK_QUERY_KEYS.all, 'history', id] as const,
   summary: () => [...TASK_QUERY_KEYS.all, 'summary'] as const,
+  processHistory: (id: string) => [...TASK_QUERY_KEYS.all, 'process-history', id] as const,
   search: (query: string, params: TaskQueryParams) => [...TASK_QUERY_KEYS.all, 'search', query, params] as const,
 }
 
@@ -227,7 +228,7 @@ export function useProcessHistory(
   options?: UseQueryOptions<any, Error>
 ) {
   return useQuery<any, Error>({
-    queryKey: ['processes', 'history', processInstanceId],
+    queryKey: TASK_QUERY_KEYS.processHistory(processInstanceId ?? ''),
     queryFn: () => getProcessHistory(processInstanceId!),
     enabled: !!processInstanceId,
     staleTime: 60000,

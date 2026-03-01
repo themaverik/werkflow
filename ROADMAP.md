@@ -32,10 +32,10 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 
 ## Current Session State
 
-**Active Phase**: S4 — Frontend Completion
-**Current Task**: S4 complete — S5 next (requires Docker)
-**Last Commit**: *(S4.3 committed this session)*
-**Stopped At**: S4 complete (S4.1, S4.2, S4.3 all done)
+**Active Phase**: S5 — Integration Testing
+**Current Task**: S5 next (requires Docker)
+**Last Commit**: *(S4 review fixes committed this session)*
+**Stopped At**: S4 complete with review fixes applied; S5 next
 
 > Update this section at the start and end of every session.
 
@@ -350,6 +350,7 @@ Tasks:
 - [x] Submit form via `POST /api/tasks/{taskId}/form/submit` *(submitTaskForm API + handleFormSubmit)*
 - [x] Show process timeline from `GET /workflows/processes/{id}/history` *(ProcessTimeline component)*
 - [x] Handle claim, unclaim, and complete actions *(unclaim added this session)*
+- [x] Code review fixes: removed no-op form submit button, fixed API URL, memoized isApproval, added hasForm guard, lazy ProcessTimeline rendering
 
 ---
 
@@ -375,6 +376,16 @@ Tasks:
 - [x] Team tasks widget *(Team Tasks + Overdue + High Priority stat cards)*
 - [x] Recent activity feed *(getActivityLogs with type-based icons)*
 - [x] Quick action buttons *(View My Tasks, My Requests, Start New Process)*
+- [x] Code review fixes: added error states for summary and activity queries
+
+#### S4 — Cross-cutting Review Fixes
+
+- [x] Extracted shared `formatDate`/`formatDateTime` utilities into `lib/utils/format.ts` (removed duplication across 3 files)
+- [x] Fixed `submitTaskForm` API URL from `/api/tasks/` to `/api/v1/tasks/`
+- [x] Added `processHistory` to `TASK_QUERY_KEYS` factory in `useTasks.ts`
+- [x] Removed dead `statusBadgeVariant` function and unused `Badge` import from `ProcessTimeline.tsx`
+- [x] Fixed `Math.random()` key to stable `activity-${index}` in ProcessTimeline
+- [x] Added TODO documenting requests page data scoping limitation
 
 ---
 

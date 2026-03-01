@@ -1,7 +1,7 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +16,7 @@ import { DelegationModal } from '../components/DelegationModal'
 import { FormSection } from '../components/FormSection'
 import { ProcessTimeline } from '../components/ProcessTimeline'
 import type { UserClaims } from '@/lib/types/task'
+import { formatDateTime } from '@/lib/utils/format'
 
 export default function TaskDetailPage() {
   const params = useParams()
@@ -25,6 +26,7 @@ export default function TaskDetailPage() {
 
   const [userClaims, setUserClaims] = useState<UserClaims | null>(null)
   const [showDelegationModal, setShowDelegationModal] = useState(false)
+  const [activeTab, setActiveTab] = useState('details')
 
   const { data: task, isLoading: isLoadingTask } = useTask(taskId)
   const { data: formData, isLoading: isLoadingForm } = useTaskFormData(taskId)
@@ -283,6 +285,7 @@ export default function TaskDetailPage() {
   const isAssignedToUser = task.assignee === userClaims?.sub
   const canClaim = !task.assignee && userClaims
   const canComplete = isAssignedToUser
+  const hasForm = formData?.formData && typeof formData.formData === 'object' && Array.isArray(formData.formData.components)
 
   const priorityColor = task.priority
     ? task.priority >= 75
@@ -302,26 +305,16 @@ export default function TaskDetailPage() {
       : 'Low'
     : 'Normal'
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString()
-  }
-
-  const isApprovalTask = () => {
+  const isApproval = useMemo(() => {
     if (!task) return false
-
-    const taskNameLower = (task.name || '').toLowerCase()
-    const taskDefKeyLower = (task.taskDefinitionKey || '').toLowerCase()
-
+    const nameLower = (task.name || '').toLowerCase()
+    const keyLower = (task.taskDefinitionKey || '').toLowerCase()
     return (
-      taskNameLower.includes('approval') ||
-      taskNameLower.includes('approve') ||
-      taskDefKeyLower.includes('approval') ||
-      taskDefKeyLower.includes('approve') ||
-      task.processVariables?.approvalLevel !== undefined ||
-      task.processVariables?.requestAmount !== undefined ||
-      task.processVariables?.amount !== undefined
+      nameLower.includes('approv') ||
+      keyLower.includes('approv') ||
+      task.processVariables?.approvalLevel !== undefined
     )
-  }
+  }, [task])
 
   return (
     <div className="container py-6">
@@ -346,7 +339,7 @@ export default function TaskDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          {isApprovalTask() && userClaims ? (
+          {isApproval && userClaims ? (
             <ApprovalPanel
               task={task}
               userClaims={userClaims}
@@ -356,7 +349,7 @@ export default function TaskDetailPage() {
               isSubmitting={completeTaskMutation.isPending}
             />
           ) : (
-            <Tabs defaultValue="details" className="w-full">
+            <Tabs defaultValue="details" className="w-full" onValueChange={setActiveTab}>
             <TabsList>
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="form">Form</TabsTrigger>
@@ -393,7 +386,7 @@ export default function TaskDetailPage() {
                         Created
                       </h4>
                       <p className="text-sm text-muted-foreground">
-                        {formatDate(task.createTime)}
+                        {formatDateTime(task.createTime)}
                       </p>
                     </div>
 
@@ -404,7 +397,7 @@ export default function TaskDetailPage() {
                           Due Date
                         </h4>
                         <p className="text-sm text-muted-foreground">
-                          {formatDate(task.dueDate)}
+                          {formatDateTime(task.dueDate)}
                         </p>
                       </div>
                     )}
@@ -435,18 +428,20 @@ export default function TaskDetailPage() {
             </TabsContent>
 
             <TabsContent value="history" className="mt-4">
-              <ProcessTimeline
-                processInstanceId={task.processInstanceId}
-                taskHistory={history}
-                isLoading={isLoadingHistory}
-              />
+              {activeTab === 'history' && (
+                <ProcessTimeline
+                  processInstanceId={task.processInstanceId}
+                  taskHistory={history}
+                  isLoading={isLoadingHistory}
+                />
+              )}
             </TabsContent>
           </Tabs>
           )}
         </div>
 
         <div className="lg:col-span-1">
-          {!isApprovalTask() && (
+          {!isApproval && (
             <Card>
               <CardHeader>
                 <CardTitle>Actions</CardTitle>
@@ -465,14 +460,16 @@ export default function TaskDetailPage() {
 
                 {canComplete && (
                   <>
-                    <Button
-                      onClick={handleComplete}
-                      className="w-full"
-                      disabled={completeTaskMutation.isPending}
-                    >
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      {completeTaskMutation.isPending ? 'Completing...' : 'Complete Task'}
-                    </Button>
+                    {!hasForm && (
+                      <Button
+                        onClick={handleComplete}
+                        className="w-full"
+                        disabled={completeTaskMutation.isPending}
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        {completeTaskMutation.isPending ? 'Completing...' : 'Complete Task'}
+                      </Button>
+                    )}
 
                     <Button
                       variant="outline"
@@ -506,7 +503,7 @@ export default function TaskDetailPage() {
             </Card>
           )}
 
-          {isApprovalTask() && canClaim && (
+          {isApproval && canClaim && (
             <Card>
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>

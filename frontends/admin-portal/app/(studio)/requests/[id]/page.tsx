@@ -18,17 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ArrowLeft } from 'lucide-react'
 import { getProcessInstance, getTasksByProcessInstance } from '@/lib/api/workflows'
 import { ProcessTimeline } from '../../tasks/components/ProcessTimeline'
-
-function formatDate(dateStr?: string) {
-  if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
+import { formatDate } from '@/lib/utils/format'
 
 function StatusBadge({ ended, suspended }: { ended: boolean; suspended: boolean }) {
   if (ended) {

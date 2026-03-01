@@ -33,9 +33,9 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 ## Current Session State
 
 **Active Phase**: S4 — Frontend Completion
-**Current Task**: S4.3 — Dashboard
-**Last Commit**: *(S4.2 committed this session)*
-**Stopped At**: S4.2 complete, S4.3 next
+**Current Task**: S4 complete — S5 next (requires Docker)
+**Last Commit**: *(S4.3 committed this session)*
+**Stopped At**: S4 complete (S4.1, S4.2, S4.3 all done)
 
 > Update this section at the start and end of every session.
 
@@ -330,7 +330,7 @@ Tasks:
 **Goal**: Complete the task management UI wiring existing backend APIs to frontend.
 **Duration**: 5-6 days
 **Prerequisite**: S1 complete
-**Status**: NOT STARTED
+**Status**: COMPLETE
 
 > **Brainstorm required** before starting each sub-phase — apply the feature brainstorm protocol from CLAUDE.md Section 4. Wait for user sign-off before writing any code.
 
@@ -369,12 +369,12 @@ Tasks:
 #### S4.3 — Dashboard (1-2 days)
 
 Tasks:
-- [ ] Brainstorm *(complete feature brainstorm and get user confirmation before starting)*
-- [ ] Create `DashboardPage` component
-- [ ] Pending tasks count widget
-- [ ] Team tasks widget
-- [ ] Recent activity feed
-- [ ] Quick action buttons (New CapEx, New Leave Request, etc.)
+- [x] Brainstorm *(standalone page at /dashboard confirmed)*
+- [x] Create `DashboardPage` component *(dashboard/page.tsx)*
+- [x] Pending tasks count widget *(My Tasks stat card via useTaskSummary)*
+- [x] Team tasks widget *(Team Tasks + Overdue + High Priority stat cards)*
+- [x] Recent activity feed *(getActivityLogs with type-based icons)*
+- [x] Quick action buttons *(View My Tasks, My Requests, Start New Process)*
 
 ---
 

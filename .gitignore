@@ -116,5 +116,6 @@ dist/
 build/
 out/
 
-# Documentation archive
+# Archives
 docs/Archive/
+archive/

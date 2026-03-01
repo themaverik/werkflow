@@ -95,11 +95,13 @@ S1 — Critical Fixes         [2-3 hours]   <-- ACTIVE
 S2 — BPMN Wiring            [3-4 hours]   prerequisite: S1.1
   S2.1 CapEx RestServiceDelegate
 
-S3 — Consolidation          [1 day]       prerequisite: S1.3, S1.4 — ACTIVE
-  S3.1 Business service shell            <-- START HERE
-  S3.2 Move domain packages
-  S3.3 Consolidate infrastructure       <-- Docker pre-flight required
+S3 — Consolidation          [3-4 days]    prerequisite: S1.3, S1.4 — ACTIVE
+  S3.1 Business service shell            COMPLETED (cc613ab)
+  S3.2 Move domain packages             COMPLETED (5893a8f)
+  S3.3 Consolidate infrastructure        COMPLETED (1d65d52)
   S3.4 Verify and clean up              <-- Docker pre-flight required
+  S3.5 Frontend consolidation            <-- single app, module-based
+  S3.6 Update architecture docs
 
 S4 — Frontend Completion    [5-6 days]    COMPLETED
   S4.1 Task Detail Page
@@ -324,8 +326,99 @@ Tasks:
 - [ ] Verify Flyway migrations run per schema without conflicts
 - [ ] Verify Engine `RestServiceDelegate` reaches `business` service endpoints
 - [ ] Verify `admin-portal` works against new endpoint layout
-- [ ] Delete old `services/hr/`, `services/finance/`, `services/procurement/`, `services/inventory/`
-- [ ] Update Docker Compose dev and prod configs
+- [x] Delete old `services/hr/`, `services/finance/`, `services/procurement/`, `services/inventory/` *(commit: b802d08, backed up to archive/pre-consolidation/)*
+- [ ] Update Docker Compose dev config (`docker-compose.dev.yml`)
+
+---
+
+#### S3.5 — Frontend Consolidation (Module-Based Single App)
+
+> **Decision (2026-03-01)**: Consolidate `admin-portal` + `hr-portal` into a single
+> Next.js app (`frontends/portal/`) with route-group modules. Mirrors the backend
+> consolidation. Industry standard for ERP platforms (SAP, Oracle, Workday).
+> Keeps things simple, scalable, and reliable.
+
+**Architecture**:
+- Single Next.js app with route groups per domain
+- Shared auth (one Keycloak client), shared layout, shared components
+- Role-based module visibility via Keycloak roles
+- Single API client pointing to business-service on port 8084
+- Next.js code splitting per route group = no performance penalty
+
+**Proposed structure**:
+```
+frontends/portal/
+  app/
+    (auth)/login/                    -- shared Keycloak auth
+    (platform)/                      -- admin/platform features (from admin-portal studio)
+      dashboard/
+      processes/
+      forms/
+      services/
+      monitoring/
+      analytics/
+    (hr)/                            -- HR module (from hr-portal + admin-portal portal)
+      employees/
+      leave/
+      attendance/
+      payroll/
+      performance/
+    (finance)/                       -- Finance module
+      budgets/
+      expenses/
+      capex/
+    (procurement)/                   -- Procurement module
+      vendors/
+      purchase-requests/
+      purchase-orders/
+      receipts/
+    (inventory)/                     -- Inventory module
+      assets/
+      transfers/
+      maintenance/
+  components/
+    shared/                          -- shared UI components (sidebar, header, notifications)
+    hr/                              -- HR-specific components
+    finance/
+    procurement/
+    inventory/
+  lib/
+    api/                             -- single API client to business-service
+    auth/                            -- Keycloak auth config (one client)
+```
+
+**Navigation**: Sidebar with module sections, role-gated:
+- Admin/Super Admin: Platform + all modules
+- HR Manager: HR module + related
+- Finance: Finance + Procurement
+- Employee: HR self-service only
+
+Tasks:
+- [ ] Scaffold `frontends/portal/` with Next.js, Tailwind, shadcn/ui
+- [ ] Set up shared auth (NextAuth + Keycloak, single client)
+- [ ] Create shared layout with role-based sidebar navigation
+- [ ] Migrate `admin-portal` (studio) pages -> `(platform)/` route group
+- [ ] Migrate `hr-portal` pages -> `(hr)/` route group
+- [ ] Create placeholder pages for `(finance)/`, `(procurement)/`, `(inventory)/`
+- [ ] Set up single API client for business-service
+- [ ] Update Docker Compose and Dockerfile for single `portal` frontend
+- [ ] Deprecate `frontends/admin-portal/` and `frontends/hr-portal/`
+
+---
+
+#### S3.6 — Update Architecture Documentation
+
+> All docs in `docs/` must reflect the consolidated architecture post-S3.
+
+Tasks:
+- [ ] Update `docs/Architecture/Workflow-Architecture-Design.md` -- service topology (3 services: engine, admin, business)
+- [ ] Update `docs/Architecture/Delegate-Architecture-Analysis.md` -- service URLs now point to business-service
+- [ ] Update `docs/Deployment/Deployment-Configuration-Guide.md` -- new Docker Compose layout, .env.business
+- [ ] Update `docs/Development/API-Path-Structure.md` -- consolidated API paths under business-service
+- [ ] Update `docs/Security/Keycloak-Implementation-Guide.md` -- single frontend client vs multiple
+- [ ] Update `docs/OAuth2/OAuth2-Setup-Guide.md` -- single portal auth flow
+- [ ] Update or archive stale phase docs (Phase-3-7, Phase-4-5-6, etc.) that reference old 4-service architecture
+- [ ] Update `docs/README.md` -- reflect current project structure
 
 ---
 

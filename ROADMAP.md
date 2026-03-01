@@ -33,9 +33,9 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 ## Current Session State
 
 **Active Phase**: S3 — Domain Service Consolidation
-**Current Task**: S3.1 — Create Business Service Shell
-**Last Commit**: `1d6b510` fix(finance): remove double /api prefix from controller request mappings
-**Stopped At**: S5 pre-deployment fixes done; pivoting to S3 before S5 to avoid rework
+**Current Task**: S3.2 — Move Domain Packages
+**Last Commit**: S3.1 commit (see git log)
+**Stopped At**: S3.1 complete; S3.2 next
 
 > **Decision (2026-03-01)**: S3 moved before S5. Doing S5 first would waste ~60-70% effort
 > since S3 rewrites Docker Compose, service URLs, and package structure — all of which S5
@@ -281,11 +281,11 @@ services/
 #### S3.1 — Create Business Service Shell
 
 Tasks:
-- [ ] Create `services/business/` with `pom.xml` consolidating dependencies from all 4 domain services
-- [ ] Create `BusinessServiceApplication.java` with `@SpringBootApplication(scanBasePackages = "com.werkflow.business")`
-- [ ] Create single `SecurityConfig.java` (all domain configs are identical)
-- [ ] Create single `application.yml` with `spring.flyway.enabled: false`
-- [ ] Create per-schema Flyway configuration beans for each domain schema
+- [x] Create `services/business/` with `pom.xml` consolidating dependencies from all 4 domain services
+- [x] Create `BusinessServiceApplication.java` with `@SpringBootApplication(scanBasePackages = "com.werkflow.business")`
+- [x] Create single `SecurityConfig.java` (all domain configs are identical)
+- [x] Create single `application.yml` with `spring.flyway.enabled: false`
+- [x] Create per-schema Flyway configuration beans for each domain schema
 
 ---
 

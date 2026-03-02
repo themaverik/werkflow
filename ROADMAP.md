@@ -34,7 +34,7 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 
 **Active Phase**: S5 — Integration Testing
 **Current Task**: S5.2 — Regression
-**Last Commit**: (pending commit — Docker full-stack deployment)
+**Last Commit**: 2cb1997 (Docker full-stack deployment)
 **Stopped At**: Full-stack Docker deployment complete; CapEx E2E verified inside Docker network
 
 > **Decision (2026-03-01)**: S3 moved before S5. Doing S5 first would waste ~60-70% effort

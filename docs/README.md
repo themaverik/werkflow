@@ -1,224 +1,117 @@
 # Werkflow Documentation Hub
 
-Welcome to the Werkflow Enterprise Platform documentation. This hub provides organized access to all project documentation, guides, and references.
+Enterprise Workflow Automation Platform -- consolidated documentation index.
+
+**Last Updated**: 2026-03-02
 
 ---
 
-## Quick Navigation
+## Platform Architecture
 
-### Getting Started
-- **README.md** - Main project overview (in root directory)
-- **Quick Start** - Fast setup guide for new developers
-- **Getting Started Checklist** - Complete setup verification checklist
+Werkflow runs 3 backend services, 1 unified frontend, Keycloak for auth, and PostgreSQL.
 
-### Project Planning & Roadmap
-- **Roadmap.md** - Master roadmap with all phases, timelines, and current status (in root directory)
-  - Phase 0-5 implementation tracking
-  - Critical architectural corrections (Phase 3.6, 3.7)
-  - Success metrics and key features
+| Component | Port | Description |
+|-----------|------|-------------|
+| Engine | 8081 | Flowable BPMN engine, workflow orchestration |
+| Admin | 8083 | Admin APIs, route access control |
+| Business | 8084 | All domain logic (HR, Finance, Procurement, Inventory) |
+| Portal | 4000 | Unified Next.js frontend with module-based route groups |
+| Keycloak | 8090 | OAuth2/OIDC identity provider |
+| PostgreSQL | 5432 | Shared database |
 
-### Architecture & Design
-**Location**: `/docs/Architecture/`
-- **Workflow Architecture Design** - System design patterns and inter-service communication
-- **Frontend No-Code Gap Analysis** - UI/UX completeness assessment
-- **BPMN Workflows** - Process definition guide and workflow patterns
+---
 
-### Authentication & OAuth2
-**Location**: `/docs/OAuth2/`
-- **OAuth2 Setup Guide** - Complete Keycloak OAuth2 configuration
-- **OAuth2 Docker Configuration** - Docker-specific networking and setup
-- **NextAuth Configuration** - Next.js + NextAuth.js + Keycloak integration
-- **OAuth2 Troubleshooting** - Common errors and solutions
+## Core Documentation
 
-### Deployment & Infrastructure
-**Location**: `/docs/Deployment/`
-- **Deployment Configuration Guide** - Production deployment checklist
-- **Docker Infrastructure** - Docker Compose configuration and management
+### Architecture
 
-### Development Guides
-**Location**: `/docs/Development/`
-- **Workflow Guide** - How to create and manage workflows
-- **BPMN Designer Guide** - Visual workflow design guide
-- **Form Builder Guide** - Dynamic form creation with Form.io
+| Document | Description |
+|----------|-------------|
+| [Workflow Architecture Design](Architecture/Workflow-Architecture-Design.md) | Service topology, deployment model, inter-service patterns |
+| [Delegate Architecture Analysis](Architecture/Delegate-Architecture-Analysis.md) | Generic vs specific delegates, RestServiceDelegate usage |
+| [BPMN Workflows](Architecture/BPMN-Workflows.md) | Process definition reference |
+| [Keycloak Authentication Flow](Architecture/Keycloak-Authentication-Flow.md) | Auth flow diagrams |
 
-### Testing & Quality
-**Location**: `/docs/Testing/`
-- **Testing Guide** - Unit, integration, and E2E testing
-- **Sanity Testing** - Pre-deployment validation checklist
+### Deployment
+
+| Document | Description |
+|----------|-------------|
+| [Deployment Configuration Guide](Deployment/Deployment-Configuration-Guide.md) | Local dev, Docker Compose, env vars, health checks |
+
+### Development
+
+| Document | Description |
+|----------|-------------|
+| [API Path Structure](Development/API-Path-Structure.md) | `/api/*` vs `/werkflow/api/*` conventions |
+| [BPMN Quick Reference](BPMN-Quick-Reference-Guide.md) | Common BPMN patterns and delegate examples |
+| [Service Registry User Guide](Service-Registry-User-Guide.md) | Service registry for delegate URL management |
+
+### Authentication and Security
+
+| Document | Description |
+|----------|-------------|
+| [OAuth2 Setup Guide](OAuth2/OAuth2-Setup-Guide.md) | Keycloak realm, client, user setup |
+| [Keycloak Implementation Guide](Security/Keycloak-Implementation-Guide.md) | Backend + frontend Keycloak integration |
+| [Keycloak RBAC Design](Security/Keycloak-RBAC-Design.md) | Role matrix and permission model |
+| [OAuth2 Docker Configuration](OAuth2/OAuth2-Docker-Configuration.md) | Three-URL strategy for Docker networking |
+| [OAuth2 Troubleshooting](OAuth2/OAuth2-Troubleshooting.md) | Common auth errors and fixes |
+
+### Testing
+
+| Document | Description |
+|----------|-------------|
+| [Testing Guide](Testing/Testing.md) | Test strategy and methodology |
+| [Sanity Testing](Testing/Sanity-Testing.md) | Pre-deployment validation |
 
 ### Troubleshooting
-**Location**: `/docs/Troubleshooting/`
-- **Authentication Issues** - OAuth2, Keycloak, NextAuth errors and fixes
-- **Docker Issues** - Common Docker and container problems
-- **Configuration Issues** - Environment variable and setup problems
 
-### Reference
-**Location**: `/docs/Reference/`
-- **Quick Reference** - Common commands and snippets
-- **Keycloak Quick Reference** - Keycloak admin operations
+| Document | Description |
+|----------|-------------|
+| [Authentication Issues](Troubleshooting/Authentication-Issues.md) | Auth error resolution |
+| [Frontend Route Issues](Troubleshooting/Frontend-Route-Issues.md) | Routing and navigation fixes |
+| [Flowable REST API Conflict](Troubleshooting/Flowable-REST-API-Conflict.md) | API path conflict resolution |
 
 ---
 
-## Documentation Structure
+## Project Structure
 
 ```
-docs/
-├── README.md                           (This file - Navigation hub)
-├── Architecture/
-│   ├── Workflow-Architecture-Design.md
-│   ├── Frontend-No-Code-Gap-Analysis.md
-│   ├── BPMN-Workflows.md
-│   └── System-Design-Patterns.md
-├── OAuth2/
-│   ├── OAuth2-Setup-Guide.md          (Consolidated Keycloak setup)
-│   ├── OAuth2-Docker-Configuration.md  (Docker networking fixes)
-│   ├── NextAuth-Configuration.md       (Next.js integration)
-│   └── OAuth2-Troubleshooting.md       (Error resolution)
-├── Deployment/
-│   ├── Deployment-Configuration-Guide.md
-│   ├── Docker-Infrastructure.md
-│   └── Production-Checklist.md
-├── Development/
-│   ├── Workflow-Guide.md
-│   ├── BPMN-Designer-Guide.md
-│   ├── Form-Builder-Guide.md
-│   └── Development-Standards.md
-├── Testing/
-│   ├── Testing-Guide.md
-│   ├── Sanity-Testing.md
-│   ├── Integration-Testing.md
-│   └── Test-Coverage.md
-├── Troubleshooting/
-│   ├── Authentication-Issues.md
-│   ├── Frontend-Route-Issues.md
-│   ├── Docker-Issues.md
-│   ├── Configuration-Issues.md
-│   └── Common-Errors.md
-└── Reference/
-    ├── Quick-Reference.md
-    ├── Keycloak-Quick-Reference.md
-    ├── API-Reference.md
-    └── CLI-Commands.md
+werkflow/
+  services/
+    engine/          -- Flowable BPMN engine (port 8081)
+    admin/           -- Admin service (port 8083)
+    business/        -- Consolidated domain service (port 8084)
+  frontends/
+    portal/          -- Unified Next.js app (port 4000)
+      app/
+        (platform)/  -- Process Designer, Forms, Workflows
+        (hr)/        -- HR module
+        (finance)/   -- Finance module
+        (procurement)/ -- Procurement module
+        (inventory)/ -- Inventory module
+        (auth)/      -- Login
+  shared/
+    delegates/       -- Generic BPMN delegates (RestServiceDelegate)
+  infrastructure/
+    docker/          -- Docker Compose files
+    keycloak/        -- Realm export/import
+  docs/              -- This documentation
+    archive/         -- Historical phase docs (preserved for reference)
 ```
 
 ---
 
-## Document Categories
+## Quick Start
 
-### Completed Documents (Ready to Use)
-- Roadmap.md - Master project roadmap
-- BPMN-Workflows.md - Workflow patterns and definitions
-- TESTING.md - Testing methodology
-- KEYCLOAK-SETUP.md - Keycloak configuration basics
-- Workflow-Architecture-Design.md - System architecture
-- Deployment-Configuration-Guide.md - Deployment guide
+1. Start Keycloak: `docker compose -f infrastructure/docker/docker-compose.yml up keycloak -d`
+2. Start backend: `cd services/engine && mvn spring-boot:run` (repeat for admin, business)
+3. Start frontend: `cd frontends/portal && npm install && npm run dev`
+4. Open http://localhost:4000
 
-### Consolidated Documents (OAuth2 Focus)
-- OAuth2-Setup-Guide.md - Complete Keycloak OAuth2 setup
-- OAuth2-Docker-Configuration.md - Docker networking for OAuth2
-- NextAuth-Configuration.md - NextAuth.js + Keycloak integration
-- OAuth2-Troubleshooting.md - Error resolution and debugging
-
-### Development Guides
-- WORKFLOW-GUIDE.md - Step-by-step workflow creation
-- QUICK-START.md - Fast project setup
-
-### Reference Materials
-- QUICK-REFERENCE.md - Common operations and commands
-- KEYCLOAK-QUICK-REF.md - Keycloak admin quick reference
+See [Deployment Configuration Guide](Deployment/Deployment-Configuration-Guide.md) for full details.
 
 ---
 
-## How to Use This Documentation
+## Archive
 
-### For New Developers
-1. Start with README.md in project root
-2. Follow Quick Start guide
-3. Read Workflow_Architecture_Design.md for system understanding
-4. Review Development guides relevant to your work
-
-### For Deploying
-1. Read Deployment_Configuration_Guide.md
-2. Follow Docker_Infrastructure.md for container setup
-3. Use Production_Checklist.md before going live
-
-### For Troubleshooting
-1. Check Troubleshooting/Authentication_Issues.md for auth problems
-2. See Troubleshooting/Docker_Issues.md for container problems
-3. Consult Troubleshooting/Configuration_Issues.md for environment setup
-
-### For Working with Workflows
-1. Read Workflow_Architecture_Design.md for patterns
-2. Follow Workflow_Guide.md for creation steps
-3. Use BPMN_Workflows.md as reference for process definitions
-4. Check OAuth2 guides if authentication is involved
-
----
-
-## Key Resources by Role
-
-### Product Manager
-- Roadmap.md (root) - Project timeline and features
-- Frontend-No-Code-Gap-Analysis.md - Feature completeness
-- BPMN-Workflows.md - Available workflows
-
-### Backend Developer
-- Workflow-Architecture-Design.md - System design
-- BPMN-Workflows.md - Process definitions
-- API-Reference.md - Backend endpoints
-- Deployment-Configuration-Guide.md - Production setup
-
-### Frontend Developer
-- Frontend-No-Code-Gap-Analysis.md - UI gaps and tasks
-- BPMN-Designer-Guide.md - Workflow design UI
-- Form-Builder-Guide.md - Dynamic forms
-- OAuth2/NextAuth-Configuration.md - Authentication
-
-### DevOps / Infrastructure
-- Deployment-Configuration-Guide.md - Deployment steps
-- Docker-Infrastructure.md - Container orchestration
-- OAuth2/OAuth2-Docker-Configuration.md - OAuth2 networking
-- Production-Checklist.md - Pre-deployment validation
-
-### QA / Testing
-- Testing-Guide.md - Test strategy
-- Sanity-Testing.md - Pre-release testing
-- Integration-Testing.md - Cross-system testing
-- OAuth2-Troubleshooting.md - Error scenarios
-
----
-
-## Contributing to Documentation
-
-When updating documentation:
-1. Use Title Case for all headers
-2. Follow the established folder structure
-3. Reference related documents with relative links
-4. Include code examples only when necessary
-5. Keep documentation concise and actionable
-
----
-
-## Document Status
-
-| Document | Status | Last Updated | Maintainer |
-|----------|--------|-------------|-----------|
-| Roadmap.md | Complete | 2025-11-22 | Architecture |
-| OAuth2_Setup_Guide.md | In Progress | 2025-11-22 | Security |
-| Docker_Infrastructure.md | Complete | 2025-11-20 | DevOps |
-| Workflow_Guide.md | Complete | 2025-11-18 | Development |
-| Testing_Guide.md | Complete | 2025-11-19 | QA |
-
----
-
-## Need Help?
-
-- Check Troubleshooting section for common issues
-- Review Quick_Reference.md for common commands
-- Consult Workflow_Architecture_Design.md for system questions
-- Contact the appropriate team lead for architecture questions
-
----
-
-Last Updated: 2025-11-22
-Documentation Version: 2.0
+Historical phase-specific docs (Phase 3-7, Phase 4-6, migration summaries, etc.) are preserved in `docs/archive/` for reference. These reflect the pre-consolidation architecture and are no longer actively maintained.

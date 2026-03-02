@@ -83,23 +83,13 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
 
 ## Frontend Integration
 
-### Environment Configuration
+The Portal (`frontends/portal`) proxies API calls through Next.js rewrites:
 
-**Backend Service URL (without /api suffix):**
-```env
-# .env.local
-NEXT_PUBLIC_ENGINE_API_URL=http://localhost:8081
-```
-
-### API Client Usage
-
-```typescript
-// For Flowable built-in APIs
-const engineBaseUrl = process.env.NEXT_PUBLIC_ENGINE_API_URL || 'http://localhost:8081';
-const response = await fetch(`${engineBaseUrl}/api/tasks/${taskId}`);
-
-// For Werkflow custom APIs
-const response = await fetch(`${engineBaseUrl}/werkflow/api/forms/${formKey}`);
+```javascript
+// next.config.mjs rewrites
+{ source: '/api/engine/:path*', destination: 'http://localhost:8081/api/:path*' },
+{ source: '/api/admin/:path*', destination: 'http://localhost:8083/api/:path*' },
+{ source: '/api/business/:path*', destination: 'http://localhost:8084/api/:path*' },
 ```
 
 ### Axios Client Configuration
@@ -107,14 +97,15 @@ const response = await fetch(`${engineBaseUrl}/werkflow/api/forms/${formKey}`);
 ```typescript
 import axios from 'axios';
 
-const apiClient = axios.create({
+// Engine API client (Flowable + custom werkflow APIs)
+const engineClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_ENGINE_API_URL || 'http://localhost:8081',
   headers: { 'Content-Type': 'application/json' },
 });
 
 // Usage
-apiClient.get('/api/tasks/123');                    // Flowable API
-apiClient.get('/werkflow/api/forms/employee-form'); // Custom API
+engineClient.get('/api/tasks/123');                    // Flowable API
+engineClient.get('/werkflow/api/forms/employee-form'); // Custom API
 ```
 
 ## Directory Structure
@@ -313,12 +304,5 @@ class FormControllerTest {
 
 ## Related Documentation
 
-- [Flowable REST API Conflict](../Troubleshooting/Flowable-REST-API-Conflict.md) - Detailed troubleshooting guide
-- [Security Configuration](./Security-Configuration.md) - Complete security setup
-- [Frontend Integration](./Frontend-Integration.md) - Client-side API usage
-
-## References
-
-- [Flowable REST API Documentation](https://www.flowable.com/open-source/docs/bpmn/ch15-REST)
-- [Spring Boot REST API Design](https://spring.io/guides/tutorials/rest/)
-- [Next.js Environment Variables](https://nextjs.org/docs/basic-features/environment-variables)
+- [Flowable REST API Conflict](../Troubleshooting/Flowable-REST-API-Conflict.md)
+- [Deployment Configuration Guide](../Deployment/Deployment-Configuration-Guide.md)

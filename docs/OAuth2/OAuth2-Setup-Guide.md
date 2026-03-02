@@ -48,7 +48,7 @@ Result: HR_ADMIN role exists
 2. Click "Create client" button
 3. Fill form:
    - Client type: OpenID Connect
-   - Client ID: werkflow-admin-portal
+   - Client ID: werkflow-portal
 4. Click "Next"
 5. Capability Config:
    - Keep defaults (Standard flow + Direct access checked)
@@ -137,7 +137,7 @@ Repeat this process for each additional role your system requires.
 
 ### OAuth2 Client Configuration
 
-#### Client 1: Admin Portal
+#### Client 1: Portal
 
 OAuth2 clients represent applications that authenticate users. The admin portal client configuration:
 
@@ -145,8 +145,8 @@ OAuth2 clients represent applications that authenticate users. The admin portal 
 2. Click "Create client" button
 3. General Settings screen:
    - Client type: OpenID Connect
-   - Client ID: werkflow-admin-portal
-   - Name: Werkflow Admin Portal
+   - Client ID: werkflow-portal
+   - Name: Werkflow Portal
    - Description: Process Studio and Admin Interface
 4. Click "Next"
 5. Capability Configuration:
@@ -167,17 +167,6 @@ OAuth2 clients represent applications that authenticate users. The admin portal 
 8. Click "Save"
 9. Navigate to "Credentials" tab
 10. Copy the "Client Secret" (you will need this for backend configuration)
-
-#### Client 2: HR Portal (Optional - For Later)
-
-When ready to configure the HR portal:
-
-Configuration identical to Admin Portal except:
-- Client ID: werkflow-hr-portal
-- Root URL: http://localhost:4001
-- Valid redirect URIs: http://localhost:4001/*
-- Valid post logout redirect URIs: http://localhost:4001/*
-- Web origins: http://localhost:4001
 
 ### User Management
 
@@ -224,18 +213,18 @@ Required variables for backend integration:
 
 ```bash
 KEYCLOAK_ISSUER=http://localhost:8090/realms/werkflow
-KEYCLOAK_CLIENT_ID=werkflow-admin-portal
+KEYCLOAK_CLIENT_ID=werkflow-portal
 KEYCLOAK_CLIENT_SECRET=<copy from Keycloak credentials tab>
 ```
 
 In Docker environment (docker-compose.yml):
 
 ```yaml
-admin-portal:
+portal:
   environment:
     KEYCLOAK_ISSUER: http://keycloak:8080/realms/werkflow
     KEYCLOAK_ISSUER_BROWSER: http://localhost:8090/realms/werkflow
-    KEYCLOAK_CLIENT_ID: werkflow-admin-portal
+    KEYCLOAK_CLIENT_ID: werkflow-portal
     KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_ADMIN_PORTAL_SECRET}
 ```
 
@@ -257,7 +246,7 @@ curl http://localhost:8090/realms/werkflow | jq .
 
 Should return realm configuration JSON, not an error.
 
-### Test 2: Login to Admin Portal
+### Test 2: Login to Portal
 
 1. Navigate to http://localhost:4000
 2. Click "Process Studio"
@@ -267,7 +256,7 @@ Should return realm configuration JSON, not an error.
 
 ### Test 3: Access Processes Page
 
-1. After successful login, you should be on /studio/processes
+1. After successful login, you should be on /dashboard
 2. Page should display:
    - "Process Designer" heading
    - "No processes deployed yet" (if database is empty)
@@ -290,7 +279,7 @@ User Browser
   |
   | 1. Visits http://localhost:4000
   v
-Admin Portal (Next.js)
+Portal (Next.js)
   |
   | 2. User clicks "Sign In"
   v
@@ -314,7 +303,7 @@ Generate JWT token with roles
   |
   | 6. Redirect with authorization code
   v
-Admin Portal receives callback
+Portal receives callback
   |
   | http://localhost:4000/api/auth/callback?code=...
   v
@@ -328,7 +317,7 @@ Extract user info and roles from token
   v
 Create session cookie
   |
-  | 9. Redirect to /studio/processes
+  | 9. Redirect to /dashboard
   v
 User authenticated and authorized
 ```
@@ -348,7 +337,7 @@ User authenticated and authorized
 
 #### Clients
 - OAuth2 applications that authenticate users
-- werkflow-admin-portal: Frontend application
+- werkflow-portal: Frontend application
 - Backend services also authenticate as clients
 
 #### Users
@@ -376,12 +365,11 @@ User authenticated and authorized
 - [ ] MANAGER role created (optional)
 
 ### OAuth2 Clients
-- [ ] werkflow-admin-portal client created
+- [ ] werkflow-portal client created
   - [ ] Client ID correct
   - [ ] Client secret generated
   - [ ] Valid redirect URIs configured
   - [ ] Web origins configured
-- [ ] werkflow-hr-portal client created (optional, for later)
 
 ### Users
 - [ ] Admin user created (username: admin)
@@ -417,14 +405,14 @@ Fix:
 
 ### Issue: "Client not found"
 
-Cause: werkflow-admin-portal client not created
+Cause: werkflow-portal client not created
 Fix: Follow OAuth2 client creation steps in this guide
 
 ### Issue: Redirect loop (keeps redirecting to login)
 
 Cause: Valid redirect URIs misconfigured
 Fix:
-- Go to Clients → werkflow-admin-portal → Settings
+- Go to Clients → werkflow-portal → Settings
 - Check "Valid redirect URIs" includes: http://localhost:4000/*
 - Check "Web origins" includes: http://localhost:4000
 
@@ -432,7 +420,7 @@ Fix:
 
 Cause: Client secret mismatch
 Fix:
-- In Keycloak: Clients → werkflow-admin-portal → Credentials
+- In Keycloak: Clients → werkflow-portal → Credentials
 - Copy exact client secret
 - Update .env.shared and .env.admin
 - Restart services: docker-compose restart
@@ -458,7 +446,7 @@ Fix:
 TOKEN=$(curl -s -X POST \
   http://localhost:8090/realms/werkflow/protocol/openid-connect/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "client_id=werkflow-admin-portal" \
+  -d "client_id=werkflow-portal" \
   -d "client_secret=<YOUR_CLIENT_SECRET>" \
   -d "grant_type=password" \
   -d "username=admin" \

@@ -241,7 +241,7 @@ Use in BPMN:
 
 ### 1. NextAuth Configuration
 
-Update `/frontends/admin-portal/auth.config.ts`:
+Update `/frontends/portal/auth.config.ts`:
 
 ```typescript
 import type { NextAuthConfig } from "next-auth";
@@ -294,7 +294,7 @@ export const authConfig = {
 Create authorization hooks:
 
 ```typescript
-// /frontends/admin-portal/hooks/useAuthorization.ts
+// /frontends/portal/hooks/useAuthorization.ts
 import { useSession } from "next-auth/react";
 
 export function useAuthorization() {
@@ -353,7 +353,7 @@ export function useAuthorization() {
 ### 3. Protected Components
 
 ```typescript
-// /frontends/admin-portal/components/ProtectedComponent.tsx
+// /frontends/portal/components/ProtectedComponent.tsx
 import { useAuthorization } from "@/hooks/useAuthorization";
 
 interface Props {
@@ -394,7 +394,7 @@ export function ProtectedComponent({
 ### 4. Usage in Pages
 
 ```typescript
-// /frontends/admin-portal/app/workflows/asset-requests/page.tsx
+// /frontends/portal/app/workflows/asset-requests/page.tsx
 import { ProtectedComponent } from "@/components/ProtectedComponent";
 import { useAuthorization } from "@/hooks/useAuthorization";
 
@@ -621,12 +621,12 @@ KEYCLOAK_REALM=werkflow-platform
 KEYCLOAK_ADMIN_CLIENT_ID=werkflow-engine
 KEYCLOAK_ADMIN_CLIENT_SECRET=<secure-secret>
 
-# Frontend (Admin Portal)
-NEXTAUTH_URL=https://admin.company.com
+# Frontend (Portal)
+NEXTAUTH_URL=https://portal.company.com
 KEYCLOAK_ISSUER_INTERNAL=http://keycloak:8080/realms/werkflow-platform
 KEYCLOAK_ISSUER_PUBLIC=https://keycloak.company.com/realms/werkflow-platform
 KEYCLOAK_ISSUER_BROWSER=https://keycloak.company.com/realms/werkflow-platform
-KEYCLOAK_CLIENT_ID=werkflow-admin-portal
+KEYCLOAK_CLIENT_ID=werkflow-portal
 KEYCLOAK_CLIENT_SECRET=<secure-secret>
 ```
 

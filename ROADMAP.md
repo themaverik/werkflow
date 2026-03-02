@@ -34,8 +34,8 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 
 **Active Phase**: S3 — Domain Service Consolidation
 **Current Task**: S3.6 — Update Architecture Documentation
-**Last Commit**: S3.5 complete (see git log)
-**Stopped At**: S3.5 complete; S3.6 next
+**Last Commit**: S3.6 complete (see git log)
+**Stopped At**: S3.6 complete; S3 fully done
 
 > **Decision (2026-03-01)**: S3 moved before S5. Doing S5 first would waste ~60-70% effort
 > since S3 rewrites Docker Compose, service URLs, and package structure — all of which S5
@@ -101,7 +101,7 @@ S3 — Consolidation          [3-4 days]    prerequisite: S1.3, S1.4 — ACTIVE
   S3.3 Consolidate infrastructure        COMPLETED (1d65d52)
   S3.4 Verify and clean up              COMPLETED
   S3.5 Frontend consolidation            <-- single app, module-based
-  S3.6 Update architecture docs
+  S3.6 Update architecture docs          COMPLETED
 
 S4 — Frontend Completion    [5-6 days]    COMPLETED
   S4.1 Task Detail Page
@@ -417,14 +417,14 @@ Tasks:
 > All docs in `docs/` must reflect the consolidated architecture post-S3.
 
 Tasks:
-- [ ] Update `docs/Architecture/Workflow-Architecture-Design.md` -- service topology (3 services: engine, admin, business)
-- [ ] Update `docs/Architecture/Delegate-Architecture-Analysis.md` -- service URLs now point to business-service
-- [ ] Update `docs/Deployment/Deployment-Configuration-Guide.md` -- new Docker Compose layout, .env.business
-- [ ] Update `docs/Development/API-Path-Structure.md` -- consolidated API paths under business-service
-- [ ] Update `docs/Security/Keycloak-Implementation-Guide.md` -- single frontend client vs multiple
-- [ ] Update `docs/OAuth2/OAuth2-Setup-Guide.md` -- single portal auth flow
-- [ ] Update or archive stale phase docs (Phase-3-7, Phase-4-5-6, etc.) that reference old 4-service architecture
-- [ ] Update `docs/README.md` -- reflect current project structure
+- [x] Update `docs/Architecture/Workflow-Architecture-Design.md` -- rewritten for 3-service topology
+- [x] Update `docs/Architecture/Delegate-Architecture-Analysis.md` -- simplified, URLs point to business-service:8084
+- [x] Update `docs/Deployment/Deployment-Configuration-Guide.md` -- rewritten with new Docker Compose, env vars
+- [x] Update `docs/Development/API-Path-Structure.md` -- updated frontend integration section
+- [x] Update `docs/Security/Keycloak-Implementation-Guide.md` -- werkflow-portal client, single frontend
+- [x] Update `docs/OAuth2/OAuth2-Setup-Guide.md` -- werkflow-portal client, removed HR portal client
+- [x] Archive 32 stale phase docs to `docs/archive/`
+- [x] Update `docs/README.md` -- rewritten as consolidated documentation index
 
 ---
 

@@ -480,10 +480,10 @@ curl -v http://localhost:8090/health/ready
 
 ## See Also
 
-- [OAuth2 Setup Guide](./OAuth2_Setup_Guide.md) - Initial setup instructions
-- [OAuth2 Docker Configuration](./OAuth2_Docker_Configuration.md) - Docker networking details
-- [NextAuth Configuration](./NextAuth_Configuration.md) - NextAuth.js configuration
-- [Authentication Issues](../Troubleshooting/Authentication_Issues.md) - General auth troubleshooting
+- [OAuth2 Setup Guide](./OAuth2-Setup-Guide.md) - Initial setup instructions
+- [OAuth2 Docker Configuration](./OAuth2-Docker-Configuration.md) - Docker networking details
+- [NextAuth Configuration](./NextAuth-Configuration.md) - NextAuth.js configuration
+- [Authentication Issues](./Troubleshooting/Authentication-Issues.md) - General auth troubleshooting
 
 ## Archived Files
 

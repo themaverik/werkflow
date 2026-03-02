@@ -191,5 +191,5 @@ All route groups share the same app-shell layout (sidebar + header).
 ## Related Documentation
 
 - [Delegate Architecture Analysis](./Delegate-Architecture-Analysis.md)
-- [API Path Structure](../Development/API-Path-Structure.md)
-- [Deployment Configuration Guide](../Deployment/Deployment-Configuration-Guide.md)
+- [API Path Structure](../API-Path-Structure.md)
+- [Deployment Configuration Guide](../Deployment-Configuration-Guide.md)

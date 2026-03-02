@@ -285,10 +285,9 @@ From realm export:
 
 ## Related Documentation
 
-- **Keycloak Realm Import Guide:** `/Users/lamteiwahlang/Projects/werkflow/docs/Keycloak-Realm-Import-Guide.md`
-- **Authentication Flow Analysis:** `/Users/lamteiwahlang/Projects/werkflow/docs/OAuth2/Authentication-Flow-Analysis.md`
-- **Keycloak Docker Networking:** `/Users/lamteiwahlang/Projects/werkflow/docs/OAuth2/Keycloak-Docker-Networking.md`
-- **Quick Fix Authentication:** `/Users/lamteiwahlang/Projects/werkflow/docs/OAuth2/Quick-Fix-Authentication.md`
+- **OAuth2 Setup Guide:** `/docs/OAuth2-Setup-Guide.md`
+- **OAuth2 Docker Configuration:** `/docs/OAuth2-Docker-Configuration.md`
+- **OAuth2 Troubleshooting:** `/docs/OAuth2-Troubleshooting.md`
 
 ---
 

@@ -611,10 +611,9 @@ public Keycloak keycloak() {
 
 ## Related Documentation
 
-- **Keycloak Realm Import Guide:** `/docs/Keycloak-Realm-Import-Guide.md`
 - **Authentication 404 Fix:** `/docs/Troubleshooting/Authentication-404-Callback-Fix.md`
-- **RBAC Implementation:** `/docs/Keycloak-Implementation-Quick-Start.md`
-- **Docker Networking:** `/docs/OAuth2/Keycloak-Docker-Networking.md`
+- **RBAC Implementation:** `/docs/Keycloak-Implementation-Guide.md`
+- **Docker Configuration:** `/docs/OAuth2-Docker-Configuration.md`
 
 ---
 

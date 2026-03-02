@@ -678,5 +678,5 @@ WHERE NOT do.revoked
 
 - [Keycloak Admin REST API](https://www.keycloak.org/docs-api/latest/rest-api/)
 - [Keycloak Documentation](https://www.keycloak.org/documentation)
-- Werkflow RBAC Design: `/docs/Security/Keycloak-RBAC-Design.md`
+- Werkflow RBAC Design: `/docs/Keycloak-RBAC-Role-Matrix-Design.md`
 - Realm Configuration: `/infrastructure/keycloak/werkflow-realm.json`

@@ -304,5 +304,5 @@ class FormControllerTest {
 
 ## Related Documentation
 
-- [Flowable REST API Conflict](../Troubleshooting/Flowable-REST-API-Conflict.md)
-- [Deployment Configuration Guide](../Deployment/Deployment-Configuration-Guide.md)
+- [Flowable REST API Conflict](Troubleshooting/Flowable-REST-API-Conflict.md)
+- [Deployment Configuration Guide](Deployment-Configuration-Guide.md)

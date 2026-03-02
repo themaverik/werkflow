@@ -564,8 +564,8 @@ export default function Page({ params }: { params: { slug: string[] } }) {
 
 ## See Also
 
-- [Authentication Issues](./Authentication_Issues.md) - Auth-related routing problems
-- [OAuth2 Troubleshooting](../OAuth2/OAuth2_Troubleshooting.md) - OAuth redirect issues
+- [Authentication Issues](./Authentication-Issues.md) - Auth-related routing problems
+- [OAuth2 Troubleshooting](../OAuth2-Troubleshooting.md) - OAuth redirect issues
 - [Next.js Routing Documentation](https://nextjs.org/docs/app/building-your-application/routing)
 
 ## Summary

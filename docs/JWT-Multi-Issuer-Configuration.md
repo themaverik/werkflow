@@ -309,9 +309,8 @@ To rollback to default behavior:
 
 ### Related Documentation
 
-- [Keycloak Configuration](../Keycloak/Configuration.md)
-- [OAuth2 Setup Guide](../Keycloak/OAuth2-Setup.md)
-- [Security Configuration](../Security/Security-Configuration.md)
+- [OAuth2 Setup Guide](./OAuth2-Setup-Guide.md)
+- [Keycloak Implementation Guide](./Keycloak-Implementation-Guide.md)
 
 ### Spring Security References
 

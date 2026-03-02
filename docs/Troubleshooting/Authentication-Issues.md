@@ -511,10 +511,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
 ## See Also
 
-- [OAuth2 Setup Guide](../OAuth2/OAuth2_Setup_Guide.md) - Initial Keycloak setup
-- [OAuth2 Troubleshooting](../OAuth2/OAuth2_Troubleshooting.md) - OAuth2-specific issues
-- [OAuth2 Docker Configuration](../OAuth2/OAuth2_Docker_Configuration.md) - Docker networking
-- [Frontend Route Issues](./Frontend_Route_Issues.md) - Frontend routing problems
+- [OAuth2 Setup Guide](../OAuth2-Setup-Guide.md) - Initial Keycloak setup
+- [OAuth2 Troubleshooting](../OAuth2-Troubleshooting.md) - OAuth2-specific issues
+- [OAuth2 Docker Configuration](../OAuth2-Docker-Configuration.md) - Docker networking
+- [Frontend Route Issues](./Frontend-Route-Issues.md) - Frontend routing problems
 
 ## Summary
 

@@ -96,8 +96,7 @@ docker-compose logs -f engine-service | grep -i "jwt\|issuer\|token"
 - Unit Tests: `services/engine/src/test/java/com/werkflow/engine/config/JwtDecoderConfigTest.java`
 
 ### Documentation
-- Detailed Guide: `docs/Security/JWT-Multi-Issuer-Configuration.md`
-- Security Overview: `docs/Security/README.md`
+- Detailed Guide: `docs/JWT-Multi-Issuer-Configuration.md`
 
 ## Architecture
 

@@ -201,5 +201,5 @@ Use `RestServiceDelegate` instead. One generic delegate serves all domains.
 ## Related Documentation
 
 - [Workflow Architecture Design](./Workflow-Architecture-Design.md)
-- [API Path Structure](../Development/API-Path-Structure.md)
+- [API Path Structure](../API-Path-Structure.md)
 - [BPMN Quick Reference](../BPMN-Quick-Reference-Guide.md)

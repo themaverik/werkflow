@@ -245,6 +245,6 @@ Run migrations: services auto-run Flyway on startup via Spring Boot.
 
 ## Related Documentation
 
-- [Workflow Architecture Design](../Architecture/Workflow-Architecture-Design.md)
-- [OAuth2 Setup Guide](../OAuth2/OAuth2-Setup-Guide.md)
-- [API Path Structure](../Development/API-Path-Structure.md)
+- [Workflow Architecture Design](Architecture/Workflow-Architecture-Design.md)
+- [OAuth2 Setup Guide](OAuth2-Setup-Guide.md)
+- [API Path Structure](API-Path-Structure.md)

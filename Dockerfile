@@ -79,55 +79,29 @@ WORKDIR /build
 RUN npm install -g pnpm
 
 # ================================================================
-# STAGE 6: Admin Portal Build
+# STAGE 6: Portal Build (unified frontend)
 # ================================================================
-FROM frontend-base AS admin-portal-build
+FROM frontend-base AS portal-build
 
-WORKDIR /build/frontends/admin-portal
+WORKDIR /build/frontends/portal
 
 # Copy package files
-COPY frontends/admin-portal/package.json frontends/admin-portal/package-lock.json* ./
+COPY frontends/portal/package.json frontends/portal/package-lock.json* ./
 
 # Install ALL dependencies (including devDependencies for build)
 RUN npm install && npm cache clean --force
 
 # Copy configuration files first (tsconfig, next.config, etc.)
-COPY frontends/admin-portal/tsconfig.json* ./
-COPY frontends/admin-portal/next.config.mjs* ./
-COPY frontends/admin-portal/next.config.js* ./
-COPY frontends/admin-portal/tailwind.config.ts* ./
-COPY frontends/admin-portal/tailwind.config.js* ./
-COPY frontends/admin-portal/postcss.config.js* ./
-COPY frontends/admin-portal/postcss.config.mjs* ./
+COPY frontends/portal/tsconfig.json* ./
+COPY frontends/portal/next.config.mjs* ./
+COPY frontends/portal/tailwind.config.ts* ./
+COPY frontends/portal/tailwind.config.js* ./
+COPY frontends/portal/postcss.config.js* ./
+COPY frontends/portal/postcss.config.mjs* ./
+COPY frontends/portal/components.json* ./
 
 # Copy source code
-COPY frontends/admin-portal/ ./
-
-# Build the application
-RUN npm run build
-
-# ================================================================
-# STAGE 7: HR Portal Build
-# ================================================================
-FROM frontend-base AS hr-portal-build
-
-WORKDIR /build/frontends/hr-portal
-
-# Copy package files
-COPY frontends/hr-portal/package.json frontends/hr-portal/package-lock.json* ./
-
-# Install ALL dependencies (including devDependencies for build)
-RUN npm install && npm cache clean --force
-
-# Copy configuration files first (tsconfig, next.config, etc.)
-COPY frontends/hr-portal/tsconfig.json ./
-COPY frontends/hr-portal/next.config.mjs ./
-COPY frontends/hr-portal/tailwind.config.ts* ./
-COPY frontends/hr-portal/postcss.config.js* ./
-COPY frontends/hr-portal/postcss.config.mjs* ./
-
-# Copy source code
-COPY frontends/hr-portal/ ./
+COPY frontends/portal/ ./
 
 # Build the application
 RUN npm run build
@@ -229,9 +203,9 @@ ENTRYPOINT ["java", \
     "app.jar"]
 
 # ================================================================
-# STAGE 11: Admin Portal Runtime
+# STAGE 11: Portal Runtime (unified frontend)
 # ================================================================
-FROM node:20-alpine AS admin-portal
+FROM node:20-alpine AS portal
 
 # Add non-root user
 RUN addgroup -S werkflow && adduser -S werkflow -G werkflow
@@ -239,9 +213,9 @@ RUN addgroup -S werkflow && adduser -S werkflow -G werkflow
 WORKDIR /app
 
 # Copy built application
-COPY --from=admin-portal-build --chown=werkflow:werkflow /build/frontends/admin-portal/.next/standalone ./
-COPY --from=admin-portal-build --chown=werkflow:werkflow /build/frontends/admin-portal/.next/static ./.next/static
-COPY --from=admin-portal-build --chown=werkflow:werkflow /build/frontends/admin-portal/public ./public
+COPY --from=portal-build --chown=werkflow:werkflow /build/frontends/portal/.next/standalone ./
+COPY --from=portal-build --chown=werkflow:werkflow /build/frontends/portal/.next/static ./.next/static
+COPY --from=portal-build --chown=werkflow:werkflow /build/frontends/portal/public ./public
 
 USER werkflow
 
@@ -252,34 +226,6 @@ ENV NODE_ENV=production
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:4000/api/health || exit 1
-
-CMD ["node", "server.js"]
-
-# ================================================================
-# STAGE 12: HR Portal Runtime
-# ================================================================
-FROM node:20-alpine AS hr-portal
-
-# Add non-root user
-RUN addgroup -S werkflow && adduser -S werkflow -G werkflow
-
-WORKDIR /app
-
-# Copy built application
-COPY --from=hr-portal-build --chown=werkflow:werkflow /build/frontends/hr-portal/.next/standalone ./
-COPY --from=hr-portal-build --chown=werkflow:werkflow /build/frontends/hr-portal/.next/static ./.next/static
-COPY --from=hr-portal-build --chown=werkflow:werkflow /build/frontends/hr-portal/public ./public
-
-USER werkflow
-
-EXPOSE 4001
-
-ENV PORT=4001
-ENV NODE_ENV=production
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:4001/api/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:4000/ || exit 1
 
 CMD ["node", "server.js"]

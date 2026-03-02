@@ -54,6 +54,14 @@
     </dependencyManagement>
 
     <dependencies>
+        <!-- Groovy scripting engine (required by BPMN Groovy script tasks) -->
+        <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+            <version>4.0.21</version>
+            <type>pom</type>
+        </dependency>
+
         <!-- Spring Boot Starters -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

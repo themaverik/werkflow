@@ -216,15 +216,19 @@ execution.setVariable('budgetAllocateBody', body)
       </extensionElements>
     </serviceTask>
 
+    <!-- Script Task: Build approval notification variables -->
+    <scriptTask id="buildApprovalNotification" name="Build Approval Notification" scriptFormat="groovy">
+      <script><![CDATA[
+execution.setVariable('recipients', execution.getVariable('requestedBy') ?: 'admin@werkflow.com')
+execution.setVariable('message', 'Your CapEx request ' + (execution.getVariable('requestNumber') ?: '') + ' (' + (execution.getVariable('title') ?: '') + ') has been APPROVED.')
+execution.setVariable('subject', 'CapEx Request Approved: ' + (execution.getVariable('requestNumber') ?: ''))
+      ]]></script>
+    </scriptTask>
+
     <!-- Service Task: Send Approval Notification -->
     <serviceTask id="sendApprovalNotification" name="Send Approval Notification"
                  flowable:delegateExpression="${notificationDelegate}">
       <documentation>Sends email notification to requester about approval</documentation>
-      <extensionElements>
-        <flowable:field name="notificationType">
-          <flowable:string><![CDATA[CAPEX_APPROVED]]></flowable:string>
-        </flowable:field>
-      </extensionElements>
     </serviceTask>
 
     <!-- Script Task: Build rejected status body -->
@@ -258,15 +262,19 @@ execution.setVariable('rejectedStatusBody', body)
       </extensionElements>
     </serviceTask>
 
+    <!-- Script Task: Build rejection notification variables -->
+    <scriptTask id="buildRejectionNotification" name="Build Rejection Notification" scriptFormat="groovy">
+      <script><![CDATA[
+execution.setVariable('recipients', execution.getVariable('requestedBy') ?: 'admin@werkflow.com')
+execution.setVariable('message', 'Your CapEx request ' + (execution.getVariable('requestNumber') ?: '') + ' (' + (execution.getVariable('title') ?: '') + ') has been REJECTED. Reason: ' + (execution.getVariable('rejectionReason') ?: 'No reason provided'))
+execution.setVariable('subject', 'CapEx Request Rejected: ' + (execution.getVariable('requestNumber') ?: ''))
+      ]]></script>
+    </scriptTask>
+
     <!-- Service Task: Send Rejection Notification -->
     <serviceTask id="sendRejectionNotification" name="Send Rejection Notification"
                  flowable:delegateExpression="${notificationDelegate}">
       <documentation>Sends email notification to requester about rejection</documentation>
-      <extensionElements>
-        <flowable:field name="notificationType">
-          <flowable:string><![CDATA[CAPEX_REJECTED]]></flowable:string>
-        </flowable:field>
-      </extensionElements>
     </serviceTask>
 
     <!-- End Events -->
@@ -345,12 +353,14 @@ execution.setVariable('rejectedStatusBody', body)
     <sequenceFlow id="flow7a" sourceRef="buildApprovedBody" targetRef="updateApproved" />
     <sequenceFlow id="flow8" sourceRef="updateApproved" targetRef="buildAllocateBody" />
     <sequenceFlow id="flow8a" sourceRef="buildAllocateBody" targetRef="reserveBudget" />
-    <sequenceFlow id="flow9" sourceRef="reserveBudget" targetRef="sendApprovalNotification" />
+    <sequenceFlow id="flow9" sourceRef="reserveBudget" targetRef="buildApprovalNotification" />
+    <sequenceFlow id="flow9a" sourceRef="buildApprovalNotification" targetRef="sendApprovalNotification" />
     <sequenceFlow id="flow10" sourceRef="sendApprovalNotification" targetRef="endEventApproved" />
 
     <!-- Rejection Path -->
     <sequenceFlow id="flow10a" sourceRef="buildRejectedBody" targetRef="updateRejected" />
-    <sequenceFlow id="flow11" sourceRef="updateRejected" targetRef="sendRejectionNotification" />
+    <sequenceFlow id="flow11" sourceRef="updateRejected" targetRef="buildRejectionNotification" />
+    <sequenceFlow id="flow11a" sourceRef="buildRejectionNotification" targetRef="sendRejectionNotification" />
     <sequenceFlow id="flow12" sourceRef="sendRejectionNotification" targetRef="endEventRejected" />
 
   </process>

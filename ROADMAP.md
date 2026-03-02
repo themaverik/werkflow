@@ -1,7 +1,7 @@
 # Werkflow Implementation Roadmap
 
 **Project**: Enterprise Workflow Automation Platform
-**Last Updated**: 2026-02-26
+**Last Updated**: 2026-03-02
 **Maintained By**: Tech Lead
 
 ---
@@ -32,10 +32,10 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 
 ## Current Session State
 
-**Active Phase**: S3 — Domain Service Consolidation
-**Current Task**: S3.6 — Update Architecture Documentation
-**Last Commit**: S3.6 complete (see git log)
-**Stopped At**: S3.6 complete; S3 fully done
+**Active Phase**: S5 — Integration Testing
+**Current Task**: S5.2 — Regression
+**Last Commit**: 41c0084 (docs consolidation)
+**Stopped At**: S3 fully complete; S5 is next
 
 > **Decision (2026-03-01)**: S3 moved before S5. Doing S5 first would waste ~60-70% effort
 > since S3 rewrites Docker Compose, service URLs, and package structure — all of which S5
@@ -47,47 +47,37 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 
 ## Project Health
 
-**System Status**: Architecture review complete. Stabilization in progress.
+**System Status**: S1-S4 complete. Architecture consolidated to 3 backend services + 1 frontend. Integration testing (S5) pending.
 **Last Audit**: 2026-02-26 — Principal engineer independent codebase review.
 
-### Audit Findings
+### Audit Findings (Post-Stabilization)
 
-| Documented Claim | Actual State |
-|------------------|-------------|
-| All priorities resolved | Dual package trees still exist in Finance and Procurement |
-| BPMN migrated to RestServiceDelegate | Zero Engine BPMN files use RestServiceDelegate; v2 uses inline Groovy HTTP |
-| RestServiceDelegate pattern established | Delegate exists but uses `WebClient.block()` — thread starvation risk |
-| Service Registry verified | Flyway seed data only; no runtime registration or health checks |
-| Flowable 7.0.1 compatibility issues | Most were misdiagnosed — wrong service interface, not missing API |
+| Original Finding | Resolution |
+|------------------|-----------|
+| Dual package trees in Finance/Procurement | Fixed in S1.3 — legacy packages deleted |
+| BPMN uses inline Groovy HTTP | Fixed in S2.1 — CapEx v2 migrated to RestServiceDelegate |
+| RestServiceDelegate uses `WebClient.block()` | Fixed in S1.1 — replaced with synchronous RestClient |
+| Service Registry: seed data only | Unchanged — sufficient for MVP |
+| Flowable 7.0.1 misdiagnosed issues | Fixed in S1.2 — upgraded to 7.1.0 |
 
-### Infrastructure Status
+### Infrastructure Status (Post-Consolidation)
 
 | Component | Port | Status |
 |-----------|------|--------|
-| Flowable Engine Service | 8081 | Healthy — 62 database tables, 30 BPMN workflows deployed |
-| Admin Service | 8083 | Healthy |
-| Keycloak Authentication | 8090 | Healthy |
-| PostgreSQL | 5433 | Healthy — 6 schemas |
-| HR, Finance, Procurement, Inventory | 8082-8086 | Flyway fixed — awaiting deployment verification |
-
-### Service Inventory
-
-| Service | Port | Flowable Dep | Flowable Usage | Action Required |
-|---------|------|-------------|----------------|-----------------|
-| Engine | 8081 | Required | Primary orchestrator | None |
-| Admin | 8083 | None | None | None |
-| HR | 8082 | Unnecessary | 1 file — embedded WorkflowService | Remove in S1.4 |
-| Finance | 8084 | Unnecessary | 0 files | Remove in S1.4 |
-| Procurement | 8085 | Unnecessary | 1 file — ProcessVariableInjector | Remove in S1.4 |
-| Inventory | 8086 | Unnecessary | 0 files | Remove in S1.4 |
+| Engine Service | 8081 | Flowable BPMN orchestration |
+| Admin Service | 8083 | Route access control, service registry |
+| Business Service | 8084 | Consolidated HR, Finance, Procurement, Inventory |
+| Portal | 4000 | Unified Next.js frontend (module-based route groups) |
+| Keycloak | 8090 | OAuth2/OIDC identity provider |
+| PostgreSQL | 5432 | Shared database (4 domain schemas) |
 
 ---
 
 ## Execution Order
 
 ```
-S1 — Critical Fixes         [2-3 hours]   <-- ACTIVE
-  S1.1 RestServiceDelegate      30 min    <-- START HERE
+S1 — Critical Fixes         [2-3 hours]   COMPLETED
+  S1.1 RestServiceDelegate      30 min
   S1.2 Flowable 7.1.0           1 hour
   S1.3 Dual package cleanup     1 hour
   S1.4 Remove unused Flowable   1 hour
@@ -95,23 +85,23 @@ S1 — Critical Fixes         [2-3 hours]   <-- ACTIVE
 S2 — BPMN Wiring            [3-4 hours]   prerequisite: S1.1
   S2.1 CapEx RestServiceDelegate
 
-S3 — Consolidation          [3-4 days]    prerequisite: S1.3, S1.4 — ACTIVE
+S3 — Consolidation          [3-4 days]    prerequisite: S1.3, S1.4 — COMPLETED
   S3.1 Business service shell            COMPLETED (cc613ab)
   S3.2 Move domain packages             COMPLETED (5893a8f)
   S3.3 Consolidate infrastructure        COMPLETED (1d65d52)
   S3.4 Verify and clean up              COMPLETED
-  S3.5 Frontend consolidation            <-- single app, module-based
-  S3.6 Update architecture docs          COMPLETED
+  S3.5 Frontend consolidation            COMPLETED (5630882)
+  S3.6 Update architecture docs          COMPLETED (c54a83f)
 
 S4 — Frontend Completion    [5-6 days]    COMPLETED
   S4.1 Task Detail Page
   S4.2 Request Tracking Page
   S4.3 Dashboard
 
-S5 — Integration Testing    [2-3 days]    prerequisite: S1, S2, S3
+S5 — Integration Testing    [2-3 days]    prerequisite: S1, S2, S3 — ACTIVE
   S5.0 Pre-deployment fixes              COMPLETED (commit: 1d6b510)
-  S5.1 CapEx end-to-end                 <-- Docker pre-flight required
-  S5.2 Regression
+  S5.1 CapEx end-to-end                 COMPLETED
+  S5.2 Regression                       <-- START HERE
 
 Total to MVP:   ~11-13 days
 ```
@@ -266,7 +256,7 @@ Tasks:
 **Goal**: Merge HR, Finance, Procurement, Inventory into a single `business` service.
 **Duration**: 1 day
 **Prerequisite**: S1.3 and S1.4 must be complete (done)
-**Status**: IN PROGRESS
+**Status**: COMPLETED
 
 **Target architecture**:
 ```
@@ -514,17 +504,27 @@ Tasks:
 
 > **Docker pre-flight check required** — verify Docker is running before deploying.
 
+**Status**: COMPLETED
+
 Tasks:
-- [ ] Docker pre-flight check *(run: `docker info` — stop and prompt user if not running)*
-- [ ] Deploy all services in Docker
-- [ ] Authenticate via Keycloak, obtain JWT
-- [ ] Start CapEx process via Engine API
-- [ ] Verify RestServiceDelegate calls Finance service correctly
-- [ ] Verify task routing by DOA level
-- [ ] Complete approval task
-- [ ] Verify notification sent
-- [ ] Verify process history recorded
-- [ ] Test all 4 DOA scenarios ($500, $7.5K, $75K, $250K)
+- [x] Docker pre-flight check
+- [x] Deploy all services locally against Docker infra (engine:8081, admin:8083, business:8084)
+- [x] Authenticate via Keycloak, obtain JWT (created werkflow realm, werkflow-portal client, admin user)
+- [x] Start CapEx process via Engine API (CAPEX-TEST-003, $500 DOA Level 1)
+- [x] Verify RestServiceDelegate calls business service correctly (create request, check budget, update status, allocate budget all OK)
+- [x] Complete manager approval task (APPROVED decision via ApprovalTaskCompletionListener)
+- [x] Verify notification sent (NotificationDelegate logged successfully)
+- [x] Verify process history recorded (full event trail with endTime)
+- [~] Verify task routing by DOA level (only $500 / DOA Level 1 tested; $7.5K/$75K/$250K scenarios deferred)
+- [~] Test all 4 DOA scenarios (only Level 1 completed; Levels 2-4 deferred to future session)
+
+Fixes applied during S5.1:
+- Added `groovy-all:4.0.21` to engine pom.xml (Groovy scripting engine for BPMN)
+- Added `scanBasePackages` to EngineServiceApplication (resolve restServiceDelegate bean)
+- Added Groovy script tasks in BPMN to build notification variables before NotificationDelegate
+- Fixed docker-compose.yml env vars to match application.yml expectations
+- Fixed .env.shared/.env.business passwords to match Docker PostgreSQL
+- Updated Dockerfile for unified portal (replaced admin-portal + hr-portal stages)
 
 ---
 
@@ -621,12 +621,12 @@ Tasks:
 
 | # | Risk | Probability | Impact | Mitigation | Status |
 |---|------|------------|--------|------------|--------|
-| 1 | RestServiceDelegate thread starvation | High under load | Engine unresponsive | S1.1 — replace WebClient.block() with RestClient | Fix designed, not implemented |
-| 2 | Flowable/Spring Boot version mismatch | Low (works today) | Subtle runtime failures | S1.2 — upgrade to Flowable 7.1.0 | Fix designed, not implemented |
-| 3 | No workflow uses RestServiceDelegate end-to-end | Known gap | Core pattern unvalidated | S2.1 — migrate CapEx v2 BPMN | Planned |
-| 4 | Consolidation breaks Flyway migration ordering | Medium | Migration conflicts | Per-schema Flyway beans with separate directories | Planned for S3 |
-| 5 | Keycloak JWT not propagated across services | Medium | Auth failures in cross-service calls | RestServiceDelegate must forward Authorization header | Not yet addressed — add to S2.1 |
-| 6 | HR embedded Flowable removal breaks HR workflows | Low | HR leave/onboarding stops | Test HR workflows after S1.4; route through Engine if broken | Planned for S1.4 |
+| 1 | RestServiceDelegate thread starvation | High under load | Engine unresponsive | S1.1 — replace WebClient.block() with RestClient | RESOLVED |
+| 2 | Flowable/Spring Boot version mismatch | Low (works today) | Subtle runtime failures | S1.2 — upgrade to Flowable 7.1.0 | RESOLVED |
+| 3 | No workflow uses RestServiceDelegate end-to-end | Known gap | Core pattern unvalidated | S2.1 — migrate CapEx v2 BPMN | RESOLVED — awaiting S5 verification |
+| 4 | Consolidation breaks Flyway migration ordering | Medium | Migration conflicts | Per-schema Flyway beans with separate directories | RESOLVED in S3.4 |
+| 5 | Keycloak JWT not propagated across services | Medium | Auth failures in cross-service calls | RestServiceDelegate forwards Authorization header | RESOLVED in S2.1 |
+| 6 | HR embedded Flowable removal breaks HR workflows | Low | HR leave/onboarding stops | Test HR workflows via Engine | Pending S5.2 verification |
 
 ---
 

@@ -17,7 +17,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * - Event handling and messaging
  * - Workflow monitoring and history
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.werkflow.engine", "com.werkflow.delegates"})
 public class EngineServiceApplication {
 
     public static void main(String[] args) {

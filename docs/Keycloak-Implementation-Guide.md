@@ -682,15 +682,41 @@ Use Prometheus + Grafana with Keycloak metrics endpoint.
 
 ---
 
-## Troubleshooting
+## Operations Quick Reference
 
-See [Keycloak-Operations-Guide.md](./Keycloak-Operations-Guide.md) for detailed troubleshooting steps.
+### Adding a New User
+
+1. Login to Keycloak Admin Console (`http://localhost:8090`)
+2. Select `werkflow-platform` realm
+3. Users -> Add User -> fill username, email, first/last name
+4. Credentials tab -> Set Password (Temporary: OFF)
+5. Role Mappings tab -> Assign roles (e.g., `HR_STAFF`, `EMPLOYEE`)
+6. If using groups: Groups tab -> Join group (e.g., `/HR Department/Staff`)
+
+### Managing Roles
+
+- Realm Roles -> Create Role -> set name and description
+- Composite roles: open a role -> Composite Roles tab -> add sub-roles
+- Role naming: `DEPARTMENT_LEVEL` (e.g., `HR_ADMIN`, `FINANCE_STAFF`)
+
+### Custom User Attributes
+
+Set on user's Attributes tab:
+- `employee_id`: Employee identifier
+- `department`: Department name
+- `doa_level`: Delegation of Authority level (1-4)
+- `is_poc`: Point of Contact flag
+
+### Common Troubleshooting
+
+- **401 after login**: Check user has required roles assigned
+- **Token issuer mismatch**: Verify `KEYCLOAK_ISSUER` env var matches realm URL
+- **Redirect loop**: Check Valid Redirect URIs includes `http://localhost:4000/*`
+- **Client not found**: Verify `werkflow-portal` client exists in realm
 
 ---
 
 ## References
 
-- Keycloak RBAC Design: [Keycloak-RBAC-Design.md](./Keycloak-RBAC-Design.md)
-- Operations Guide: [Keycloak-Operations-Guide.md](./Keycloak-Operations-Guide.md)
+- Keycloak RBAC Role Matrix: [Keycloak-RBAC-Role-Matrix-Design.md](./Keycloak-RBAC-Role-Matrix-Design.md)
 - Realm Configuration: `/infrastructure/keycloak/werkflow-realm.json`
-- Database Schema: `/services/engine/src/main/resources/db/migration/V3__create_rbac_tables.sql`

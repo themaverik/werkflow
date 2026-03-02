@@ -1,6 +1,6 @@
-# Werkflow Documentation Hub
+# Werkflow Documentation
 
-Enterprise Workflow Automation Platform -- consolidated documentation index.
+Enterprise Workflow Automation Platform
 
 **Last Updated**: 2026-03-02
 
@@ -19,7 +19,9 @@ Enterprise Workflow Automation Platform -- consolidated documentation index.
 
 ---
 
-## Architecture
+## Documentation
+
+### Architecture
 
 | Document | Description |
 |----------|-------------|
@@ -30,74 +32,37 @@ Enterprise Workflow Automation Platform -- consolidated documentation index.
 | [BPMN Diagram Configuration](Architecture/BPMN-Diagram-Configuration.md) | BPMN diagram generation and rendering |
 | [Workflow Guide](Architecture/Workflow-Guide.md) | Workflow features, REST APIs, role-based access |
 
-## Deployment and Configuration
+### Operations
 
 | Document | Description |
 |----------|-------------|
 | [Deployment Configuration Guide](Deployment-Configuration-Guide.md) | Local dev, Docker Compose, env vars, health checks |
-| [API Path Structure](API-Path-Structure.md) | `/api/*` vs `/werkflow/api/*` conventions |
-| [Security Deployment Checklist](Security-Deployment-Checklist.md) | Pre-deployment security validation |
+| [Keycloak Implementation Guide](Keycloak-Implementation-Guide.md) | Backend + frontend Keycloak integration and operations |
+| [Keycloak RBAC Role Matrix](Keycloak-RBAC-Role-Matrix-Design.md) | Role hierarchy, DOA system, permission model |
+| [Testing Guide](Testing.md) | Health checks, sanity testing, E2E workflow test |
 
-## Authentication and Security
-
-| Document | Description |
-|----------|-------------|
-| [OAuth2 Setup Guide](OAuth2-Setup-Guide.md) | Keycloak realm, client, user setup |
-| [Keycloak Implementation Guide](Keycloak-Implementation-Guide.md) | Backend + frontend Keycloak integration |
-| [Keycloak Operations Guide](Keycloak-Operations-Guide.md) | User lifecycle, group management |
-| [Keycloak RBAC Role Matrix](Keycloak-RBAC-Role-Matrix-Design.md) | Role hierarchy, DOA system, custom attributes |
-| [NextAuth Configuration](NextAuth-Configuration.md) | NextAuth.js v5 + Keycloak integration |
-| [OAuth2 Docker Configuration](OAuth2-Docker-Configuration.md) | Three-URL strategy for Docker networking |
-| [JWT Multi-Issuer Configuration](JWT-Multi-Issuer-Configuration.md) | Multiple JWT issuer validation |
-| [Quick Reference JWT](Quick-Reference-JWT.md) | JWT claims and validation cheat sheet |
-| [OAuth2 Troubleshooting](OAuth2-Troubleshooting.md) | Common auth errors and fixes |
-
-## BPMN and Forms
+### Reference
 
 | Document | Description |
 |----------|-------------|
-| [BPMN Quick Reference Guide](BPMN-Quick-Reference-Guide.md) | BPMN constructs, gateways, events, variables |
-| [BPMN Delegate Quick Start](BPMN-Delegate-Implementation-Quick-Start.md) | Custom Java delegate implementation |
-| [Form-js Quick Reference](Form-Js-Quick-Reference.md) | form-js component types and usage |
+| [BPMN Quick Reference](BPMN-Quick-Reference-Guide.md) | BPMN constructs, gateways, events, variables |
+| [form-js Quick Reference](Form-Js-Quick-Reference.md) | form-js component types and usage |
 | [Service Registry User Guide](Service-Registry-User-Guide.md) | Service URL management for delegates |
 
-## Testing
+### Troubleshooting
 
 | Document | Description |
 |----------|-------------|
-| [Testing Guide](Testing.md) | Unit, integration, E2E testing |
-| [Sanity Testing](Sanity-Testing.md) | Pre-deployment validation checklist |
-
-## Troubleshooting
-
-| Document | Description |
-|----------|-------------|
-| [Authentication Issues](Troubleshooting/Authentication-Issues.md) | Comprehensive auth error resolution |
-| [Authentication 404 Callback Fix](Troubleshooting/Authentication-404-Callback-Fix.md) | OAuth2 callback 404 fix |
+| [Authentication Issues](Troubleshooting/Authentication-Issues.md) | Auth error resolution |
+| [Authentication 404 Fix](Troubleshooting/Authentication-404-Callback-Fix.md) | OAuth2 callback 404 fix |
 | [Flowable REST API Conflict](Troubleshooting/Flowable-REST-API-Conflict.md) | API path conflict resolution |
 | [Frontend Route Issues](Troubleshooting/Frontend-Route-Issues.md) | Routing and navigation fixes |
 
 ---
 
-## Project Structure
+## Quick Start
 
-```
-werkflow/
-  services/
-    engine/        -- Flowable BPMN engine (:8081)
-    admin/         -- Admin service (:8083)
-    business/      -- Consolidated domain service (:8084)
-  frontends/
-    portal/        -- Unified Next.js app (:4000)
-  shared/
-    delegates/     -- Generic BPMN delegates
-  infrastructure/
-    docker/        -- Docker Compose files
-    keycloak/      -- Realm export/import
-```
-
----
-
-## Archive
-
-Historical docs (phase reports, migration summaries, feasibility analyses) are in `docs/archive/`.
+1. Start Keycloak: `docker compose -f infrastructure/docker/docker-compose.yml up keycloak -d`
+2. Start backend: `cd services/engine && mvn spring-boot:run` (repeat for admin, business)
+3. Start frontend: `cd frontends/portal && npm install && npm run dev`
+4. Open http://localhost:4000

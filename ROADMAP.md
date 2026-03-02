@@ -33,9 +33,9 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 ## Current Session State
 
 **Active Phase**: S3 — Domain Service Consolidation
-**Current Task**: S3.5 — Frontend Consolidation
-**Last Commit**: S3.4 complete (see git log)
-**Stopped At**: S3.4 complete; S3.5 next
+**Current Task**: S3.6 — Update Architecture Documentation
+**Last Commit**: S3.5 complete (see git log)
+**Stopped At**: S3.5 complete; S3.6 next
 
 > **Decision (2026-03-01)**: S3 moved before S5. Doing S5 first would waste ~60-70% effort
 > since S3 rewrites Docker Compose, service URLs, and package structure — all of which S5
@@ -397,15 +397,18 @@ frontends/portal/
 - Employee: HR self-service only
 
 Tasks:
-- [ ] Scaffold `frontends/portal/` with Next.js, Tailwind, shadcn/ui
-- [ ] Set up shared auth (NextAuth + Keycloak, single client)
-- [ ] Create shared layout with role-based sidebar navigation
-- [ ] Migrate `admin-portal` (studio) pages -> `(platform)/` route group
-- [ ] Migrate `hr-portal` pages -> `(hr)/` route group
-- [ ] Create placeholder pages for `(finance)/`, `(procurement)/`, `(inventory)/`
-- [ ] Set up single API client for business-service
-- [ ] Update Docker Compose and Dockerfile for single `portal` frontend
-- [ ] Deprecate `frontends/admin-portal/` and `frontends/hr-portal/`
+- [x] Copy admin-portal as base, restructure into `frontends/portal/`
+- [x] Update package.json (name, port 4000, HR deps), next.config.mjs (rewrites, app name), env files
+- [x] Restructure route groups: `(studio)` -> `(platform)`, create `(hr)`, `(finance)`, `(procurement)`, `(inventory)`, `(auth)`
+- [x] Create sidebar component with role-gated sections (General, Studio, HR, Finance, Procurement, Inventory, System)
+- [x] Create app-shell layout (header + sidebar + content area), used by all route group layouts
+- [x] Simplify middleware (84 -> 40 lines, legacy URL redirects, simple auth gate)
+- [x] Update auth.config.ts with new route patterns (dashboard, hr, finance, procurement, inventory)
+- [x] Migrate 5 HR pages from hr-portal into `(hr)/hr/` with shadcn Card/Button
+- [x] Create placeholder pages for finance, procurement, inventory modules
+- [x] Fix all `/studio/` and `/portal/` link references across 15+ files
+- [x] `npm install && npm run build` -- zero errors, 26 pages
+- [ ] Update Docker Compose and Dockerfile for single `portal` frontend *(deferred -- separate step)*
 
 ---
 

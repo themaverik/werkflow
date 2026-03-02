@@ -19,7 +19,7 @@ import java.util.Map;
  * Handles form retrieval and submission for Flowable tasks.
  */
 @RestController
-@RequestMapping("/api/tasks")
+@RequestMapping({"/api/tasks", "/api/v1/tasks"})
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Task Forms", description = "Task form management and submission API")

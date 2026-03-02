@@ -13,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,13 +21,34 @@ import java.util.Map;
  * REST controller for managing user tasks
  */
 @RestController
-@RequestMapping("/api/tasks")
+@RequestMapping({"/api/tasks", "/api/v1/tasks"})
 @RequiredArgsConstructor
 @Tag(name = "Tasks", description = "User task management")
 @SecurityRequirement(name = "bearer-jwt")
 public class TaskController {
 
     private final TaskService taskService;
+
+    @GetMapping
+    @Operation(summary = "List tasks for current user (assigned + candidate)")
+    public ResponseEntity<Map<String, Object>> listTasks(
+        @AuthenticationPrincipal Jwt jwt,
+        @RequestParam(defaultValue = "0") int start,
+        @RequestParam(defaultValue = "20") int size,
+        @RequestParam(defaultValue = "createTime") String sort,
+        @RequestParam(defaultValue = "desc") String order
+    ) {
+        String userId = jwt.getClaimAsString("preferred_username");
+        List<TaskResponse> myTasks = taskService.getTasksForUser(userId);
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("data", myTasks);
+        result.put("total", myTasks.size());
+        result.put("start", start);
+        result.put("size", size);
+        result.put("sort", sort);
+        result.put("order", order);
+        return ResponseEntity.ok(result);
+    }
 
     @GetMapping("/my-tasks")
     @Operation(summary = "Get tasks assigned to current user")

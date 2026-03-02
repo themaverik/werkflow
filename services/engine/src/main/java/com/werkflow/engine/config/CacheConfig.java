@@ -24,8 +24,9 @@ public class CacheConfig {
     @Bean
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager(
-                "serviceUrls",               // Existing cache for service URL resolution
-                "processDefinitionNames"     // New cache for process definition names
+                "serviceUrls",               // Cache for service URL resolution
+                "processDefinitionNames",    // Cache for process definition names
+                "formSchemas"                // Cache for form schema lookups
         );
         cacheManager.setCaffeine(Caffeine.newBuilder()
                 .expireAfterWrite(30, TimeUnit.SECONDS)

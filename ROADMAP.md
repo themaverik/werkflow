@@ -34,8 +34,8 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 
 **Active Phase**: S5 — Integration Testing
 **Current Task**: S5.2 — Regression
-**Last Commit**: 41c0084 (docs consolidation)
-**Stopped At**: S3 fully complete; S5 is next
+**Last Commit**: (pending commit — Docker full-stack deployment)
+**Stopped At**: Full-stack Docker deployment complete; CapEx E2E verified inside Docker network
 
 > **Decision (2026-03-01)**: S3 moved before S5. Doing S5 first would waste ~60-70% effort
 > since S3 rewrites Docker Compose, service URLs, and package structure — all of which S5
@@ -525,6 +525,18 @@ Fixes applied during S5.1:
 - Fixed docker-compose.yml env vars to match application.yml expectations
 - Fixed .env.shared/.env.business passwords to match Docker PostgreSQL
 - Updated Dockerfile for unified portal (replaced admin-portal + hr-portal stages)
+
+Docker full-stack deployment (S5.1 continuation):
+- [x] Created `.dockerignore` (excludes node_modules, target, .next, .git, docs, archive)
+- [x] Built all 4 Docker images: engine-service, admin-service, business-service, portal
+- [x] Deployed 8-container full stack (postgres, keycloak-postgres, keycloak, engine, admin, business, portal, pgadmin)
+- [x] Fixed Dockerfile: added `HOSTNAME=0.0.0.0` for Next.js standalone server binding
+- [x] Fixed JWT propagation: ProcessInstanceController passes JWT to ProcessInstanceService, which sets `authorizationToken` process variable
+- [x] Fixed `requestAmount` mapping: ProcessInstanceService maps `estimatedAmount` -> `requestAmount` for BPMN gateway expressions
+- [x] Re-created Keycloak werkflow realm, werkflow-portal client, 15 realm roles, admin user (super_admin + finance_head)
+- [x] Verified CapEx E2E inside Docker network: createRequest -> checkBudget -> managerApproval -> updateStatus -> allocateBudget -> notification
+- [x] All 8 containers healthy, all health endpoints UP, portal returns 200
+- Known issues found: procurement controllers have double `/api` prefix (context-path + @RequestMapping both have /api)
 
 ---
 

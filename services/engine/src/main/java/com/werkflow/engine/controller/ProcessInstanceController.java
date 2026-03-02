@@ -37,7 +37,8 @@ public class ProcessInstanceController {
         @AuthenticationPrincipal Jwt jwt
     ) {
         String userId = jwt.getClaimAsString("preferred_username");
-        ProcessInstanceResponse response = processInstanceService.startProcessInstance(request, userId);
+        ProcessInstanceResponse response = processInstanceService.startProcessInstance(
+            request, userId, jwt.getTokenValue());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

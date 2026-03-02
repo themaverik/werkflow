@@ -30,10 +30,20 @@ public class ProcessInstanceService {
      * Start a new process instance
      */
     @Transactional
-    public ProcessInstanceResponse startProcessInstance(StartProcessRequest request, String userId) {
+    public ProcessInstanceResponse startProcessInstance(StartProcessRequest request, String userId, String jwtToken) {
         log.info("Starting process instance: {} by user: {}", request.getProcessDefinitionKey(), userId);
 
-        Map<String, Object> variables = request.getVariables() != null ? request.getVariables() : new HashMap<>();
+        Map<String, Object> variables = request.getVariables() != null
+            ? new HashMap<>(request.getVariables()) : new HashMap<>();
+
+        if (jwtToken != null) {
+            variables.put("authorizationToken", "Bearer " + jwtToken);
+        }
+
+        // Normalize: map estimatedAmount to requestAmount for BPMN gateway expressions
+        if (variables.containsKey("estimatedAmount") && !variables.containsKey("requestAmount")) {
+            variables.put("requestAmount", variables.get("estimatedAmount"));
+        }
 
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(
             request.getProcessDefinitionKey(),

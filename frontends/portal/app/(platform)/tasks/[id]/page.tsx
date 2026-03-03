@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, CheckCircle2, XCircle, UserPlus, Clock, User, Calendar } from "lucide-react"
 import Link from "next/link"
-import { useTask, useTaskFormData, useTaskHistory, useCompleteTask, useClaimTask, useUnclaimTask, useDelegateTask } from '@/lib/hooks/useTasks'
+import { useTask, useTaskFormData, useTaskHistory, useCompleteTask, useClaimTask, useUnclaimTask, useDelegateTask, useSubmitTaskForm } from '@/lib/hooks/useTasks'
 import { getTokenFromStorage, extractUserClaims } from '@/lib/utils/jwt'
 import { useToast } from "@/hooks/use-toast"
 import { ApprovalPanel } from '../components/ApprovalPanel'
@@ -36,6 +36,7 @@ export default function TaskDetailPage() {
   const claimTaskMutation = useClaimTask()
   const unclaimTaskMutation = useUnclaimTask()
   const delegateTaskMutation = useDelegateTask()
+  const submitFormMutation = useSubmitTaskForm()
 
   useEffect(() => {
     async function loadUserClaims() {
@@ -235,9 +236,9 @@ export default function TaskDetailPage() {
 
   const handleFormSubmit = async (data: Record<string, any>) => {
     try {
-      await completeTaskMutation.mutateAsync({
+      await submitFormMutation.mutateAsync({
         taskId,
-        data: { variables: data },
+        formData: data,
       })
       toast({ title: 'Task Completed', description: 'Form submitted successfully.' })
       router.push('/tasks')
@@ -422,7 +423,7 @@ export default function TaskDetailPage() {
                 formData={formData}
                 isLoading={isLoadingForm}
                 onSubmit={handleFormSubmit}
-                isSubmitting={completeTaskMutation.isPending}
+                isSubmitting={submitFormMutation.isPending}
                 readonly={!canComplete}
               />
             </TabsContent>

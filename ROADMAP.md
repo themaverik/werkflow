@@ -33,9 +33,9 @@ See `CLAUDE.md` Section 6 for full session continuity rules.
 ## Current Session State
 
 **Active Phase**: S5 — Integration Testing
-**Current Task**: S5.2 — Regression
-**Last Commit**: 2cb1997 (Docker full-stack deployment)
-**Stopped At**: Full-stack Docker deployment complete; CapEx E2E verified inside Docker network
+**Current Task**: S5.1 — Portal/API fixes (ongoing), then S5.2 — Regression
+**Last Commit**: 0393946 (CapEx E2E integration test)
+**Stopped At**: Fixing portal UI issues — forms display, BPMN edges, missing endpoints
 
 > **Decision (2026-03-01)**: S3 moved before S5. Doing S5 first would waste ~60-70% effort
 > since S3 rewrites Docker Compose, service URLs, and package structure — all of which S5
@@ -538,6 +538,26 @@ Docker full-stack deployment (S5.1 continuation):
 - [x] All 8 containers healthy, all health endpoints UP, portal returns 200
 - Known issues found: procurement controllers have double `/api` prefix (context-path + @RequestMapping both have /api)
 
+Portal/API fixes (S5.1 continuation — discovered via UI testing):
+- [x] Created `WorkflowDashboardController` with 3 missing endpoints: `/workflows/instances`, `/workflows/activity`, `/api/v1/tasks/summary`
+- [x] Added `/api/v1/tasks` alias path to `TaskController` and `TaskFormController` (portal uses v1 prefix)
+- [x] Added root `GET` task listing endpoint on `TaskController` with pagination params
+- [x] Added `formSchemas` to `CacheConfig` (used by `@Cacheable` but not registered)
+- [x] Fixed BPMN diagram: added 27 `BPMNEdge` elements + 2 missing shapes + fixed overlapping positions in `capex-approval-process-v2.bpmn20.xml`
+- [x] Added `GET /workflows/tasks/process/{processInstanceId}` endpoint to `WorkflowTaskController`
+- [x] Populated `candidateGroups`/`candidateUsers` in `TaskService.mapToResponse()` via Flowable identity link API
+- [~] Forms display issue: deployed forms show no names or keys in Form Designer page
+
+Form/BPMN integration fixes (S5.1 continuation):
+- [x] Fixed task form submission: `handleFormSubmit` now calls `submitTaskForm` endpoint instead of `completeTask`, wraps data in `{ formData }` matching `FormSubmitRequest` DTO *(commit: 1c8d471)*
+- [x] Added `GET /process-definitions/{id}/start-form` endpoint: extracts formKey from BPMN start event, returns form schema *(commit: 3b7e9c4)*
+- [x] Added `startFormKey` field to `ProcessDefinitionResponse` DTO *(commit: 3b7e9c4)*
+- [x] Created `/processes/start/[id]` page: fetches start form, renders FormJsViewer, submits as process variables *(commit: c8c8c43)*
+- [x] Added "Start Process" button to processes page for definitions with start forms *(commit: c8c8c43)*
+- [x] Replaced `CamundaPlatformPropertiesProviderModule` with custom `FlowablePropertiesProviderModule` in BPMN designer *(commit: 7f7ac3f)*
+- [x] Added StartEvent form key support in FlowablePropertiesProvider *(commit: 7f7ac3f)*
+- [x] Converted FormKeyEntry from text field to select dropdown populated from form schemas API *(commit: 7f7ac3f)*
+
 ---
 
 #### S5.2 — Regression (1 day)
@@ -626,6 +646,7 @@ Tasks:
 | Load testing and security hardening | Pre-production concern | Before production deployment |
 | PostgreSQL sequences for request numbers | `System.currentTimeMillis()` sufficient for single dev | Phase 4 cleanup |
 | Inventory DTO layer | Currently leaks JPA entities | Phase 4 cleanup |
+| Process participant visibility (names & roles) | Medium priority — BPMN viewer shows task names but not who is assigned/waiting. Need to display participant names and roles for active user tasks in the process instance detail view. Enables managers to see "Waiting for: John Smith (FINANCE_MANAGER)" instead of just "Manager Review (unassigned)". Requires: (1) Keycloak user lookup by role/group, (2) BPMN viewer with active node highlighting, (3) participant info panel on instance detail page | After S5 — when real users are onboarded |
 
 ---
 

@@ -22,8 +22,11 @@ import '@bpmn-io/properties-panel/dist/assets/properties-panel.css'
 import {
   BpmnPropertiesPanelModule,
   BpmnPropertiesProviderModule,
-  CamundaPlatformPropertiesProviderModule
 } from 'bpmn-js-properties-panel'
+
+import FlowablePropertiesProviderModule from '@/lib/bpmn/flowable-properties-module'
+import { setFormSchemaOptions } from '@/lib/bpmn/flowable-properties-provider'
+import { getFormDefinitions } from '@/lib/api/flowable'
 
 interface BpmnDesignerProps {
   initialXml?: string
@@ -59,7 +62,7 @@ export default function BpmnDesigner({ initialXml, processId, onSave }: BpmnDesi
       additionalModules: [
         BpmnPropertiesPanelModule,
         BpmnPropertiesProviderModule,
-        CamundaPlatformPropertiesProviderModule
+        FlowablePropertiesProviderModule
       ]
     })
 
@@ -93,6 +96,17 @@ export default function BpmnDesigner({ initialXml, processId, onSave }: BpmnDesi
       bpmnModeler.destroy()
     }
   }, [initialXml])
+
+  // Fetch form schemas for properties panel dropdown
+  useEffect(() => {
+    getFormDefinitions()
+      .then((forms) => {
+        setFormSchemaOptions(forms.map((f) => ({ key: f.key, name: f.name })))
+      })
+      .catch((err) => {
+        console.error('Failed to load form definitions for properties panel:', err)
+      })
+  }, [])
 
   // Deploy to backend
   const deployMutation = useMutation({

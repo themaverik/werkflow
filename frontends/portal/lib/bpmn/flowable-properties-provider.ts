@@ -5,7 +5,7 @@
  * - Assignee (user assignment)
  * - Candidate Users (potential assignees)
  * - Candidate Groups (group assignments)
- * - Form Key (link to Form.io form)
+ * - Form Key (link to Form.io form, select dropdown populated from API)
  * - Priority
  * - Due Date Expression
  */
@@ -13,7 +13,21 @@
 import { is } from 'bpmn-js/lib/util/ModelUtil'
 
 /**
- * Flowable properties provider for user tasks
+ * Module-level variable for form schema options.
+ * Set from BpmnDesigner.tsx after fetching from API.
+ */
+let formSchemaOptions: Array<{ key: string; name: string }> = []
+
+export function setFormSchemaOptions(options: Array<{ key: string; name: string }>) {
+  formSchemaOptions = options
+}
+
+export function getFormSchemaOptions(): Array<{ key: string; name: string }> {
+  return formSchemaOptions
+}
+
+/**
+ * Flowable properties provider for user tasks, start events, and service tasks
  */
 class FlowablePropertiesProvider {
   static $inject = ['propertiesPanel', 'injector'];
@@ -72,8 +86,8 @@ class FlowablePropertiesProvider {
           {
             id: 'formKey',
             element,
-            component: FormKeyEntry,
-            isEdited: isTextFieldEntryEdited
+            component: FormKeySelectEntry,
+            isEdited: isSelectEntryEdited
           }
         ]
       })
@@ -94,6 +108,22 @@ class FlowablePropertiesProvider {
             element,
             component: DueDateEntry,
             isEdited: isTextFieldEntryEdited
+          }
+        ]
+      })
+    }
+
+    // Add Flowable forms group for Start Events
+    if (is(element, 'bpmn:StartEvent')) {
+      groups.splice(generalIdx + 1, 0, {
+        id: 'flowable-forms',
+        label: 'Forms',
+        entries: [
+          {
+            id: 'formKey',
+            element,
+            component: FormKeySelectEntry,
+            isEdited: isSelectEntryEdited
           }
         ]
       })
@@ -228,11 +258,10 @@ function CandidateGroupsEntry(props: any) {
   }
 }
 
-function FormKeyEntry(props: any) {
+function FormKeySelectEntry(props: any) {
   const { element, id } = props
   const modeling = props.modeling || props.injector.get('modeling')
   const translate = props.translate || ((s: string) => s)
-  const debounce = props.debounce || ((fn: Function) => fn)
 
   const getValue = () => {
     return element.businessObject.formKey || ''
@@ -244,14 +273,22 @@ function FormKeyEntry(props: any) {
     })
   }
 
+  const getOptions = () => {
+    const options = [{ value: '', label: translate('(none)') }]
+    for (const schema of formSchemaOptions) {
+      options.push({ value: schema.key, label: schema.name || schema.key })
+    }
+    return options
+  }
+
   return {
     id,
     element,
     label: translate('Form Key'),
-    description: translate('Form.io form key (e.g., leave-request-form)'),
+    description: translate('Select a form definition to link'),
     getValue,
     setValue,
-    debounce
+    getOptions
   }
 }
 
@@ -395,6 +432,14 @@ function ExtensionElementsEntry(props: any) {
  * Helper function to check if a text field entry is edited
  */
 function isTextFieldEntryEdited(entry: any) {
+  const { getValue } = entry
+  return getValue && getValue() !== ''
+}
+
+/**
+ * Helper function to check if a select entry is edited
+ */
+function isSelectEntryEdited(entry: any) {
   const { getValue } = entry
   return getValue && getValue() !== ''
 }

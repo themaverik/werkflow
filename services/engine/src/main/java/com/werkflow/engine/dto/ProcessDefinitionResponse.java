@@ -26,4 +26,5 @@ public class ProcessDefinitionResponse {
     private boolean suspended;
     private boolean hasStartFormKey;
     private boolean hasGraphicalNotation;
+    private String startFormKey;
 }

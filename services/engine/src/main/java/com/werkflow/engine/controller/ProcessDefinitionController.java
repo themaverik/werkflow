@@ -1,6 +1,7 @@
 package com.werkflow.engine.controller;
 
 import com.werkflow.engine.dto.ProcessDefinitionResponse;
+import com.werkflow.engine.dto.TaskFormResponse;
 import com.werkflow.engine.service.ProcessDefinitionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -102,6 +103,15 @@ public class ProcessDefinitionController {
     ) {
         processDefinitionService.activateProcessDefinition(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/start-form")
+    @Operation(summary = "Get start form for process definition", description = "Returns the form schema linked to the start event")
+    public ResponseEntity<TaskFormResponse> getStartForm(
+        @Parameter(description = "Process definition ID") @PathVariable String id
+    ) {
+        TaskFormResponse response = processDefinitionService.getStartForm(id);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}/xml")

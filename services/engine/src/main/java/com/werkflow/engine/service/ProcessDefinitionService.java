@@ -1,8 +1,12 @@
 package com.werkflow.engine.service;
 
 import com.werkflow.engine.dto.ProcessDefinitionResponse;
+import com.werkflow.engine.dto.TaskFormResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.flowable.bpmn.model.BpmnModel;
+import org.flowable.bpmn.model.FlowElement;
+import org.flowable.bpmn.model.StartEvent;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
@@ -12,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,6 +29,7 @@ import java.util.stream.Collectors;
 public class ProcessDefinitionService {
 
     private final RepositoryService repositoryService;
+    private final FormSchemaService formSchemaService;
 
     /**
      * Deploy a new process definition from BPMN XML file
@@ -191,9 +197,68 @@ public class ProcessDefinitionService {
     }
 
     /**
+     * Get start form schema for a process definition
+     */
+    public TaskFormResponse getStartForm(String processDefinitionId) {
+        log.info("Getting start form for process definition: {}", processDefinitionId);
+
+        ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery()
+            .processDefinitionId(processDefinitionId)
+            .singleResult();
+
+        if (processDefinition == null) {
+            throw new RuntimeException("Process definition not found with ID: " + processDefinitionId);
+        }
+
+        String formKey = extractStartFormKey(processDefinitionId);
+
+        if (formKey == null || formKey.isEmpty()) {
+            throw new RuntimeException("Process definition " + processDefinitionId + " has no start form");
+        }
+
+        var formSchema = formSchemaService.loadFormSchema(formKey);
+
+        return TaskFormResponse.builder()
+            .formKey(formSchema.getFormKey())
+            .version(formSchema.getVersion())
+            .schema(formSchema.getSchemaJson())
+            .description(formSchema.getDescription())
+            .formType(formSchema.getFormType().name())
+            .processInstanceId(null)
+            .taskId(null)
+            .build();
+    }
+
+    /**
+     * Extract start event formKey from BPMN model
+     */
+    private String extractStartFormKey(String processDefinitionId) {
+        BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionId);
+        if (bpmnModel == null || bpmnModel.getMainProcess() == null) {
+            return null;
+        }
+
+        Collection<FlowElement> flowElements = bpmnModel.getMainProcess().getFlowElements();
+        for (FlowElement element : flowElements) {
+            if (element instanceof StartEvent startEvent) {
+                String formKey = startEvent.getFormKey();
+                if (formKey != null && !formKey.isEmpty()) {
+                    return formKey;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * Map ProcessDefinition entity to response DTO
      */
     private ProcessDefinitionResponse mapToResponse(ProcessDefinition pd) {
+        String startFormKey = null;
+        if (pd.hasStartFormKey()) {
+            startFormKey = extractStartFormKey(pd.getId());
+        }
+
         return ProcessDefinitionResponse.builder()
             .id(pd.getId())
             .key(pd.getKey())
@@ -207,6 +272,7 @@ public class ProcessDefinitionService {
             .suspended(pd.isSuspended())
             .hasStartFormKey(pd.hasStartFormKey())
             .hasGraphicalNotation(pd.hasGraphicalNotation())
+            .startFormKey(startFormKey)
             .build();
     }
 }

@@ -18,6 +18,16 @@ export interface ProcessDefinitionResponse {
   version: number
   deploymentId: string
   resourceName: string
+  hasStartFormKey?: boolean
+  startFormKey?: string
+}
+
+export interface StartFormResponse {
+  formKey: string
+  version: number
+  schema: any
+  description?: string
+  formType?: string
 }
 
 export interface FormDeploymentRequest {
@@ -81,5 +91,11 @@ export async function deleteFormDefinition(formKey: string): Promise<void> {
 // Get form data for a task
 export async function getTaskFormData(taskId: string): Promise<any> {
   const response = await apiClient.get(`/api/v1/tasks/${taskId}/form`)
+  return response.data
+}
+
+// Get start form for a process definition
+export async function getProcessStartForm(processDefinitionId: string): Promise<StartFormResponse> {
+  const response = await apiClient.get(`/api/process-definitions/${processDefinitionId}/start-form`)
   return response.data
 }

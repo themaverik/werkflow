@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { FileText, Plus, Trash2, Download, Eye, Activity, ExternalLink } from "lucide-react"
+import { FileText, Plus, Trash2, Download, Eye, Activity, ExternalLink, Play } from "lucide-react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getProcessDefinitions, deleteDeployment, getProcessDefinitionXml } from "@/lib/api/flowable"
 import { downloadBpmn } from "@/lib/bpmn/utils"
@@ -128,6 +128,19 @@ export default function ProcessesPage() {
                           <Download className="h-4 w-4" />
                         </Button>
                       </div>
+                      {latestVersion.hasStartFormKey && (
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="secondary"
+                          className="w-full"
+                        >
+                          <Link href={`/processes/start/${latestVersion.id}`}>
+                            <Play className="h-4 w-4 mr-2" />
+                            Start Process
+                          </Link>
+                        </Button>
+                      )}
                       {versions.length > 1 && (
                         <div className="text-xs text-muted-foreground">
                           <details className="cursor-pointer">

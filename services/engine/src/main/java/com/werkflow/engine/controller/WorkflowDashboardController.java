@@ -41,16 +41,20 @@ public class WorkflowDashboardController {
     public ResponseEntity<List<Map<String, Object>>> getWorkflowInstances(
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String startedBy,
             @RequestParam(defaultValue = "100") int limit) {
 
-        log.info("GET /workflows/instances - status={}, limit={}", status, limit);
+        log.info("GET /workflows/instances - status={}, startedBy={}, limit={}", status, startedBy, limit);
 
         List<Map<String, Object>> results = new ArrayList<>();
 
         if (status == null || "active".equals(status)) {
-            List<ProcessInstance> active = runtimeService.createProcessInstanceQuery()
-                    .orderByProcessInstanceId().desc()
-                    .listPage(0, limit);
+            var query = runtimeService.createProcessInstanceQuery()
+                    .orderByProcessInstanceId().desc();
+            if (startedBy != null && !startedBy.isEmpty()) {
+                query.startedBy(startedBy);
+            }
+            List<ProcessInstance> active = query.listPage(0, limit);
             for (ProcessInstance pi : active) {
                 Map<String, Object> entry = new LinkedHashMap<>();
                 entry.put("id", pi.getId());
@@ -66,10 +70,13 @@ public class WorkflowDashboardController {
         }
 
         if (status == null || "completed".equals(status) || "failed".equals(status)) {
-            List<HistoricProcessInstance> finished = historyService.createHistoricProcessInstanceQuery()
+            var hQuery = historyService.createHistoricProcessInstanceQuery()
                     .finished()
-                    .orderByProcessInstanceEndTime().desc()
-                    .listPage(0, limit);
+                    .orderByProcessInstanceEndTime().desc();
+            if (startedBy != null && !startedBy.isEmpty()) {
+                hQuery.startedBy(startedBy);
+            }
+            List<HistoricProcessInstance> finished = hQuery.listPage(0, limit);
             for (HistoricProcessInstance hpi : finished) {
                 Map<String, Object> entry = new LinkedHashMap<>();
                 entry.put("id", hpi.getId());

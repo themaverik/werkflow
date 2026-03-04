@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -8,39 +8,19 @@ import { Search, Bell, RefreshCw } from "lucide-react"
 import { TaskList } from './components/TaskList'
 import { TaskFilters } from './components/TaskFilters'
 import { useTasks, useClaimTask, useTaskSummary } from '@/lib/hooks/useTasks'
-import { getTokenFromStorage, extractUserClaims, mapGroupsToCandidateGroups } from '@/lib/utils/jwt'
+import { mapGroupsToCandidateGroups } from '@/lib/utils/jwt'
+import { useAuth } from '@/lib/auth/auth-context'
 import { useToast } from "@/hooks/use-toast"
-import type { TaskFilter, UserClaims } from '@/lib/types/task'
+import type { TaskFilter } from '@/lib/types/task'
 
 export default function TasksPage() {
   const { toast } = useToast()
+  const { user } = useAuth()
   const [page, setPage] = useState(0)
   const [pageSize] = useState(20)
   const [searchText, setSearchText] = useState('')
   const [filters, setFilters] = useState<TaskFilter>({})
-  const [userClaims, setUserClaims] = useState<UserClaims | null>(null)
   const [claimingTaskId, setClaimingTaskId] = useState<string | undefined>(undefined)
-
-  useEffect(() => {
-    async function loadUserClaims() {
-      try {
-        const token = await getTokenFromStorage()
-        if (token) {
-          const claims = extractUserClaims(token)
-          setUserClaims(claims)
-        }
-      } catch (error) {
-        console.error('Failed to load user claims:', error)
-        toast({
-          title: 'Authentication Error',
-          description: 'Failed to load user information. Please log in again.',
-          variant: 'destructive',
-        })
-      }
-    }
-
-    loadUserClaims()
-  }, [toast])
 
   const buildQueryParams = () => {
     const params: any = {
@@ -51,19 +31,20 @@ export default function TasksPage() {
       includeProcessVariables: false,
     }
 
-    if (userClaims) {
+    if (user) {
       if (filters.myTasks) {
-        params.assignee = userClaims.sub
+        params.assignee = user.username
       } else if (filters.teamTasks) {
-        const candidateGroups = mapGroupsToCandidateGroups(userClaims.groups || [])
+        const candidateGroups = mapGroupsToCandidateGroups(user.groups || [])
         if (candidateGroups.length > 0) {
           params.candidateGroups = candidateGroups.join(',')
         }
       } else if (filters.unassigned) {
         params.unassigned = true
       } else {
-        params.candidateUser = userClaims.sub
-        const candidateGroups = mapGroupsToCandidateGroups(userClaims.groups || [])
+        // Default: let backend return assigned + candidate group tasks
+        params.candidateUser = user.username
+        const candidateGroups = mapGroupsToCandidateGroups(user.groups || [])
         if (candidateGroups.length > 0) {
           params.candidateGroups = candidateGroups.join(',')
         }
@@ -98,7 +79,7 @@ export default function TasksPage() {
   const claimTaskMutation = useClaimTask()
 
   const handleClaim = async (taskId: string) => {
-    if (!userClaims) {
+    if (!user) {
       toast({
         title: 'Authentication Required',
         description: 'Please log in to claim tasks.',
@@ -112,7 +93,7 @@ export default function TasksPage() {
     try {
       await claimTaskMutation.mutateAsync({
         taskId,
-        assignee: userClaims.sub,
+        assignee: user.username,
       })
 
       toast({
@@ -197,7 +178,7 @@ export default function TasksPage() {
           <TaskFilters
             filters={filters}
             onFilterChange={handleFilterChange}
-            userDepartment={userClaims?.department}
+            userDepartment={user?.department}
           />
         </div>
 

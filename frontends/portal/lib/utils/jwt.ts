@@ -119,45 +119,10 @@ export function getUserGroups(userClaims: UserClaims): string[] {
 }
 
 export function mapGroupsToCandidateGroups(keycloakGroups: string[]): string[] {
-  const candidateGroups: string[] = []
-
-  keycloakGroups.forEach(group => {
-    const groupPath = group.toLowerCase()
-
-    if (groupPath.includes('manager')) {
-      candidateGroups.push('manager')
-    }
-
-    if (groupPath.includes('employee')) {
-      candidateGroups.push('employee')
-    }
-
-    if (groupPath.includes('doa')) {
-      const doaMatch = groupPath.match(/doa[/_-]?level[/_-]?(\d+)/i)
-      if (doaMatch) {
-        const level = doaMatch[1]
-        candidateGroups.push(`doa_approver_level${level}`)
-      }
-    }
-
-    if (groupPath.includes('finance')) {
-      candidateGroups.push('finance')
-    }
-
-    if (groupPath.includes('hr')) {
-      candidateGroups.push('hr')
-    }
-
-    if (groupPath.includes('procurement')) {
-      candidateGroups.push('procurement')
-    }
-
-    if (groupPath.includes('admin')) {
-      candidateGroups.push('admin')
-    }
-  })
-
-  return Array.from(new Set(candidateGroups))
+  // Pass through the raw Keycloak group names as-is.
+  // These must match the candidateGroups defined in BPMN process definitions
+  // (e.g. FINANCE_MANAGER, FINANCE_VP, FINANCE_CFO).
+  return keycloakGroups.filter(g => g && g.trim().length > 0)
 }
 
 export function hasRole(userClaims: UserClaims, role: string): boolean {

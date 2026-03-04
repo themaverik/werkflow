@@ -8,13 +8,14 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { CheckCircle2, XCircle, ArrowUpCircle, Loader2, FileText, Building, User, Calendar, DollarSign } from "lucide-react"
+import { CheckCircle2, XCircle, ArrowUpCircle, Loader2, FileText, Building, User as UserIcon, Calendar, DollarSign } from "lucide-react"
 import { DOAIndicator } from './DOAIndicator'
-import type { Task, UserClaims } from '@/lib/types/task'
+import type { Task } from '@/lib/types/task'
+import type { User } from '@/lib/auth/auth-context'
 
 export interface ApprovalPanelProps {
   task: Task
-  userClaims: UserClaims
+  user: User
   onApprove: (comment: string) => Promise<void>
   onReject: (comment: string) => Promise<void>
   onEscalate: (reason: string) => Promise<void>
@@ -39,7 +40,7 @@ const DOA_ROLES: Record<number, string> = {
 
 export function ApprovalPanel({
   task,
-  userClaims,
+  user,
   onApprove,
   onReject,
   onEscalate,
@@ -51,11 +52,11 @@ export function ApprovalPanel({
 
   const requestAmount = task.processVariables?.requestAmount || task.processVariables?.amount || 0
   const requiredDoaLevel = task.processVariables?.approvalLevel || 1
-  const userDoaLevel = userClaims.doaLevel || 0
+  const userDoaLevel = user.doaLevel || 0
   const userApprovalLimit = DOA_LIMITS[userDoaLevel] || 0
 
   const canApprove = userDoaLevel >= requiredDoaLevel && requestAmount <= userApprovalLimit
-  const isAssignedToUser = task.assignee === userClaims.sub
+  const isAssignedToUser = task.assignee === user.username
 
   const handleSubmit = async () => {
     if (selectedAction === 'reject' && !comment.trim()) {
@@ -142,7 +143,7 @@ export function ApprovalPanel({
 
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <User className="h-4 w-4" />
+                <UserIcon className="h-4 w-4" />
                 <span>Requested By</span>
               </div>
               <p className="font-medium">{task.processVariables?.requestedBy || 'Unknown'}</p>
@@ -153,7 +154,7 @@ export function ApprovalPanel({
                 <Building className="h-4 w-4" />
                 <span>Department</span>
               </div>
-              <p className="font-medium">{task.processVariables?.departmentName || userClaims.department}</p>
+              <p className="font-medium">{task.processVariables?.departmentName || user.department}</p>
             </div>
 
             <div className="space-y-1">

@@ -16,7 +16,7 @@ export default function StartProcessPage() {
   const params = useParams()
   const router = useRouter()
   const { toast } = useToast()
-  const processDefinitionId = params.id as string
+  const processDefinitionId = decodeURIComponent(params.id as string)
   const [formData, setFormData] = useState<Record<string, any>>({})
 
   const { data: startForm, isLoading, error } = useQuery({

@@ -4,6 +4,7 @@ import com.werkflow.engine.dto.ProcessInstanceResponse;
 import com.werkflow.engine.dto.StartProcessRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.flowable.engine.IdentityService;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 public class ProcessInstanceService {
 
     private final RuntimeService runtimeService;
+    private final IdentityService identityService;
 
     /**
      * Start a new process instance
@@ -45,15 +47,22 @@ public class ProcessInstanceService {
             variables.put("requestAmount", variables.get("estimatedAmount"));
         }
 
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(
-            request.getProcessDefinitionKey(),
-            request.getBusinessKey(),
-            variables
-        );
+        // Set authenticated user so Flowable records startUserId on the process instance
+        try {
+            identityService.setAuthenticatedUserId(userId);
 
-        log.info("Process instance started successfully. ID: {}", processInstance.getId());
+            ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(
+                request.getProcessDefinitionKey(),
+                request.getBusinessKey(),
+                variables
+            );
 
-        return mapToResponse(processInstance, variables);
+            log.info("Process instance started successfully. ID: {}", processInstance.getId());
+
+            return mapToResponse(processInstance, variables);
+        } finally {
+            identityService.setAuthenticatedUserId(null);
+        }
     }
 
     /**

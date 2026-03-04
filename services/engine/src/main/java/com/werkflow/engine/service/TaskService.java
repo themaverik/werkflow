@@ -43,6 +43,70 @@ public class TaskService {
     }
 
     /**
+     * Get tasks for candidate groups
+     */
+    public List<TaskResponse> getTasksForCandidateGroups(List<String> groups) {
+        log.debug("Fetching tasks for candidate groups: {}", groups);
+
+        List<Task> tasks = flowableTaskService.createTaskQuery()
+            .taskCandidateGroupIn(groups)
+            .active()
+            .list();
+
+        return tasks.stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Get unassigned tasks
+     */
+    public List<TaskResponse> getUnassignedTasks() {
+        log.debug("Fetching unassigned tasks");
+
+        List<Task> tasks = flowableTaskService.createTaskQuery()
+            .taskUnassigned()
+            .active()
+            .list();
+
+        return tasks.stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Get tasks assigned to user OR available via candidate groups
+     */
+    public List<TaskResponse> getTasksForUserOrGroups(String userId, List<String> groups) {
+        log.debug("Fetching tasks for user: {} or groups: {}", userId, groups);
+
+        // Get assigned tasks
+        List<Task> assignedTasks = flowableTaskService.createTaskQuery()
+            .taskAssignee(userId)
+            .active()
+            .list();
+
+        // Get candidate group tasks (unassigned)
+        List<Task> candidateTasks = new java.util.ArrayList<>();
+        if (groups != null && !groups.isEmpty()) {
+            candidateTasks = flowableTaskService.createTaskQuery()
+                .taskCandidateGroupIn(groups)
+                .taskUnassigned()
+                .active()
+                .list();
+        }
+
+        // Merge and deduplicate by task ID
+        Map<String, Task> taskMap = new java.util.LinkedHashMap<>();
+        for (Task t : assignedTasks) taskMap.put(t.getId(), t);
+        for (Task t : candidateTasks) taskMap.putIfAbsent(t.getId(), t);
+
+        return taskMap.values().stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+    }
+
+    /**
      * Get tasks assigned to a group/role
      */
     public List<TaskResponse> getTasksForGroup(String groupId) {
@@ -56,6 +120,15 @@ public class TaskService {
         return tasks.stream()
             .map(this::mapToResponse)
             .collect(Collectors.toList());
+    }
+
+    /**
+     * Find an active task by ID (returns null if not found)
+     */
+    public Task findActiveTask(String taskId) {
+        return flowableTaskService.createTaskQuery()
+            .taskId(taskId)
+            .singleResult();
     }
 
     /**

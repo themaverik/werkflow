@@ -1,30 +1,29 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, CheckCircle2, XCircle, UserPlus, Clock, User, Calendar } from "lucide-react"
+import { ArrowLeft, CheckCircle2, XCircle, UserPlus, Clock, User as UserIcon, Calendar } from "lucide-react"
 import Link from "next/link"
 import { useTask, useTaskFormData, useTaskHistory, useCompleteTask, useClaimTask, useUnclaimTask, useDelegateTask, useSubmitTaskForm } from '@/lib/hooks/useTasks'
-import { getTokenFromStorage, extractUserClaims } from '@/lib/utils/jwt'
+import { useAuth } from '@/lib/auth/auth-context'
 import { useToast } from "@/hooks/use-toast"
 import { ApprovalPanel } from '../components/ApprovalPanel'
 import { DelegationModal } from '../components/DelegationModal'
 import { FormSection } from '../components/FormSection'
 import { ProcessTimeline } from '../components/ProcessTimeline'
-import type { UserClaims } from '@/lib/types/task'
 import { formatDateTime } from '@/lib/utils/format'
 
 export default function TaskDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { toast } = useToast()
+  const { user } = useAuth()
   const taskId = params.id as string
 
-  const [userClaims, setUserClaims] = useState<UserClaims | null>(null)
   const [showDelegationModal, setShowDelegationModal] = useState(false)
   const [activeTab, setActiveTab] = useState('details')
 
@@ -38,24 +37,8 @@ export default function TaskDetailPage() {
   const delegateTaskMutation = useDelegateTask()
   const submitFormMutation = useSubmitTaskForm()
 
-  useEffect(() => {
-    async function loadUserClaims() {
-      try {
-        const token = await getTokenFromStorage()
-        if (token) {
-          const claims = extractUserClaims(token)
-          setUserClaims(claims)
-        }
-      } catch (error) {
-        console.error('Failed to load user claims:', error)
-      }
-    }
-
-    loadUserClaims()
-  }, [])
-
   const handleClaim = async () => {
-    if (!userClaims) {
+    if (!user) {
       toast({
         title: 'Authentication Required',
         description: 'Please log in to claim tasks.',
@@ -67,7 +50,7 @@ export default function TaskDetailPage() {
     try {
       await claimTaskMutation.mutateAsync({
         taskId,
-        assignee: userClaims.sub,
+        assignee: user.username,
       })
 
       toast({
@@ -113,7 +96,7 @@ export default function TaskDetailPage() {
           variables: {
             approved: true,
             approvalComment: comment,
-            approvedBy: userClaims?.sub,
+            approvedBy: user?.username,
             approvalTimestamp: new Date().toISOString(),
           },
         },
@@ -142,7 +125,7 @@ export default function TaskDetailPage() {
           variables: {
             approved: false,
             rejectionReason: comment,
-            rejectedBy: userClaims?.sub,
+            rejectedBy: user?.username,
             rejectionTimestamp: new Date().toISOString(),
           },
         },
@@ -171,7 +154,7 @@ export default function TaskDetailPage() {
           variables: {
             escalated: true,
             escalationReason: reason,
-            escalatedBy: userClaims?.sub,
+            escalatedBy: user?.username,
             escalationTimestamp: new Date().toISOString(),
           },
         },
@@ -283,8 +266,8 @@ export default function TaskDetailPage() {
     )
   }
 
-  const isAssignedToUser = task.assignee === userClaims?.sub
-  const canClaim = !task.assignee && userClaims
+  const isAssignedToUser = task.assignee === user?.username
+  const canClaim = !task.assignee && user
   const canComplete = isAssignedToUser
   const hasForm = formData?.formData && typeof formData.formData === 'object' && Array.isArray(formData.formData.components)
 
@@ -340,10 +323,10 @@ export default function TaskDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          {isApproval && userClaims ? (
+          {isApproval && user ? (
             <ApprovalPanel
               task={task}
-              userClaims={userClaims}
+              user={user}
               onApprove={handleApprove}
               onReject={handleReject}
               onEscalate={handleEscalate}
@@ -373,7 +356,7 @@ export default function TaskDetailPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <h4 className="font-semibold mb-2 flex items-center gap-2">
-                        <User className="h-4 w-4" />
+                        <UserIcon className="h-4 w-4" />
                         Assignee
                       </h4>
                       <p className="text-sm text-muted-foreground">
@@ -495,7 +478,7 @@ export default function TaskDetailPage() {
 
                 {!canClaim && !canComplete && (
                   <div className="text-center py-4 text-sm text-muted-foreground">
-                    {task.assignee && task.assignee !== userClaims?.sub
+                    {task.assignee && task.assignee !== user?.username
                       ? 'This task is assigned to another user'
                       : 'You cannot perform actions on this task'}
                   </div>

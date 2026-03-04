@@ -18,6 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent } from '@/components/ui/card'
 import { getAllWorkflowInstances, type WorkflowInstance } from '@/lib/api/workflows'
 import { formatDate } from '@/lib/utils/format'
+import { useAuth } from '@/lib/auth/auth-context'
 
 type StatusFilter = 'all' | 'active' | 'completed' | 'suspended'
 
@@ -54,17 +55,17 @@ function TableSkeleton() {
 }
 
 export default function RequestsPage() {
+  const { user } = useAuth()
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [search, setSearch] = useState('')
 
   const queryStatus = statusFilter === 'all' ? undefined : statusFilter
+  const currentUsername = user?.username || ''
 
-  // TODO: Backend lacks a startedBy/initiator filter on /workflows/instances.
-  // Currently fetches all workflow instances. Scope to current user once
-  // the Engine service adds an initiator query parameter.
   const { data: instances, isLoading } = useQuery({
-    queryKey: ['workflow-instances', statusFilter],
-    queryFn: () => getAllWorkflowInstances(queryStatus, 100),
+    queryKey: ['workflow-instances', statusFilter, currentUsername],
+    queryFn: () => getAllWorkflowInstances(queryStatus, 100, currentUsername),
+    enabled: !!currentUsername,
   })
 
   const filtered = (instances ?? []).filter((instance) => {

@@ -3,6 +3,8 @@ package com.werkflow.engine.controller;
 import com.werkflow.engine.dto.CompleteTaskRequest;
 import com.werkflow.engine.dto.TaskResponse;
 import com.werkflow.engine.service.TaskService;
+import org.flowable.engine.HistoryService;
+import org.flowable.task.api.history.HistoricTaskInstance;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -28,6 +30,7 @@ import java.util.Map;
 public class TaskController {
 
     private final TaskService taskService;
+    private final HistoryService historyService;
 
     @GetMapping
     @Operation(summary = "List tasks for current user (assigned + candidate)")
@@ -36,13 +39,34 @@ public class TaskController {
         @RequestParam(defaultValue = "0") int start,
         @RequestParam(defaultValue = "20") int size,
         @RequestParam(defaultValue = "createTime") String sort,
-        @RequestParam(defaultValue = "desc") String order
+        @RequestParam(defaultValue = "desc") String order,
+        @RequestParam(required = false) String assignee,
+        @RequestParam(required = false) String candidateUser,
+        @RequestParam(required = false) String candidateGroups,
+        @RequestParam(required = false) Boolean unassigned
     ) {
         String userId = jwt.getClaimAsString("preferred_username");
-        List<TaskResponse> myTasks = taskService.getTasksForUser(userId);
+        List<TaskResponse> tasks;
+
+        if (assignee != null && !assignee.isEmpty()) {
+            // My Tasks: assigned to specific user
+            tasks = taskService.getTasksForUser(assignee);
+        } else if (candidateGroups != null && !candidateGroups.isEmpty()) {
+            // Team/Group Tasks: candidate group query
+            List<String> groups = List.of(candidateGroups.split(","));
+            tasks = taskService.getTasksForCandidateGroups(groups);
+        } else if (unassigned != null && unassigned) {
+            // Unassigned tasks
+            tasks = taskService.getUnassignedTasks();
+        } else {
+            // Default: assigned to user + candidate tasks for user's groups
+            List<String> userGroups = jwt.getClaimAsStringList("groups");
+            tasks = taskService.getTasksForUserOrGroups(userId, userGroups);
+        }
+
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("data", myTasks);
-        result.put("total", myTasks.size());
+        result.put("data", tasks);
+        result.put("total", tasks.size());
         result.put("start", start);
         result.put("size", size);
         result.put("sort", sort);
@@ -145,6 +169,58 @@ public class TaskController {
     ) {
         taskService.setTaskVariables(id, variables);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/history")
+    @Operation(summary = "Get task history (audit trail)")
+    public ResponseEntity<List<Map<String, Object>>> getTaskHistory(
+        @Parameter(description = "Task ID") @PathVariable String id
+    ) {
+        List<Map<String, Object>> history = new java.util.ArrayList<>();
+
+        // Get historic task instances related to this task's process instance
+        // First try to find the task (active or historic) to get the process instance ID
+        String processInstanceId = null;
+
+        // Check active tasks
+        org.flowable.task.api.Task activeTask = taskService.findActiveTask(id);
+        if (activeTask != null) {
+            processInstanceId = activeTask.getProcessInstanceId();
+        } else {
+            // Check historic tasks
+            HistoricTaskInstance historicTask = historyService.createHistoricTaskInstanceQuery()
+                    .taskId(id)
+                    .singleResult();
+            if (historicTask != null) {
+                processInstanceId = historicTask.getProcessInstanceId();
+            }
+        }
+
+        if (processInstanceId != null) {
+            List<HistoricTaskInstance> tasks = historyService.createHistoricTaskInstanceQuery()
+                    .processInstanceId(processInstanceId)
+                    .orderByHistoricTaskInstanceStartTime().asc()
+                    .list();
+
+            for (HistoricTaskInstance task : tasks) {
+                Map<String, Object> entry = new LinkedHashMap<>();
+                entry.put("id", task.getId());
+                entry.put("taskId", task.getId());
+                entry.put("action", task.getEndTime() != null ? "completed" : "active");
+                entry.put("userId", task.getAssignee());
+                entry.put("taskName", task.getName());
+                entry.put("timestamp", task.getEndTime() != null ?
+                        task.getEndTime().toInstant().toString() :
+                        task.getStartTime().toInstant().toString());
+                entry.put("startTime", task.getStartTime() != null ?
+                        task.getStartTime().toInstant().toString() : null);
+                entry.put("endTime", task.getEndTime() != null ?
+                        task.getEndTime().toInstant().toString() : null);
+                history.add(entry);
+            }
+        }
+
+        return ResponseEntity.ok(history);
     }
 
     @PostMapping("/{id}/comments")

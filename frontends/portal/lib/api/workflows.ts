@@ -42,7 +42,7 @@ export interface CompleteTaskRequest {
 
 // Start a new workflow process
 export async function startProcess(data: StartProcessRequest): Promise<ProcessInstanceResponse> {
-  const response = await apiClient.post('/workflows/processes/start', data)
+  const response = await apiClient.post('/api/process-instances', data)
   return response.data
 }
 
@@ -305,10 +305,11 @@ export async function getDepartmentWorkflows(
 // Get all workflow instances across departments
 export async function getAllWorkflowInstances(
   status?: 'active' | 'completed' | 'failed' | 'suspended',
-  limit: number = 20
+  limit: number = 20,
+  startedBy?: string
 ): Promise<WorkflowInstance[]> {
   const response = await apiClient.get('/workflows/instances', {
-    params: { status, limit }
+    params: { status, limit, startedBy }
   })
   return response.data
 }

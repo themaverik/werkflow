@@ -369,109 +369,255 @@ execution.setVariable('subject', 'CapEx Request Rejected: ' + (execution.getVari
   <bpmndi:BPMNDiagram id="BPMNDiagram_capex-approval-process-v2">
     <bpmndi:BPMNPlane bpmnElement="capex-approval-process-v2" id="BPMNPlane_capex-approval-process-v2">
 
+      <!-- Main Row Shapes (y center = 178) -->
       <bpmndi:BPMNShape bpmnElement="startEvent" id="BPMNShape_startEvent">
         <omgdc:Bounds height="30.0" width="30.0" x="100.0" y="163.0"/>
       </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="buildCreateBody" id="BPMNShape_buildCreateBody">
-        <omgdc:Bounds height="80.0" width="100.0" x="150.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="195.0" y="138.0"/>
       </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="createCapExRequest" id="BPMNShape_createCapExRequest">
-        <omgdc:Bounds height="80.0" width="100.0" x="280.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="345.0" y="138.0"/>
       </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="extractCreateResponse" id="BPMNShape_extractCreateResponse">
-        <omgdc:Bounds height="80.0" width="100.0" x="330.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="495.0" y="138.0"/>
       </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="buildBudgetCheckBody" id="BPMNShape_buildBudgetCheckBody">
-        <omgdc:Bounds height="80.0" width="100.0" x="560.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="645.0" y="138.0"/>
       </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="checkBudget" id="BPMNShape_checkBudget">
-        <omgdc:Bounds height="80.0" width="100.0" x="690.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="795.0" y="138.0"/>
       </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="extractBudgetResponse" id="BPMNShape_extractBudgetResponse">
-        <omgdc:Bounds height="80.0" width="100.0" x="630.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="945.0" y="138.0"/>
       </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="budgetGateway" id="BPMNShape_budgetGateway">
-        <omgdc:Bounds height="40.0" width="40.0" x="780.0" y="158.0"/>
+        <omgdc:Bounds height="40.0" width="40.0" x="1095.0" y="158.0"/>
       </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="managerApproval" id="BPMNShape_managerApproval">
-        <omgdc:Bounds height="80.0" width="100.0" x="870.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="1185.0" y="138.0"/>
       </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="amountGateway" id="BPMNShape_amountGateway">
-        <omgdc:Bounds height="40.0" width="40.0" x="1020.0" y="158.0"/>
+        <omgdc:Bounds height="40.0" width="40.0" x="1335.0" y="158.0"/>
       </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="vpApproval" id="BPMNShape_vpApproval">
-        <omgdc:Bounds height="80.0" width="100.0" x="1110.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="1425.0" y="138.0"/>
       </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="cfoGateway" id="BPMNShape_cfoGateway">
-        <omgdc:Bounds height="40.0" width="40.0" x="1260.0" y="158.0"/>
+        <omgdc:Bounds height="40.0" width="40.0" x="1575.0" y="158.0"/>
       </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="cfoApproval" id="BPMNShape_cfoApproval">
-        <omgdc:Bounds height="80.0" width="100.0" x="1350.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="1665.0" y="138.0"/>
       </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="mergeGateway" id="BPMNShape_mergeGateway">
-        <omgdc:Bounds height="40.0" width="40.0" x="1500.0" y="158.0"/>
+        <omgdc:Bounds height="40.0" width="40.0" x="1815.0" y="158.0"/>
       </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="decisionGateway" id="BPMNShape_decisionGateway">
-        <omgdc:Bounds height="40.0" width="40.0" x="1590.0" y="158.0"/>
+        <omgdc:Bounds height="40.0" width="40.0" x="1905.0" y="158.0"/>
       </bpmndi:BPMNShape>
 
+      <!-- Approval Path Shapes (y center = 90) -->
       <bpmndi:BPMNShape bpmnElement="buildApprovedBody" id="BPMNShape_buildApprovedBody">
-        <omgdc:Bounds height="80.0" width="100.0" x="1680.0" y="50.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="1995.0" y="50.0"/>
       </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="updateApproved" id="BPMNShape_updateApproved">
-        <omgdc:Bounds height="80.0" width="100.0" x="1810.0" y="50.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="2145.0" y="50.0"/>
       </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="buildAllocateBody" id="BPMNShape_buildAllocateBody">
-        <omgdc:Bounds height="80.0" width="100.0" x="1940.0" y="50.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="2295.0" y="50.0"/>
       </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="reserveBudget" id="BPMNShape_reserveBudget">
-        <omgdc:Bounds height="80.0" width="100.0" x="2070.0" y="50.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="2445.0" y="50.0"/>
       </bpmndi:BPMNShape>
-
+      <bpmndi:BPMNShape bpmnElement="buildApprovalNotification" id="BPMNShape_buildApprovalNotification">
+        <omgdc:Bounds height="80.0" width="100.0" x="2595.0" y="50.0"/>
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="sendApprovalNotification" id="BPMNShape_sendApprovalNotification">
-        <omgdc:Bounds height="80.0" width="100.0" x="1980.0" y="50.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="2745.0" y="50.0"/>
       </bpmndi:BPMNShape>
-
-      <bpmndi:BPMNShape bpmnElement="buildRejectedBody" id="BPMNShape_buildRejectedBody">
-        <omgdc:Bounds height="80.0" width="100.0" x="1680.0" y="250.0"/>
-      </bpmndi:BPMNShape>
-
-      <bpmndi:BPMNShape bpmnElement="updateRejected" id="BPMNShape_updateRejected">
-        <omgdc:Bounds height="80.0" width="100.0" x="1810.0" y="250.0"/>
-      </bpmndi:BPMNShape>
-
-      <bpmndi:BPMNShape bpmnElement="sendRejectionNotification" id="BPMNShape_sendRejectionNotification">
-        <omgdc:Bounds height="80.0" width="100.0" x="1830.0" y="250.0"/>
-      </bpmndi:BPMNShape>
-
       <bpmndi:BPMNShape bpmnElement="endEventApproved" id="BPMNShape_endEventApproved">
-        <omgdc:Bounds height="28.0" width="28.0" x="2130.0" y="76.0"/>
+        <omgdc:Bounds height="28.0" width="28.0" x="2895.0" y="76.0"/>
       </bpmndi:BPMNShape>
 
+      <!-- Rejection Path Shapes (y center = 320) -->
+      <bpmndi:BPMNShape bpmnElement="buildRejectedBody" id="BPMNShape_buildRejectedBody">
+        <omgdc:Bounds height="80.0" width="100.0" x="1995.0" y="280.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="updateRejected" id="BPMNShape_updateRejected">
+        <omgdc:Bounds height="80.0" width="100.0" x="2145.0" y="280.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="buildRejectionNotification" id="BPMNShape_buildRejectionNotification">
+        <omgdc:Bounds height="80.0" width="100.0" x="2295.0" y="280.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="sendRejectionNotification" id="BPMNShape_sendRejectionNotification">
+        <omgdc:Bounds height="80.0" width="100.0" x="2445.0" y="280.0"/>
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="endEventRejected" id="BPMNShape_endEventRejected">
-        <omgdc:Bounds height="28.0" width="28.0" x="1980.0" y="276.0"/>
+        <omgdc:Bounds height="28.0" width="28.0" x="2595.0" y="306.0"/>
       </bpmndi:BPMNShape>
 
+      <!-- No Budget End Event (below budgetGateway) -->
       <bpmndi:BPMNShape bpmnElement="endEventNoBudget" id="BPMNShape_endEventNoBudget">
-        <omgdc:Bounds height="28.0" width="28.0" x="786.0" y="250.0"/>
+        <omgdc:Bounds height="28.0" width="28.0" x="1101.0" y="260.0"/>
       </bpmndi:BPMNShape>
+
+      <!-- Sequence Flow Edges -->
+
+      <!-- Main flow: start -> buildCreateBody -> createCapExRequest -> extractCreateResponse -> buildBudgetCheckBody -> checkBudget -> extractBudgetResponse -> budgetGateway -->
+      <bpmndi:BPMNEdge bpmnElement="flow0" id="BPMNEdge_flow0">
+        <omgdi:waypoint x="130.0" y="178.0"/>
+        <omgdi:waypoint x="195.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow1" id="BPMNEdge_flow1">
+        <omgdi:waypoint x="295.0" y="178.0"/>
+        <omgdi:waypoint x="345.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow1b" id="BPMNEdge_flow1b">
+        <omgdi:waypoint x="445.0" y="178.0"/>
+        <omgdi:waypoint x="495.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow2" id="BPMNEdge_flow2">
+        <omgdi:waypoint x="595.0" y="178.0"/>
+        <omgdi:waypoint x="645.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow2a" id="BPMNEdge_flow2a">
+        <omgdi:waypoint x="745.0" y="178.0"/>
+        <omgdi:waypoint x="795.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow2b" id="BPMNEdge_flow2b">
+        <omgdi:waypoint x="895.0" y="178.0"/>
+        <omgdi:waypoint x="945.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow3" id="BPMNEdge_flow3">
+        <omgdi:waypoint x="1045.0" y="178.0"/>
+        <omgdi:waypoint x="1095.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Budget gateway: yes -> managerApproval, no -> endEventNoBudget -->
+      <bpmndi:BPMNEdge bpmnElement="budgetYes" id="BPMNEdge_budgetYes">
+        <omgdi:waypoint x="1135.0" y="178.0"/>
+        <omgdi:waypoint x="1185.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="budgetNo" id="BPMNEdge_budgetNo">
+        <omgdi:waypoint x="1115.0" y="198.0"/>
+        <omgdi:waypoint x="1115.0" y="260.0"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Manager -> amountGateway -->
+      <bpmndi:BPMNEdge bpmnElement="flow4" id="BPMNEdge_flow4">
+        <omgdi:waypoint x="1285.0" y="178.0"/>
+        <omgdi:waypoint x="1335.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Amount gateway: high -> vpApproval, low -> mergeGateway (bypass), managerRejected -> mergeGateway -->
+      <bpmndi:BPMNEdge bpmnElement="amountHigh" id="BPMNEdge_amountHigh">
+        <omgdi:waypoint x="1375.0" y="178.0"/>
+        <omgdi:waypoint x="1425.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="amountLow" id="BPMNEdge_amountLow">
+        <omgdi:waypoint x="1355.0" y="198.0"/>
+        <omgdi:waypoint x="1355.0" y="240.0"/>
+        <omgdi:waypoint x="1835.0" y="240.0"/>
+        <omgdi:waypoint x="1835.0" y="198.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="managerRejected" id="BPMNEdge_managerRejected">
+        <omgdi:waypoint x="1355.0" y="198.0"/>
+        <omgdi:waypoint x="1355.0" y="260.0"/>
+        <omgdi:waypoint x="1835.0" y="260.0"/>
+        <omgdi:waypoint x="1835.0" y="198.0"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- VP -> cfoGateway -->
+      <bpmndi:BPMNEdge bpmnElement="flow5" id="BPMNEdge_flow5">
+        <omgdi:waypoint x="1525.0" y="178.0"/>
+        <omgdi:waypoint x="1575.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- CFO gateway: cfoNeeded -> cfoApproval, cfoNotNeeded -> mergeGateway, vpRejected -> mergeGateway -->
+      <bpmndi:BPMNEdge bpmnElement="cfoNeeded" id="BPMNEdge_cfoNeeded">
+        <omgdi:waypoint x="1615.0" y="178.0"/>
+        <omgdi:waypoint x="1665.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="cfoNotNeeded" id="BPMNEdge_cfoNotNeeded">
+        <omgdi:waypoint x="1595.0" y="158.0"/>
+        <omgdi:waypoint x="1595.0" y="120.0"/>
+        <omgdi:waypoint x="1835.0" y="120.0"/>
+        <omgdi:waypoint x="1835.0" y="158.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="vpRejected" id="BPMNEdge_vpRejected">
+        <omgdi:waypoint x="1595.0" y="198.0"/>
+        <omgdi:waypoint x="1595.0" y="250.0"/>
+        <omgdi:waypoint x="1835.0" y="250.0"/>
+        <omgdi:waypoint x="1835.0" y="198.0"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- CFO approval -> mergeGateway -->
+      <bpmndi:BPMNEdge bpmnElement="flow6" id="BPMNEdge_flow6">
+        <omgdi:waypoint x="1765.0" y="178.0"/>
+        <omgdi:waypoint x="1815.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Merge -> Decision -->
+      <bpmndi:BPMNEdge bpmnElement="flow7" id="BPMNEdge_flow7">
+        <omgdi:waypoint x="1855.0" y="178.0"/>
+        <omgdi:waypoint x="1905.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Decision gateway: approved -> buildApprovedBody (up), rejected -> buildRejectedBody (down) -->
+      <bpmndi:BPMNEdge bpmnElement="approved" id="BPMNEdge_approved">
+        <omgdi:waypoint x="1925.0" y="158.0"/>
+        <omgdi:waypoint x="1925.0" y="90.0"/>
+        <omgdi:waypoint x="1995.0" y="90.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="rejected" id="BPMNEdge_rejected">
+        <omgdi:waypoint x="1925.0" y="198.0"/>
+        <omgdi:waypoint x="1925.0" y="320.0"/>
+        <omgdi:waypoint x="1995.0" y="320.0"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Approval path: buildApprovedBody -> updateApproved -> buildAllocateBody -> reserveBudget -> buildApprovalNotification -> sendApprovalNotification -> endEventApproved -->
+      <bpmndi:BPMNEdge bpmnElement="flow7a" id="BPMNEdge_flow7a">
+        <omgdi:waypoint x="2095.0" y="90.0"/>
+        <omgdi:waypoint x="2145.0" y="90.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow8" id="BPMNEdge_flow8">
+        <omgdi:waypoint x="2245.0" y="90.0"/>
+        <omgdi:waypoint x="2295.0" y="90.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow8a" id="BPMNEdge_flow8a">
+        <omgdi:waypoint x="2395.0" y="90.0"/>
+        <omgdi:waypoint x="2445.0" y="90.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow9" id="BPMNEdge_flow9">
+        <omgdi:waypoint x="2545.0" y="90.0"/>
+        <omgdi:waypoint x="2595.0" y="90.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow9a" id="BPMNEdge_flow9a">
+        <omgdi:waypoint x="2695.0" y="90.0"/>
+        <omgdi:waypoint x="2745.0" y="90.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow10" id="BPMNEdge_flow10">
+        <omgdi:waypoint x="2845.0" y="90.0"/>
+        <omgdi:waypoint x="2895.0" y="90.0"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Rejection path: buildRejectedBody -> updateRejected -> buildRejectionNotification -> sendRejectionNotification -> endEventRejected -->
+      <bpmndi:BPMNEdge bpmnElement="flow10a" id="BPMNEdge_flow10a">
+        <omgdi:waypoint x="2095.0" y="320.0"/>
+        <omgdi:waypoint x="2145.0" y="320.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow11" id="BPMNEdge_flow11">
+        <omgdi:waypoint x="2245.0" y="320.0"/>
+        <omgdi:waypoint x="2295.0" y="320.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow11a" id="BPMNEdge_flow11a">
+        <omgdi:waypoint x="2395.0" y="320.0"/>
+        <omgdi:waypoint x="2445.0" y="320.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow12" id="BPMNEdge_flow12">
+        <omgdi:waypoint x="2545.0" y="320.0"/>
+        <omgdi:waypoint x="2595.0" y="320.0"/>
+      </bpmndi:BPMNEdge>
 
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

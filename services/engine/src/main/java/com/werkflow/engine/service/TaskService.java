@@ -4,6 +4,8 @@ import com.werkflow.engine.dto.CompleteTaskRequest;
 import com.werkflow.engine.dto.TaskResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.flowable.identitylink.api.IdentityLink;
+import org.flowable.identitylink.api.IdentityLinkType;
 import org.flowable.task.api.Task;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -179,6 +181,16 @@ public class TaskService {
     private TaskResponse mapToResponse(Task task) {
         Map<String, Object> variables = flowableTaskService.getVariables(task.getId());
 
+        List<IdentityLink> identityLinks = flowableTaskService.getIdentityLinksForTask(task.getId());
+        List<String> candidateGroups = identityLinks.stream()
+            .filter(link -> IdentityLinkType.CANDIDATE.equals(link.getType()) && link.getGroupId() != null)
+            .map(IdentityLink::getGroupId)
+            .collect(Collectors.toList());
+        List<String> candidateUsers = identityLinks.stream()
+            .filter(link -> IdentityLinkType.CANDIDATE.equals(link.getType()) && link.getUserId() != null)
+            .map(IdentityLink::getUserId)
+            .collect(Collectors.toList());
+
         return TaskResponse.builder()
             .id(task.getId())
             .name(task.getName())
@@ -197,6 +209,8 @@ public class TaskService {
             .category(task.getCategory())
             .tenantId(task.getTenantId())
             .variables(variables)
+            .candidateGroups(candidateGroups)
+            .candidateUsers(candidateUsers)
             .build();
     }
 }

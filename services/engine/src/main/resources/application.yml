@@ -13,6 +13,7 @@ spring:
       connection-timeout: ${POSTGRES_CONNECTION_TIMEOUT:30000}
       idle-timeout: 600000
       max-lifetime: 1800000
+      connection-init-sql: SET search_path TO public,${SPRING_DATASOURCE_SCHEMA:flowable}
 
   jpa:
     hibernate:

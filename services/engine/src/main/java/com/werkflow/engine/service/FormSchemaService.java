@@ -46,7 +46,7 @@ public class FormSchemaService {
         log.info("Loading latest form schema for key: {}", formKey);
 
         String sql = """
-                SELECT id, form_key, version, schema_json, description, form_type,
+                SELECT id, form_key, name, version, schema_json, description, form_type,
                        is_active, created_at, updated_at, created_by, updated_by
                 FROM form_schemas
                 WHERE form_key = ? AND is_active = true
@@ -75,7 +75,7 @@ public class FormSchemaService {
         log.info("Loading form schema for key: {} version: {}", formKey, version);
 
         String sql = """
-                SELECT id, form_key, version, schema_json, description, form_type,
+                SELECT id, form_key, name, version, schema_json, description, form_type,
                        is_active, created_at, updated_at, created_by, updated_by
                 FROM form_schemas
                 WHERE form_key = ? AND version = ?
@@ -113,13 +113,18 @@ public class FormSchemaService {
 
         // Insert new version
         String sql = """
-                INSERT INTO form_schemas (id, form_key, version, schema_json, description, form_type,
+                INSERT INTO form_schemas (id, form_key, name, version, schema_json, description, form_type,
                                           is_active, created_at, updated_at, created_by, updated_by)
-                VALUES (?, ?, ?, ?::jsonb, ?, ?, true, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?::jsonb, ?, ?, true, ?, ?, ?, ?)
                 """;
 
         UUID id = UUID.randomUUID();
         Instant now = Instant.now();
+
+        // Derive name from formKey if not provided: "capex-request" -> "Capex Request"
+        String name = java.util.Arrays.stream(formKey.split("-"))
+                .map(w -> w.substring(0, 1).toUpperCase() + w.substring(1))
+                .collect(java.util.stream.Collectors.joining(" "));
 
         try {
             String schemaJsonStr = objectMapper.writeValueAsString(schemaJson);
@@ -127,6 +132,7 @@ public class FormSchemaService {
             jdbcTemplate.update(sql,
                     id,
                     formKey,
+                    name,
                     nextVersion,
                     schemaJsonStr,
                     description,
@@ -188,10 +194,10 @@ public class FormSchemaService {
         log.info("Getting list of all forms");
 
         String sql = """
-                SELECT id, form_key, version, schema_json, description, form_type,
+                SELECT id, form_key, name, version, schema_json, description, form_type,
                        is_active, created_at, updated_at, created_by, updated_by
                 FROM (
-                    SELECT id, form_key, version, schema_json, description, form_type,
+                    SELECT id, form_key, name, version, schema_json, description, form_type,
                            is_active, created_at, updated_at, created_by, updated_by,
                            ROW_NUMBER() OVER (PARTITION BY form_key ORDER BY version DESC) as rn
                     FROM form_schemas
@@ -213,7 +219,7 @@ public class FormSchemaService {
         log.info("Getting version history for form: {}", formKey);
 
         String sql = """
-                SELECT id, form_key, version, schema_json, description, form_type,
+                SELECT id, form_key, name, version, schema_json, description, form_type,
                        is_active, created_at, updated_at, created_by, updated_by
                 FROM form_schemas
                 WHERE form_key = ?
@@ -295,6 +301,7 @@ public class FormSchemaService {
                 return FormSchema.builder()
                         .id(UUID.fromString(rs.getString("id")))
                         .formKey(rs.getString("form_key"))
+                        .name(rs.getString("name"))
                         .version(rs.getInt("version"))
                         .schemaJson(schemaJson)
                         .description(rs.getString("description"))

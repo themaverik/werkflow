@@ -23,7 +23,7 @@ import java.util.Map;
  * Provides endpoints for CRUD operations on form-js schemas.
  */
 @RestController
-@RequestMapping({"/forms", "/api/forms"})
+@RequestMapping({"/forms", "/api/forms", "/api/v1/form-schemas"})
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Form Schemas", description = "Form schema management API")

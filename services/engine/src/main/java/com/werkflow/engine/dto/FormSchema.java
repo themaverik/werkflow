@@ -1,5 +1,6 @@
 package com.werkflow.engine.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,8 +27,14 @@ public class FormSchema {
 
     /**
      * Form key - unique identifier for the form (e.g., "capex-request-form")
+     * Serialized as both "formKey" and "key" for frontend compatibility.
      */
     private String formKey;
+
+    /**
+     * Human-readable name of the form (e.g., "Capital Expenditure Request Form")
+     */
+    private String name;
 
     /**
      * Version number for schema evolution
@@ -38,6 +45,22 @@ public class FormSchema {
      * The complete form-js schema definition in JSON format
      */
     private JsonNode schemaJson;
+
+    /**
+     * Returns formKey as "key" for frontend compatibility
+     */
+    @JsonProperty("key")
+    public String getKey() {
+        return formKey;
+    }
+
+    /**
+     * Returns schemaJson as stringified "formJson" for frontend compatibility
+     */
+    @JsonProperty("formJson")
+    public String getFormJson() {
+        return schemaJson != null ? schemaJson.toString() : null;
+    }
 
     /**
      * Human-readable description of the form

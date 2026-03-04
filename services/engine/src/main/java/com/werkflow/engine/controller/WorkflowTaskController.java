@@ -3,6 +3,8 @@ package com.werkflow.engine.controller;
 import com.werkflow.engine.dto.JwtUserContext;
 import com.werkflow.engine.dto.TaskListResponse;
 import com.werkflow.engine.dto.TaskQueryParams;
+import com.werkflow.engine.dto.TaskResponse;
+import com.werkflow.engine.service.TaskService;
 import com.werkflow.engine.service.WorkflowTaskService;
 import com.werkflow.engine.util.JwtClaimsExtractor;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,6 +23,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * REST controller for workflow task management
  * Provides endpoints for retrieving user tasks and group candidate tasks
@@ -34,6 +38,7 @@ import org.springframework.web.bind.annotation.*;
 public class WorkflowTaskController {
 
     private final WorkflowTaskService workflowTaskService;
+    private final TaskService taskService;
     private final JwtClaimsExtractor jwtClaimsExtractor;
 
     /**
@@ -187,5 +192,14 @@ public class WorkflowTaskController {
                 userContext.getGroups());
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/process/{processInstanceId}")
+    @Operation(summary = "Get tasks for a process instance")
+    public ResponseEntity<List<TaskResponse>> getTasksByProcessInstance(
+            @Parameter(description = "Process instance ID") @PathVariable String processInstanceId) {
+        log.info("GET /workflows/tasks/process/{}", processInstanceId);
+        List<TaskResponse> responses = taskService.getTasksByProcessInstanceId(processInstanceId);
+        return ResponseEntity.ok(responses);
     }
 }

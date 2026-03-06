@@ -558,6 +558,18 @@ Form/BPMN integration fixes (S5.1 continuation):
 - [x] Added StartEvent form key support in FlowablePropertiesProvider *(commit: 7f7ac3f)*
 - [x] Converted FormKeyEntry from text field to select dropdown populated from form schemas API *(commit: 7f7ac3f)*
 
+Portal runtime fixes (S5.1 continuation — discovered via live multi-user testing):
+- [x] Fixed React #310 error: moved `useMemo` before early returns to satisfy Rules of Hooks *(commit: f7a1ae7)*
+- [x] Added `unwrapProcessVariables()` to handle Flowable's `{value, type, valueInfo}` wrapper objects in API layer *(commit: f7a1ae7)*
+- [x] Added `String()` guards in ApprovalPanel for all processVariables fields rendered in JSX *(commit: f7a1ae7)*
+- [x] Wired Keycloak `doa_level`, `department`, `groups` through NextAuth JWT/session callbacks to auth-context *(commit: f7a1ae7)*
+- [x] Fixed default task list query: let backend use JWT claims for assigned + candidate group tasks (claimed tasks were invisible) *(commit: f7a1ae7)*
+- [x] Fixed claim/unclaim cache corruption: invalidate queries instead of replacing with empty 204 response *(commit: f7a1ae7)*
+- [x] Mapped backend `variables` field to frontend `processVariables` in API layer *(commit: f7a1ae7)*
+- [x] Added `jackson.serialization.write-dates-as-timestamps: false` for ISO date strings *(commit: f7a1ae7)*
+- [ ] Fix ApprovalTaskCompletionListener: `POST /api/v1/tasks/{id}/complete` returns 500 — listener extracts `decision: null` from task variables because ApprovalPanel submits `approved`/`rejected` variables but listener expects `decision` variable. File: `com.werkflow.engine.delegate.ApprovalTaskCompletionListener.java:82`
+- [~] Forms display issue: deployed forms show no names or keys in Form Designer page
+
 ---
 
 #### S5.2 — Regression (1 day)

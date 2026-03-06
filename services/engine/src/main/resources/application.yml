@@ -54,6 +54,10 @@ spring:
           issuer-uri: ${KEYCLOAK_ISSUER:http://localhost:8090/realms/werkflow}
           jwk-set-uri: ${KEYCLOAK_ISSUER:http://localhost:8090/realms/werkflow}/protocol/openid-connect/certs
 
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
 server:
   port: ${SERVER_PORT:8081}
   servlet:

@@ -43,6 +43,31 @@ export class TaskCompleteError extends TaskApiError {
   }
 }
 
+/**
+ * Flowable serializes process variables as { value, type, valueInfo } wrappers
+ * when returning them from the REST API (e.g. GET /tasks/{id}?includeProcessVariables=true).
+ * This function unwraps those objects so components always receive plain scalar values.
+ */
+function unwrapProcessVariables(variables: Record<string, any>): Record<string, any> {
+  if (!variables || typeof variables !== 'object') return {}
+  const result: Record<string, any> = {}
+  for (const [key, entry] of Object.entries(variables)) {
+    if (
+      entry !== null &&
+      typeof entry === 'object' &&
+      'value' in entry &&
+      'type' in entry &&
+      !Array.isArray(entry)
+    ) {
+      // Flowable variable wrapper - unwrap to the primitive value
+      result[key] = entry.value
+    } else {
+      result[key] = entry
+    }
+  }
+  return result
+}
+
 function handleApiError(error: any, context: string): never {
   if (error.response) {
     const status = error.response.status
@@ -165,6 +190,7 @@ export async function getTasks(params?: TaskQueryParams): Promise<TaskListRespon
         createTime: task.createTime || task.created,
         dueDate: task.dueDate || task.due,
         processDefinitionName: task.processDefinitionName || task.processName,
+        processVariables: unwrapProcessVariables(task.variables || task.processVariables || {}),
       })),
       total,
       start: params?.start || 0,
@@ -185,11 +211,13 @@ export async function getTaskById(taskId: string, includeVariables: boolean = tr
 
     const response = await apiClient.get(`/api/v1/tasks/${taskId}`, { params })
 
+    const rawVariables = response.data.variables || response.data.processVariables || {}
     return {
       ...response.data,
       createTime: response.data.createTime || response.data.created,
       dueDate: response.data.dueDate || response.data.due,
       processDefinitionName: response.data.processDefinitionName || response.data.processName,
+      processVariables: unwrapProcessVariables(rawVariables),
     }
   } catch (error: any) {
     handleApiError(error, taskId)

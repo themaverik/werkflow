@@ -50,8 +50,10 @@ export function ApprovalPanel({
   const [comment, setComment] = useState('')
   const [validationError, setValidationError] = useState('')
 
-  const requestAmount = task.processVariables?.requestAmount || task.processVariables?.amount || 0
-  const requiredDoaLevel = task.processVariables?.approvalLevel || 1
+  const rawRequestAmount = task.processVariables?.requestAmount ?? task.processVariables?.amount
+  const requestAmount = typeof rawRequestAmount === 'number' ? rawRequestAmount : Number(rawRequestAmount) || 0
+  const rawRequiredDoaLevel = task.processVariables?.approvalLevel
+  const requiredDoaLevel = typeof rawRequiredDoaLevel === 'number' ? rawRequiredDoaLevel : Number(rawRequiredDoaLevel) || 1
   const userDoaLevel = user.doaLevel || 0
   const userApprovalLimit = DOA_LIMITS[userDoaLevel] || 0
 
@@ -130,7 +132,7 @@ export function ApprovalPanel({
                 <FileText className="h-4 w-4" />
                 <span>Title</span>
               </div>
-              <p className="font-medium">{task.processVariables?.title || task.name}</p>
+              <p className="font-medium">{String(task.processVariables?.title ?? task.name)}</p>
             </div>
 
             <div className="space-y-1">
@@ -146,7 +148,7 @@ export function ApprovalPanel({
                 <UserIcon className="h-4 w-4" />
                 <span>Requested By</span>
               </div>
-              <p className="font-medium">{task.processVariables?.requestedBy || 'Unknown'}</p>
+              <p className="font-medium">{String(task.processVariables?.requestedBy ?? 'Unknown')}</p>
             </div>
 
             <div className="space-y-1">
@@ -154,7 +156,7 @@ export function ApprovalPanel({
                 <Building className="h-4 w-4" />
                 <span>Department</span>
               </div>
-              <p className="font-medium">{task.processVariables?.departmentName || user.department}</p>
+              <p className="font-medium">{String(task.processVariables?.departmentName ?? user.department ?? '')}</p>
             </div>
 
             <div className="space-y-1">
@@ -179,7 +181,7 @@ export function ApprovalPanel({
               <Separator />
               <div className="space-y-2">
                 <Label className="text-sm text-muted-foreground">Description</Label>
-                <p className="text-sm">{task.processVariables.description}</p>
+                <p className="text-sm">{String(task.processVariables.description)}</p>
               </div>
             </>
           )}
@@ -187,21 +189,21 @@ export function ApprovalPanel({
           {task.processVariables?.businessJustification && (
             <div className="space-y-2">
               <Label className="text-sm text-muted-foreground">Business Justification</Label>
-              <p className="text-sm">{task.processVariables.businessJustification}</p>
+              <p className="text-sm">{String(task.processVariables.businessJustification)}</p>
             </div>
           )}
 
           {task.processVariables?.expectedBenefits && (
             <div className="space-y-2">
               <Label className="text-sm text-muted-foreground">Expected Benefits</Label>
-              <p className="text-sm">{task.processVariables.expectedBenefits}</p>
+              <p className="text-sm">{String(task.processVariables.expectedBenefits)}</p>
             </div>
           )}
 
           {task.processVariables?.category && (
             <div className="space-y-2">
               <Label className="text-sm text-muted-foreground">Category</Label>
-              <Badge variant="outline">{task.processVariables.category}</Badge>
+              <Badge variant="outline">{String(task.processVariables.category)}</Badge>
             </div>
           )}
 
@@ -212,7 +214,7 @@ export function ApprovalPanel({
                 task.processVariables.priority === 'HIGH' ? 'destructive' :
                 task.processVariables.priority === 'MEDIUM' ? 'default' : 'secondary'
               }>
-                {task.processVariables.priority}
+                {String(task.processVariables.priority)}
               </Badge>
             </div>
           )}

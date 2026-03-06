@@ -140,8 +140,8 @@ export function useClaimTask() {
         )
       }
     },
-    onSuccess: (data, variables) => {
-      queryClient.setQueryData(TASK_QUERY_KEYS.detail(variables.taskId), data)
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: TASK_QUERY_KEYS.detail(variables.taskId) })
       queryClient.invalidateQueries({ queryKey: TASK_QUERY_KEYS.lists() })
       queryClient.invalidateQueries({ queryKey: TASK_QUERY_KEYS.summary() })
     },
@@ -172,8 +172,8 @@ export function useUnclaimTask() {
         queryClient.setQueryData(TASK_QUERY_KEYS.detail(taskId), context.previousTask)
       }
     },
-    onSuccess: (data, taskId) => {
-      queryClient.setQueryData(TASK_QUERY_KEYS.detail(taskId), data)
+    onSuccess: (_, taskId) => {
+      queryClient.invalidateQueries({ queryKey: TASK_QUERY_KEYS.detail(taskId) })
       queryClient.invalidateQueries({ queryKey: TASK_QUERY_KEYS.lists() })
       queryClient.invalidateQueries({ queryKey: TASK_QUERY_KEYS.summary() })
     },

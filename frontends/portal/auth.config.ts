@@ -72,17 +72,15 @@ export const authConfig = {
         console.log('Relam Roles: ', realmAccess?.roles)
 
         try {
-          // Use jose's decodeJwt function
           const decodedToken = decodeJwt(account.access_token || '') as KeycloakJWTPayload;
-          console.log('Decoded Token: ', decodedToken)
-          
-          // Assuming realm roles are in 'realm_access.roles'
+
           token.roles = decodedToken.realm_access?.roles || [];
-          console.log('Decode Roles: ', token.roles)
-          
-          // If you need to verify the token (not just decode), you would use 
-          // jwtVerify(account.access_token, secret) as shown in a previous answer.
-          // However, for simply extracting claims inside the callback, decodeJwt is sufficient.
+          token.groups = (decodedToken as any).groups || [];
+          token.doa_level = (decodedToken as any).doa_level;
+          token.department = (decodedToken as any).department;
+          token.preferred_username = (decodedToken as any).preferred_username;
+          token.given_name = (decodedToken as any).given_name;
+          token.family_name = (decodedToken as any).family_name;
 
         } catch (error) {
           console.error("Error decoding access token with jose:", error);
@@ -92,9 +90,17 @@ export const authConfig = {
       return token
     },
     async session({ session, token }) {
-      // Send properties to the client
-      session.accessToken = token.accessToken as string
-      session.user.roles = token.roles as string[]
+      const s = session as any
+      s.accessToken = token.accessToken as string
+      if (s.user) {
+        s.user.roles = token.roles as string[]
+        s.user.name = (token.preferred_username as string) || s.user.name
+        s.user.given_name = token.given_name
+        s.user.family_name = token.family_name
+      }
+      s.groups = token.groups as string[]
+      s.doa_level = token.doa_level
+      s.department = token.department
 
       return session
     },

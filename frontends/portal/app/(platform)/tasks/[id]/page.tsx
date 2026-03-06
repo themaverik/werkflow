@@ -37,6 +37,18 @@ export default function TaskDetailPage() {
   const delegateTaskMutation = useDelegateTask()
   const submitFormMutation = useSubmitTaskForm()
 
+  // Must be called before any early returns to satisfy Rules of Hooks
+  const isApproval = useMemo(() => {
+    if (!task) return false
+    const nameLower = (task.name || '').toLowerCase()
+    const keyLower = (task.taskDefinitionKey || '').toLowerCase()
+    return (
+      nameLower.includes('approv') ||
+      keyLower.includes('approv') ||
+      task.processVariables?.approvalLevel !== undefined
+    )
+  }, [task])
+
   const handleClaim = async () => {
     if (!user) {
       toast({
@@ -289,17 +301,6 @@ export default function TaskDetailPage() {
       : 'Low'
     : 'Normal'
 
-  const isApproval = useMemo(() => {
-    if (!task) return false
-    const nameLower = (task.name || '').toLowerCase()
-    const keyLower = (task.taskDefinitionKey || '').toLowerCase()
-    return (
-      nameLower.includes('approv') ||
-      keyLower.includes('approv') ||
-      task.processVariables?.approvalLevel !== undefined
-    )
-  }, [task])
-
   return (
     <div className="container py-6">
       <div className="mb-6">
@@ -512,7 +513,7 @@ export default function TaskDetailPage() {
             <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Task ID</span>
-                <span className="font-mono text-xs">{task.id.substring(0, 8)}...</span>
+                <span className="font-mono text-xs">{task?.id?.substring(0, 8)}...</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Process Instance</span>

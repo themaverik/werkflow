@@ -34,15 +34,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Update user when session changes
   useEffect(() => {
     if (status === 'authenticated' && session) {
+      const s = session as any
       const sessionUser: User = {
-        username: session.user?.name || '',
-        email: session.user?.email || '',
-        firstName: (session as any).user?.given_name,
-        lastName: (session as any).user?.family_name,
-        roles: (session as any).realm_access?.roles || [],
-        groups: (session as any).groups || [],
-        doaLevel: (session as any).doa_level,
-        department: (session as any).department,
+        username: s.user?.name || '',
+        email: s.user?.email || '',
+        firstName: s.user?.given_name,
+        lastName: s.user?.family_name,
+        roles: s.user?.roles || [],
+        groups: s.groups || [],
+        doaLevel: typeof s.doa_level === 'number' ? s.doa_level : Number(s.doa_level) || undefined,
+        department: s.department,
       }
       setUser(sessionUser)
     } else if (status === 'unauthenticated') {

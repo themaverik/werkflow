@@ -42,12 +42,8 @@ export default function TasksPage() {
       } else if (filters.unassigned) {
         params.unassigned = true
       } else {
-        // Default: let backend return assigned + candidate group tasks
-        params.candidateUser = user.username
-        const candidateGroups = mapGroupsToCandidateGroups(user.groups || [])
-        if (candidateGroups.length > 0) {
-          params.candidateGroups = candidateGroups.join(',')
-        }
+        // Default: don't send candidateGroups/candidateUser params
+        // Let the backend use JWT claims to return assigned + candidate group tasks
       }
     }
 

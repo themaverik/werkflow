@@ -10,6 +10,8 @@
  * - Due Date Expression
  */
 
+import { h } from 'preact'
+import { useCallback } from 'preact/hooks'
 import { is } from 'bpmn-js/lib/util/ModelUtil'
 import {
   SelectEntry,
@@ -146,14 +148,11 @@ class FlowablePropertiesProvider {
             {
               id: 'candidateGroups',
               element,
-              component: TextFieldEntry,
-              isEdited: isTextFieldEntryEdited,
-              debounce,
-              label: translate('Candidate Groups'),
-              description: translate('Comma-separated group IDs (e.g., HR_ADMIN,MANAGER)'),
+              component: CandidateGroupsMultiSelect,
               getValue: () => element.businessObject.candidateGroups || '',
               setValue: (value: string) =>
                 modeling.updateProperties(element, { candidateGroups: value || undefined }),
+              translate,
             },
           ],
         })
@@ -561,7 +560,7 @@ function buildActionBlockEntries(
       textField(element, modeling, translate, debounce, 'ab-assignee',
         translate('Assignee Expression'), 'flowable:assignee',
         translate('User ID or expression, e.g. ${initiator}')),
-      candidateGroupsEntry(element, modeling, translate, debounce),
+      candidateGroupsEntry(element, modeling, translate),
       formKeyEntry(element, modeling, translate),
       // outcomeVariable must be a <flowable:field> extension element (spec 3.2)
       flowableFieldEntry(element, modeling, translate, debounce, 'ab-outcomeVariable',
@@ -666,24 +665,84 @@ function flowableFieldEntry(
 }
 
 function candidateGroupsEntry(
-  element: any, modeling: any, translate: (s: string) => string, debounce: any
+  element: any, modeling: any, translate: (s: string) => string
 ): any {
-  const availableGroupNames = groupOptions.map(g => g.name).join(', ')
-  const hint = availableGroupNames
-    ? translate(`Groups who can claim this task. Comma-separated IDs, e.g. ${availableGroupNames.split(', ').slice(0, 2).join(',')}`)
-    : translate('Comma-separated group IDs, e.g. HR_TEAM,FINANCE_TEAM. Any member of these groups will see the task in their queue.')
   return {
     id: 'ab-candidateGroups',
     element,
-    component: TextFieldEntry,
-    isEdited: isTextFieldEntryEdited,
-    debounce,
-    label: translate('Candidate Groups'),
-    description: hint,
+    component: CandidateGroupsMultiSelect,
     getValue: () => element.businessObject.get('flowable:candidateGroups') || '',
     setValue: (value: string) =>
       modeling.updateProperties(element, { 'flowable:candidateGroups': value || undefined }),
+    translate,
   }
+}
+
+/**
+ * Multi-select Preact component for Candidate Groups.
+ * Renders a <select multiple> populated from the module-level groupOptions.
+ * Falls back to a plain text input when no groups have been loaded yet.
+ * Stores the selection as a comma-separated string in the BPMN property.
+ */
+function CandidateGroupsMultiSelect(props: any) {
+  const { id, getValue, setValue, translate: t } = props
+  const currentValue: string = getValue() || ''
+  const selected = currentValue
+    ? currentValue.split(',').map((s: string) => s.trim()).filter(Boolean)
+    : []
+
+  const onChange = useCallback(
+    (e: Event) => {
+      const sel = e.target as HTMLSelectElement
+      const chosen = Array.from(sel.selectedOptions).map((o: HTMLOptionElement) => o.value)
+      setValue(chosen.join(','))
+    },
+    [setValue]
+  )
+
+  const label = typeof t === 'function' ? t('Candidate Groups') : 'Candidate Groups'
+
+  if (!groupOptions.length) {
+    // Groups not loaded yet — plain text fallback
+    return h('div', { class: 'bio-properties-panel-entry' },
+      h('label', { class: 'bio-properties-panel-label', for: id }, label),
+      h('input', {
+        id,
+        type: 'text',
+        class: 'bio-properties-panel-input',
+        value: currentValue,
+        onInput: (e: Event) => setValue((e.target as HTMLInputElement).value),
+        placeholder: 'group-a,group-b',
+      }),
+      h('p', { class: 'bio-properties-panel-description' },
+        typeof t === 'function' ? t('Comma-separated group IDs') : 'Comma-separated group IDs'
+      )
+    )
+  }
+
+  return h('div', { class: 'bio-properties-panel-entry' },
+    h('label', { class: 'bio-properties-panel-label', for: id }, label),
+    h('select', {
+      id,
+      multiple: true,
+      class: 'bio-properties-panel-input',
+      style: 'min-height:88px;padding:4px;width:100%',
+      onChange,
+    },
+      groupOptions.map((g) =>
+        h('option', {
+          key: g.id,
+          value: g.id,
+          selected: selected.includes(g.id),
+        }, g.name || g.id)
+      )
+    ),
+    h('p', { class: 'bio-properties-panel-description' },
+      typeof t === 'function'
+        ? t('Hold Ctrl / ⌘ to select multiple groups')
+        : 'Hold Ctrl / ⌘ to select multiple groups'
+    )
+  )
 }
 
 function templateKeySelectEntry(element: any, modeling: any, translate: (s: string) => string): any {

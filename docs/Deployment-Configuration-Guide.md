@@ -111,7 +111,7 @@ All services start together. The portal is available at http://localhost:4000.
 | `KEYCLOAK_ISSUER_INTERNAL` | Keycloak URL for server-side use (Docker: `http://keycloak:8080/realms/werkflow`) |
 | `KEYCLOAK_ISSUER_BROWSER` | Keycloak URL for browser redirects (host: `http://localhost:8090/realms/werkflow`) |
 | `NEXT_PUBLIC_ENGINE_API_URL` | Engine base URL (e.g. `http://localhost:8081`) |
-| `NEXT_PUBLIC_ADMIN_API_URL` | Admin base URL (e.g. `http://localhost:8083/api`) |
+| `NEXT_PUBLIC_ADMIN_API_URL` | Admin service base URL, no trailing path (e.g. `http://localhost:8083`) |
 
 ---
 

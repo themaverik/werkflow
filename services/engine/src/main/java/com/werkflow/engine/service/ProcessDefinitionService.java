@@ -35,7 +35,7 @@ public class ProcessDefinitionService {
         JUEL_KEYWORDS.add("getClass");
         JUEL_KEYWORDS.add("forName");
         JUEL_KEYWORDS.add("Runtime");
-        JUEL_KEYWORDS.add("exec");
+        JUEL_KEYWORDS.add("exec(");   // match exec() call, not execution variable
         JUEL_KEYWORDS.add("ProcessBuilder");
         JUEL_KEYWORDS.add("getBean");
     }

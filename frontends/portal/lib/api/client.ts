@@ -9,7 +9,7 @@ import { emitTokenExpired } from '@/lib/auth/token-expired-event'
 // - Process Definitions: /werkflow/api/process-definitions/*
 // - Forms: /werkflow/api/forms/*
 const API_BASE_URL = process.env.NEXT_PUBLIC_ENGINE_API_URL || 'http://localhost:8081'
-const ADMIN_API_BASE_URL = process.env.NEXT_PUBLIC_ADMIN_SERVICE_URL || 'http://localhost:8083'
+const ADMIN_API_BASE_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:8083'
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

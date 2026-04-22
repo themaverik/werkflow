@@ -60,6 +60,7 @@ public class ConnectorService {
             .toList();
     }
 
+
     @Transactional
     public ConnectorResponse create(ConnectorRequest request) {
         validateSecretRef(request.getSecretRef());
@@ -85,7 +86,7 @@ public class ConnectorService {
         cred.setHeaderName(request.getHeaderName());
         credentialRepo.save(cred);
 
-        return toResponse(ep, cred);
+        return toResponse(ep, Optional.of(cred));
     }
 
     @Transactional
@@ -114,7 +115,8 @@ public class ConnectorService {
         TenantServiceEndpoint ep = endpointRepo.findByTenantCodeAndConnectorKey(tenantCode, connectorKey)
             .stream().findFirst()
             .orElseThrow(() -> new NoSuchElementException("Connector not found: " + connectorKey));
-        TenantApiCredential cred = findCredential(tenantCode, connectorKey);
+        TenantApiCredential cred = findCredential(tenantCode, connectorKey)
+            .orElseThrow(() -> new NoSuchElementException("No credential configured for connector: " + connectorKey));
 
         String fullUrl = ep.getBaseUrl() + request.getPath();
         ssrfGuard.validateExternal(fullUrl);
@@ -205,23 +207,22 @@ public class ConnectorService {
         }
     }
 
-    private TenantApiCredential findCredential(String tenantCode, String connectorKey) {
-        return credentialRepo.findByTenantCodeAndConnectorKey(tenantCode, connectorKey)
-            .orElseThrow(() -> new NoSuchElementException("Credential not found for connector: " + connectorKey));
+    private Optional<TenantApiCredential> findCredential(String tenantCode, String connectorKey) {
+        return credentialRepo.findByTenantCodeAndConnectorKey(tenantCode, connectorKey);
     }
 
-    private ConnectorResponse toResponse(TenantServiceEndpoint ep, TenantApiCredential cred) {
+    private ConnectorResponse toResponse(TenantServiceEndpoint ep, Optional<TenantApiCredential> cred) {
         return ConnectorResponse.builder()
             .endpointId(ep.getId())
-            .credentialId(cred.getId())
+            .credentialId(cred.map(TenantApiCredential::getId).orElse(null))
             .tenantCode(ep.getTenantCode())
             .connectorKey(ep.getConnectorKey())
             .displayName(ep.getDisplayName())
             .baseUrl(ep.getBaseUrl())
             .environment(ep.getEnvironment())
             .active(ep.isActive())
-            .authScheme(cred.getAuthScheme())
-            .headerName(cred.getHeaderName())
+            .authScheme(cred.map(TenantApiCredential::getAuthScheme).orElse(null))
+            .headerName(cred.map(TenantApiCredential::getHeaderName).orElse(null))
             .sampleSchema(ep.getSampleSchema())
             .createdAt(ep.getCreatedAt())
             .updatedAt(ep.getUpdatedAt())

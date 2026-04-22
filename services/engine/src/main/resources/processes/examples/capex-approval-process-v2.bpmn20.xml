@@ -11,7 +11,12 @@
 
   <process id="capex-approval-process-v2" name="CapEx Approval Process" isExecutable="true">
 
-    <documentation>Capital Expenditure approval workflow — V2 retrofitted with Action Blocks. Replaces Groovy script tasks with declarative action block service tasks.</documentation>
+    <documentation>Capital Expenditure approval workflow — V2 retrofitted with Action Blocks. Replaces Groovy script tasks with declarative action block service tasks.
+
+NOTE: Amount thresholds in this process (e.g. requestAmount &gt; 100000) are intentional
+demo values showing inline BPMN condition expressions. For production use, replace hardcoded
+thresholds with a Business Rule Task backed by a DMN decision table — see
+doa-routing-process.bpmn20.xml and doa-routing.dmn for the recommended pattern.</documentation>
 
     <!-- Start Event -->
     <startEvent id="startEvent" name="CapEx Request Submitted" flowable:formKey="capex-request">

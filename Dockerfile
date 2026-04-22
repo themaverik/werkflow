@@ -85,11 +85,15 @@ RUN npm install && npm cache clean --force
 # Copy dmn-js pre-built UMD bundle to public/vendor/ so it can be loaded
 # as a browser script at runtime. dmn-js references window at parse time
 # and cannot be bundled by webpack — the UMD is the only safe loading path.
-RUN mkdir -p public/vendor && \
+RUN mkdir -p public/vendor/dmn-font/font public/vendor/dmn-font/css && \
     cp node_modules/dmn-js/dist/dmn-modeler.production.min.js public/vendor/dmn-modeler.min.js && \
+    cp node_modules/dmn-js/dist/assets/diagram-js.css public/vendor/diagram-js.css && \
     cp node_modules/dmn-js/dist/assets/dmn-js-shared.css public/vendor/dmn-js-shared.css && \
     cp node_modules/dmn-js/dist/assets/dmn-js-drd.css public/vendor/dmn-js-drd.css && \
-    cp node_modules/dmn-js/dist/assets/dmn-js-decision-table.css public/vendor/dmn-js-decision-table.css
+    cp node_modules/dmn-js/dist/assets/dmn-js-decision-table.css public/vendor/dmn-js-decision-table.css && \
+    cp node_modules/dmn-js/dist/assets/dmn-js-decision-table-controls.css public/vendor/dmn-js-decision-table-controls.css && \
+    cp node_modules/dmn-js/dist/assets/dmn-font/css/dmn.css public/vendor/dmn-font/css/dmn.css && \
+    cp node_modules/dmn-js/dist/assets/dmn-font/font/* public/vendor/dmn-font/font/
 
 # Copy configuration files first (tsconfig, next.config, etc.)
 COPY frontends/portal/tsconfig.json* ./

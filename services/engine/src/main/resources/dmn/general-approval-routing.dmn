@@ -42,4 +42,12 @@ Edit this table to adjust thresholds without changing the BPMN process.</descrip
     </decisionTable>
   </decision>
 
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="general_approval_routing">
+        <dc:Bounds height="80" width="180" x="160" y="100"/>
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+
 </definitions>

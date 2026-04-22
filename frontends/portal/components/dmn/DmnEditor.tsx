@@ -124,8 +124,13 @@ const DmnEditor = forwardRef<DmnEditorHandle, DmnEditorProps>(function DmnEditor
 export default DmnEditor
 
 // ---- minimal valid DMN 1.3 used when creating a new decision ----
+// DMNDI is required so dmn-js can render the DRD and register all sub-views
+// (including the decisionTable view). Without it getViews() may return only
+// the DRD view and open(decisionTableView) silently does nothing.
 const DEFAULT_EMPTY_DMN = `<?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
              id="new_decision_definitions"
              name="New Decision"
              namespace="http://werkflow.com/dmn">
@@ -139,4 +144,11 @@ const DEFAULT_EMPTY_DMN = `<?xml version="1.0" encoding="UTF-8"?>
       <output id="output_1" label="Output" name="outputVariable" typeRef="string"/>
     </decisionTable>
   </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="new_decision">
+        <dc:Bounds height="80" width="180" x="160" y="100"/>
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
 </definitions>`

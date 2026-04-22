@@ -30,15 +30,6 @@ const sidebarSections: SidebarSection[] = [
       { labelKey: 'decisions', label: 'Decisions', href: '/decisions', requiredRoles: ['ADMIN', 'WORKFLOW_ADMIN', 'WORKFLOW_DESIGNER', 'SUPER_ADMIN'] },
     ],
   },
-  {
-    titleKey: 'admin',
-    items: [
-      { labelKey: 'authorityLevels', label: 'Authority Levels', href: '/admin/doa', requiredRoles: ['ADMIN', 'SUPER_ADMIN'] },
-      { labelKey: 'departments', label: 'Departments', href: '/admin/departments', requiredRoles: ['ADMIN', 'SUPER_ADMIN'] },
-      { labelKey: 'connectors', label: 'Connectors', href: '/admin/connectors', requiredRoles: ['ADMIN', 'SUPER_ADMIN'] },
-      { labelKey: 'custodyMappings', label: 'Custody Mappings', href: '/admin/custody', requiredRoles: ['ADMIN', 'SUPER_ADMIN'] },
-    ],
-  },
   // System section hidden until Monitoring and Analytics are implemented
   // {
   //   titleKey: 'system',

@@ -48,9 +48,14 @@ const DmnEditor = forwardRef<DmnEditorHandle, DmnEditorProps>(function DmnEditor
     let modeler: any
 
     async function init() {
-      // Dynamic import keeps dmn-js out of the server bundle
+      // Dynamic import keeps dmn-js out of the server bundle.
+      // dmn-js/lib/Modeler is ESM but its package.json has no "type":"module",
+      // so webpack may apply CJS interop wrapping. Handle all possible shapes:
+      //   - mod.default        (ESM default recognized correctly)
+      //   - mod.default.default (double-wrapped CJS interop)
+      //   - mod itself         (module.exports = class, rare but possible)
       const mod = await import('dmn-js/lib/Modeler')
-      DmnModeler = mod.default
+      DmnModeler = (mod as any).default?.default ?? (mod as any).default ?? mod
 
       modeler = new DmnModeler({
         container: containerRef.current,

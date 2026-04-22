@@ -7,6 +7,9 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   output: 'standalone',
+  // dmn-js ships ESM source under lib/ without "type":"module"; transpile so
+  // webpack can parse ES import/export syntax from within node_modules.
+  transpilePackages: ['dmn-js', 'dmn-js-shared', 'dmn-js-drd', 'dmn-js-decision-table', 'dmn-js-literal-expression', 'dmn-js-boxed-expression'],
   env: {
     NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || 'Werkflow Portal',
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api',
@@ -30,7 +33,7 @@ const nextConfig = {
     })
 
     if (isServer) {
-      config.externals = [...(config.externals || []), 'formiojs', 'bpmn-js', '@formio/react']
+      config.externals = [...(config.externals || []), 'formiojs', 'bpmn-js', 'dmn-js', '@formio/react']
     }
 
     return config

@@ -71,9 +71,12 @@ const DmnEditor = forwardRef<DmnEditorHandle, DmnEditorProps>(function DmnEditor
 
     // Load CSS dynamically alongside the UMD bundle
     const cssFiles = [
+      '/vendor/diagram-js.css',
       '/vendor/dmn-js-shared.css',
       '/vendor/dmn-js-drd.css',
       '/vendor/dmn-js-decision-table.css',
+      '/vendor/dmn-js-decision-table-controls.css',
+      '/vendor/dmn-font/css/dmn.css',
     ]
     cssFiles.forEach((href) => {
       if (!document.querySelector(`link[href="${href}"]`)) {

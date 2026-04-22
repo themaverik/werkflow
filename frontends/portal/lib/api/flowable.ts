@@ -149,9 +149,10 @@ export async function getDraft(processKey: string): Promise<ProcessDraftResponse
   try {
     const response = await apiClient.get(`/api/process-drafts/${processKey}`)
     return response.data
-  } catch (error: any) {
-    if (error?.response?.status === 404) return null
-    throw error
+  } catch {
+    // Draft check is best-effort — return null for any error (404 = no draft,
+    // 401/403 = auth edge case, 500 = engine issue). Caller handles null gracefully.
+    return null
   }
 }
 

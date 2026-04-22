@@ -1,6 +1,14 @@
 'use client'
 
 import { useEffect, useImperativeHandle, useRef, forwardRef } from 'react'
+// Static import — safe because DmnEditor is only ever loaded via
+// dynamic(() => import(...), { ssr: false }), so this module (and its
+// imports) is never evaluated on the server. Static imports are resolved
+// by webpack at build time with full module-graph visibility, eliminating
+// the CJS/ESM interop ambiguity that breaks dynamic import() at runtime.
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — dmn-js ships no TypeScript declarations
+import DmnModelerClass from 'dmn-js/lib/Modeler'
 
 // dmn-js ships its own CSS — import all three layers
 import 'dmn-js/dist/assets/dmn-js-shared.css'
@@ -44,20 +52,10 @@ const DmnEditor = forwardRef<DmnEditorHandle, DmnEditorProps>(function DmnEditor
   useEffect(() => {
     if (!containerRef.current) return
 
-    let DmnModeler: any
     let modeler: any
 
     async function init() {
-      // Dynamic import keeps dmn-js out of the server bundle.
-      // dmn-js/lib/Modeler is ESM but its package.json has no "type":"module",
-      // so webpack may apply CJS interop wrapping. Handle all possible shapes:
-      //   - mod.default        (ESM default recognized correctly)
-      //   - mod.default.default (double-wrapped CJS interop)
-      //   - mod itself         (module.exports = class, rare but possible)
-      const mod = await import('dmn-js/lib/Modeler')
-      DmnModeler = (mod as any).default?.default ?? (mod as any).default ?? mod
-
-      modeler = new DmnModeler({
+      modeler = new DmnModelerClass({
         container: containerRef.current,
       })
       modelerRef.current = modeler

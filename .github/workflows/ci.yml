@@ -12,6 +12,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: werkflow
+          POSTGRES_USER: werkflow_admin
+          POSTGRES_PASSWORD: werkflow_secure_pass
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U werkflow_admin -d werkflow"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -21,6 +36,14 @@ jobs:
           java-version: "21"
           distribution: "temurin"
           cache: "maven"
+
+      - name: Initialize database schemas and test database
+        env:
+          PGPASSWORD: werkflow_secure_pass
+        run: |
+          psql -h localhost -p 5433 -U werkflow_admin -d werkflow -f infrastructure/docker/init-db.sql
+          psql -h localhost -p 5433 -U werkflow_admin -c "CREATE DATABASE werkflow_test;"
+          psql -h localhost -p 5433 -U werkflow_admin -d werkflow_test -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
 
       - name: Build shared/common
         working-directory: shared/common
@@ -47,6 +70,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: werkflow
+          POSTGRES_USER: werkflow_admin
+          POSTGRES_PASSWORD: werkflow_secure_pass
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U werkflow_admin -d werkflow"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -56,6 +94,12 @@ jobs:
           java-version: "21"
           distribution: "temurin"
           cache: "maven"
+
+      - name: Initialize database schemas
+        env:
+          PGPASSWORD: werkflow_secure_pass
+        run: |
+          psql -h localhost -p 5433 -U werkflow_admin -d werkflow -f infrastructure/docker/init-db.sql
 
       - name: Build shared/common
         working-directory: shared/common

@@ -61,6 +61,10 @@ const DmnEditor = forwardRef<DmnEditorHandle, DmnEditorProps>(function DmnEditor
 
       try {
         await modeler.importXML(initialXml)
+        // dmn-js opens in DRD view by default; navigate to the decision table view
+        const views: any[] = modeler.getViews()
+        const tableView = views.find((v) => v.type === 'decisionTable')
+        if (tableView) modeler.open(tableView)
       } catch (err) {
         console.error('Failed to import DMN XML:', err)
       }
@@ -100,7 +104,11 @@ const DmnEditor = forwardRef<DmnEditorHandle, DmnEditorProps>(function DmnEditor
   // Reload XML when the prop changes from outside (e.g. switching between decisions)
   useEffect(() => {
     if (!modelerRef.current || !xml) return
-    modelerRef.current.importXML(xml).catch((err: unknown) => {
+    modelerRef.current.importXML(xml).then(() => {
+      const views: any[] = modelerRef.current.getViews()
+      const tableView = views.find((v: any) => v.type === 'decisionTable')
+      if (tableView) modelerRef.current.open(tableView)
+    }).catch((err: unknown) => {
       console.error('Failed to reload DMN XML:', err)
     })
   }, [xml])

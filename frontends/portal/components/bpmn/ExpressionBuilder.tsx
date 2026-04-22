@@ -311,7 +311,7 @@ export default function ExpressionBuilder({
               className="font-mono text-xs"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Example: ${'{totalAmount > 100000 && departmentId == "HR"}'}
+              Example: ${'{approvalTier == \'LEVEL_1\'}'} — use DMN output variables for routing conditions
             </p>
           </div>
         )}
@@ -343,15 +343,19 @@ export default function ExpressionBuilder({
         {/* Common Examples */}
         <div>
           <Label className="text-xs font-semibold">{t('commonExamples')}</Label>
-          <div className="space-y-1 mt-2">
+          <p className="text-xs text-muted-foreground mt-1 mb-2">
+            Gateway conditions should test process variables, not hardcoded thresholds.
+            Use a Business Rule Task with a DMN table to produce routing variables.
+          </p>
+          <div className="space-y-1">
             <code className="block text-xs bg-muted px-2 py-1 rounded">
-              ${'{totalAmount > 100000}'}
+              ${'{approvalTier == "LEVEL_1"}'}
             </code>
             <code className="block text-xs bg-muted px-2 py-1 rounded">
               ${'{status == "APPROVED"}'}
             </code>
             <code className="block text-xs bg-muted px-2 py-1 rounded">
-              ${'{totalAmount > 50000 && departmentId == "HR"}'}
+              ${'{requiresEscalation == true}'}
             </code>
           </div>
         </div>

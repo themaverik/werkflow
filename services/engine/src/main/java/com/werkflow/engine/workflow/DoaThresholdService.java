@@ -18,7 +18,16 @@ import java.util.Optional;
  * Replaces hardcoded threshold logic previously scattered across WorkflowAuthorizationService
  * and WorkflowTaskRouter.
  *
- * Results are cached per (tenantId, doaLevel) pair. Cache is invalidated by restart only —
+ * <p><strong>Responsibility boundary:</strong> This service answers the authorization question —
+ * "does this user's DOA level permit them to approve this amount?" It maps request amounts to
+ * Keycloak candidate groups (DOA_L1 … DOA_L4) that are used to claim user tasks.
+ *
+ * <p>This is distinct from the DMN routing layer (doa-routing.dmn), which answers the
+ * workflow-routing question — "which approval tier should this request flow to?" The two layers
+ * are complementary: DMN determines the path through the BPMN process; this service enforces
+ * per-user authorization within that path.
+ *
+ * <p>Results are cached per (tenantId, doaLevel) pair. Cache is invalidated by restart only —
  * thresholds are not expected to change frequently.
  */
 @Service

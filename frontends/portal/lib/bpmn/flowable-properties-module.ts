@@ -7,11 +7,13 @@
  */
 import FlowablePropertiesProvider from './flowable-properties-provider'
 import ActionBlockRenderer from './action-block-renderer'
+import WerkflowPaletteProvider from './werkflow-palette-provider'
 
 const FlowablePropertiesProviderModule = {
-  __init__: ['flowablePropertiesProvider', 'actionBlockRenderer'],
+  __init__: ['flowablePropertiesProvider', 'actionBlockRenderer', 'werkflowPaletteProvider'],
   flowablePropertiesProvider: ['type', FlowablePropertiesProvider],
   actionBlockRenderer: ['type', ActionBlockRenderer],
+  werkflowPaletteProvider: ['type', WerkflowPaletteProvider],
 }
 
 export default FlowablePropertiesProviderModule

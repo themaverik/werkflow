@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
+             id="general_approval_routing_definitions"
+             name="General Approval Routing Definitions"
+             namespace="http://werkflow.com/dmn">
+
+  <decision id="general_approval_routing" name="General Approval Routing">
+    <description>Routes general approval requests to the appropriate approval tier based on amount.
+Outputs requiresDirector (boolean) to indicate whether a director-level sign-off is needed
+in addition to manager approval. This table answers the ROUTING question only — it does not
+enforce per-user authorization limits (see DoaThresholdService for that).
+Edit this table to adjust thresholds without changing the BPMN process.</description>
+    <decisionTable id="general_approval_routing_table" hitPolicy="FIRST">
+
+      <input id="input_amount" label="Request Amount">
+        <inputExpression id="input_amount_expr" typeRef="number">
+          <text>amount</text>
+        </inputExpression>
+      </input>
+
+      <output id="output_requires_director" label="Requires Director" name="requiresDirector" typeRef="boolean"/>
+      <output id="output_approval_path" label="Approval Path" name="approvalPath" typeRef="string"/>
+
+      <!-- Rule 1: High-value requests require director in addition to manager -->
+      <rule id="rule_director">
+        <description>High-value requests require manager and director sign-off</description>
+        <inputEntry id="rule_dir_amount"><text>&gt; 50000</text></inputEntry>
+        <outputEntry id="rule_dir_req"><text>true</text></outputEntry>
+        <outputEntry id="rule_dir_path"><text>"MANAGER_AND_DIRECTOR"</text></outputEntry>
+      </rule>
+
+      <!-- Rule 2: Standard requests require manager only -->
+      <rule id="rule_manager">
+        <description>Standard requests require manager approval only</description>
+        <inputEntry id="rule_mgr_amount"><text>&lt;= 50000</text></inputEntry>
+        <outputEntry id="rule_mgr_req"><text>false</text></outputEntry>
+        <outputEntry id="rule_mgr_path"><text>"MANAGER_ONLY"</text></outputEntry>
+      </rule>
+
+    </decisionTable>
+  </decision>
+
+</definitions>

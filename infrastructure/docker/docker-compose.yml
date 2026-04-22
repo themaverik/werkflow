@@ -179,6 +179,10 @@ services:
       SMTP_AUTH: "false"
       SMTP_STARTTLS_ENABLE: "false"
       SMTP_STARTTLS_REQUIRED: "false"
+      # Enable Flyway so custom migrations (V3-V28: RBAC, forms, DOA, seeds) run on first start
+      FLYWAY_ENABLED: "true"
+      # Auto-deploy sample BPMNs (general-approval, document-review, onboarding-checklist, SLA escalation)
+      WERKFLOW_DEPLOY_EXAMPLES: "true"
     ports:
       - "8081:8081"
     volumes:
@@ -246,9 +250,11 @@ services:
 
       # Backend API URLs (internal Docker network)
       NEXT_PUBLIC_ENGINE_API_URL: http://engine-service:8081/api
-      NEXT_PUBLIC_ADMIN_API_URL: http://admin-service:8083/api
+      NEXT_PUBLIC_ADMIN_API_URL: http://admin-service:8083
 
       # NextAuth Configuration
+      # WARNING: NEXTAUTH_SECRET below is a LOCAL DEVELOPMENT DEFAULT.
+      # Generate a unique secret for any non-local deployment: openssl rand -base64 32
       NEXTAUTH_URL: http://localhost:4000
       NEXTAUTH_SECRET: xg7bVqYgFgTDwpVWe6gbyWwZVb8f0Yd1Wo+ZGuKdm/U=
       AUTH_TRUST_HOST: true
@@ -261,6 +267,8 @@ services:
       NEXT_PUBLIC_KEYCLOAK_ISSUER_BROWSER: http://localhost:8090/realms/werkflow
 
       KEYCLOAK_CLIENT_ID: werkflow-portal
+      # WARNING: KEYCLOAK_CLIENT_SECRET is a LOCAL DEVELOPMENT DEFAULT matching the imported realm.
+      # Change this in the Keycloak admin console and update here for non-local deployments.
       KEYCLOAK_CLIENT_SECRET: REDACTED_KC_PORTAL_SECRET
     ports:
       - "4000:4000"

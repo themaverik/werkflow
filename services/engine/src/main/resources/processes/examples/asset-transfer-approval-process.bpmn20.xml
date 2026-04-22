@@ -11,7 +11,10 @@
 
   <process id="asset-transfer-approval-process" name="Asset Transfer Approval Process" isExecutable="true">
 
-    <documentation>Asset transfer workflow with custody tracking and multi-level approvals for high-value assets</documentation>
+    <documentation>Asset transfer workflow with custody tracking. After the current custodian releases the asset,
+a Business Rule Task evaluates asset_transfer_routing to determine whether a manager sign-off is required
+based on asset value. The gateway checks the DMN output requiresManagerApproval — no hardcoded threshold
+in the BPMN. Edit asset-transfer-routing.dmn to change the high-value threshold.</documentation>
 
     <!-- Start Event -->
     <startEvent id="startEvent" name="Transfer Request Submitted" flowable:formKey="asset-transfer">
@@ -66,12 +69,24 @@
     <!-- Exclusive Gateway: Released? -->
     <exclusiveGateway id="releaseGateway" name="Released?" />
 
-    <!-- Exclusive Gateway: High-Value Asset? -->
-    <exclusiveGateway id="valueGateway" name="Value > $5,000?" />
+    <!-- Business Rule Task: evaluate asset_transfer_routing DMN -->
+    <!-- Sets requiresManagerApproval (boolean) and transferPath (MANAGER_APPROVAL | DIRECT_TRANSFER) -->
+    <businessRuleTask id="evaluateTransferRouting" name="Evaluate Transfer Routing"
+                      flowable:decisionRef="asset_transfer_routing"
+                      flowable:mapDecisionResult="singleEntry"
+                      flowable:resultVariable="requiresManagerApproval">
+      <documentation>Evaluates the asset_transfer_routing decision table. Input: assetValue.
+Output: requiresManagerApproval boolean. The gateway below tests this variable — no hardcoded
+threshold in the BPMN. Edit asset-transfer-routing.dmn to change the threshold.</documentation>
+    </businessRuleTask>
 
-    <!-- User Task: Department Manager Approval (for high-value assets) -->
-    <userTask id="managerApproval" name="Manager Review" flowable:candidateGroups="DOA:L2" flowable:formKey="transfer-approval">
-      <documentation>Department manager approves high-value asset transfers</documentation>
+    <!-- Exclusive Gateway: manager required? (from DMN, not hardcoded) -->
+    <exclusiveGateway id="valueGateway" name="Manager Required? (from DMN)" />
+
+    <!-- User Task: Department Manager Approval (only when requiresManagerApproval == true from DMN) -->
+    <userTask id="managerApproval" name="Manager Review" flowable:candidateGroups="DOA_L2,SUPER_ADMIN" flowable:formKey="transfer-approval">
+      <documentation>Department manager approves high-value asset transfers. Reached only when
+asset_transfer_routing DMN sets requiresManagerApproval = true.</documentation>
     </userTask>
 
     <!-- Merge Gateway -->
@@ -190,19 +205,21 @@
     <sequenceFlow id="flow5" sourceRef="custodianReleaseApproval" targetRef="releaseGateway" />
 
     <!-- Release Gateway Flows -->
-    <sequenceFlow id="released" sourceRef="releaseGateway" targetRef="valueGateway">
+    <sequenceFlow id="released" sourceRef="releaseGateway" targetRef="evaluateTransferRouting">
       <conditionExpression xsi:type="tFormalExpression">${releaseDecision == 'APPROVED'}</conditionExpression>
     </sequenceFlow>
     <sequenceFlow id="notReleased" sourceRef="releaseGateway" targetRef="updateRejected">
       <conditionExpression xsi:type="tFormalExpression">${releaseDecision == 'REJECTED'}</conditionExpression>
     </sequenceFlow>
 
-    <!-- Value Gateway Flows -->
+    <sequenceFlow id="flow_eval_value" sourceRef="evaluateTransferRouting" targetRef="valueGateway"/>
+
+    <!-- Value Gateway Flows — conditions use DMN output, not hardcoded threshold -->
     <sequenceFlow id="highValue" sourceRef="valueGateway" targetRef="managerApproval">
-      <conditionExpression xsi:type="tFormalExpression">${assetValue &gt; 5000}</conditionExpression>
+      <conditionExpression xsi:type="tFormalExpression">${requiresManagerApproval == true}</conditionExpression>
     </sequenceFlow>
     <sequenceFlow id="lowValue" sourceRef="valueGateway" targetRef="mergeGateway">
-      <conditionExpression xsi:type="tFormalExpression">${assetValue &lt;= 5000}</conditionExpression>
+      <conditionExpression xsi:type="tFormalExpression">${requiresManagerApproval == false}</conditionExpression>
     </sequenceFlow>
 
     <sequenceFlow id="flow6" sourceRef="managerApproval" targetRef="mergeGateway" />
@@ -266,63 +283,67 @@
         <omgdc:Bounds height="40.0" width="40.0" x="870.0" y="158.0"/>
       </bpmndi:BPMNShape>
 
+      <bpmndi:BPMNShape bpmnElement="evaluateTransferRouting" id="BPMNShape_evaluateTransferRouting">
+        <omgdc:Bounds height="80.0" width="120.0" x="960.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+
       <bpmndi:BPMNShape bpmnElement="valueGateway" id="BPMNShape_valueGateway">
-        <omgdc:Bounds height="40.0" width="40.0" x="960.0" y="158.0"/>
+        <omgdc:Bounds height="40.0" width="40.0" x="1120.0" y="158.0"/>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape bpmnElement="managerApproval" id="BPMNShape_managerApproval">
-        <omgdc:Bounds height="80.0" width="100.0" x="1050.0" y="50.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="1210.0" y="50.0"/>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape bpmnElement="mergeGateway" id="BPMNShape_mergeGateway">
-        <omgdc:Bounds height="40.0" width="40.0" x="1200.0" y="158.0"/>
+        <omgdc:Bounds height="40.0" width="40.0" x="1360.0" y="158.0"/>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape bpmnElement="custodianAcceptance" id="BPMNShape_custodianAcceptance">
-        <omgdc:Bounds height="80.0" width="100.0" x="1290.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="1450.0" y="138.0"/>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape bpmnElement="acceptanceGateway" id="BPMNShape_acceptanceGateway">
-        <omgdc:Bounds height="40.0" width="40.0" x="1440.0" y="158.0"/>
+        <omgdc:Bounds height="40.0" width="40.0" x="1600.0" y="158.0"/>
       </bpmndi:BPMNShape>
 
       <!-- Processing Tasks -->
       <bpmndi:BPMNShape bpmnElement="updateCustody" id="BPMNShape_updateCustody">
-        <omgdc:Bounds height="80.0" width="100.0" x="1530.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="1690.0" y="138.0"/>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape bpmnElement="updateLocation" id="BPMNShape_updateLocation">
-        <omgdc:Bounds height="80.0" width="100.0" x="1680.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="1840.0" y="138.0"/>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape bpmnElement="createTransferRecord" id="BPMNShape_createTransferRecord">
-        <omgdc:Bounds height="80.0" width="100.0" x="1830.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="1990.0" y="138.0"/>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape bpmnElement="updateCompleted" id="BPMNShape_updateCompleted">
-        <omgdc:Bounds height="80.0" width="100.0" x="1980.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="2140.0" y="138.0"/>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape bpmnElement="sendCompletionNotification" id="BPMNShape_sendCompletionNotification">
-        <omgdc:Bounds height="80.0" width="100.0" x="2130.0" y="138.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="2290.0" y="138.0"/>
       </bpmndi:BPMNShape>
 
       <!-- Rejection Path -->
       <bpmndi:BPMNShape bpmnElement="updateRejected" id="BPMNShape_updateRejected">
-        <omgdc:Bounds height="80.0" width="100.0" x="930.0" y="300.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="1090.0" y="300.0"/>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape bpmnElement="sendRejectionNotification" id="BPMNShape_sendRejectionNotification">
-        <omgdc:Bounds height="80.0" width="100.0" x="1080.0" y="300.0"/>
+        <omgdc:Bounds height="80.0" width="100.0" x="1240.0" y="300.0"/>
       </bpmndi:BPMNShape>
 
       <!-- End Events -->
       <bpmndi:BPMNShape bpmnElement="endEventCompleted" id="BPMNShape_endEventCompleted">
-        <omgdc:Bounds height="28.0" width="28.0" x="2280.0" y="164.0"/>
+        <omgdc:Bounds height="28.0" width="28.0" x="2440.0" y="164.0"/>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape bpmnElement="endEventRejected" id="BPMNShape_endEventRejected">
-        <omgdc:Bounds height="28.0" width="28.0" x="1230.0" y="326.0"/>
+        <omgdc:Bounds height="28.0" width="28.0" x="1390.0" y="326.0"/>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape bpmnElement="endEventUnavailable" id="BPMNShape_endEventUnavailable">
@@ -365,88 +386,110 @@
         <omgdi:waypoint x="870.0" y="178.0"/>
       </bpmndi:BPMNEdge>
 
+      <!-- releaseGateway(right=910) → evaluateTransferRouting(left=960) -->
       <bpmndi:BPMNEdge bpmnElement="released" id="BPMNEdge_released">
         <omgdi:waypoint x="910.0" y="178.0"/>
         <omgdi:waypoint x="960.0" y="178.0"/>
       </bpmndi:BPMNEdge>
 
+      <!-- releaseGateway(bottom=890,198) → updateRejected(left=1090,340) -->
       <bpmndi:BPMNEdge bpmnElement="notReleased" id="BPMNEdge_notReleased">
         <omgdi:waypoint x="890.0" y="198.0"/>
         <omgdi:waypoint x="890.0" y="340.0"/>
-        <omgdi:waypoint x="930.0" y="340.0"/>
+        <omgdi:waypoint x="1090.0" y="340.0"/>
       </bpmndi:BPMNEdge>
 
+      <!-- evaluateTransferRouting(right=1080) → valueGateway(left=1120) -->
+      <bpmndi:BPMNEdge bpmnElement="flow_eval_value" id="BPMNEdge_flow_eval_value">
+        <omgdi:waypoint x="1080.0" y="178.0"/>
+        <omgdi:waypoint x="1120.0" y="178.0"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- valueGateway(top=1140,158) → managerApproval(left=1210,90) -->
       <bpmndi:BPMNEdge bpmnElement="highValue" id="BPMNEdge_highValue">
-        <omgdi:waypoint x="980.0" y="158.0"/>
-        <omgdi:waypoint x="980.0" y="90.0"/>
-        <omgdi:waypoint x="1050.0" y="90.0"/>
+        <omgdi:waypoint x="1140.0" y="158.0"/>
+        <omgdi:waypoint x="1140.0" y="90.0"/>
+        <omgdi:waypoint x="1210.0" y="90.0"/>
       </bpmndi:BPMNEdge>
 
+      <!-- valueGateway(right=1160,178) → mergeGateway(left=1360,178) -->
       <bpmndi:BPMNEdge bpmnElement="lowValue" id="BPMNEdge_lowValue">
-        <omgdi:waypoint x="1000.0" y="178.0"/>
-        <omgdi:waypoint x="1200.0" y="178.0"/>
+        <omgdi:waypoint x="1160.0" y="178.0"/>
+        <omgdi:waypoint x="1360.0" y="178.0"/>
       </bpmndi:BPMNEdge>
 
+      <!-- managerApproval(right=1310,90) → mergeGateway(top=1380,158) -->
       <bpmndi:BPMNEdge bpmnElement="flow6" id="BPMNEdge_flow6">
-        <omgdi:waypoint x="1150.0" y="90.0"/>
-        <omgdi:waypoint x="1220.0" y="90.0"/>
-        <omgdi:waypoint x="1220.0" y="158.0"/>
+        <omgdi:waypoint x="1310.0" y="90.0"/>
+        <omgdi:waypoint x="1380.0" y="90.0"/>
+        <omgdi:waypoint x="1380.0" y="158.0"/>
       </bpmndi:BPMNEdge>
 
+      <!-- mergeGateway(right=1400,178) → custodianAcceptance(left=1450,178) -->
       <bpmndi:BPMNEdge bpmnElement="flow7" id="BPMNEdge_flow7">
-        <omgdi:waypoint x="1240.0" y="178.0"/>
-        <omgdi:waypoint x="1290.0" y="178.0"/>
+        <omgdi:waypoint x="1400.0" y="178.0"/>
+        <omgdi:waypoint x="1450.0" y="178.0"/>
       </bpmndi:BPMNEdge>
 
+      <!-- custodianAcceptance(right=1550,178) → acceptanceGateway(left=1600,178) -->
       <bpmndi:BPMNEdge bpmnElement="flow8" id="BPMNEdge_flow8">
-        <omgdi:waypoint x="1390.0" y="178.0"/>
-        <omgdi:waypoint x="1440.0" y="178.0"/>
+        <omgdi:waypoint x="1550.0" y="178.0"/>
+        <omgdi:waypoint x="1600.0" y="178.0"/>
       </bpmndi:BPMNEdge>
 
+      <!-- acceptanceGateway(right=1640,178) → updateCustody(left=1690,178) -->
       <bpmndi:BPMNEdge bpmnElement="accepted" id="BPMNEdge_accepted">
-        <omgdi:waypoint x="1480.0" y="178.0"/>
-        <omgdi:waypoint x="1530.0" y="178.0"/>
+        <omgdi:waypoint x="1640.0" y="178.0"/>
+        <omgdi:waypoint x="1690.0" y="178.0"/>
       </bpmndi:BPMNEdge>
 
+      <!-- acceptanceGateway(bottom=1620,198) → updateRejected(right=1190,340) looping back -->
       <bpmndi:BPMNEdge bpmnElement="notAccepted" id="BPMNEdge_notAccepted">
-        <omgdi:waypoint x="1460.0" y="198.0"/>
-        <omgdi:waypoint x="1460.0" y="340.0"/>
-        <omgdi:waypoint x="1030.0" y="340.0"/>
+        <omgdi:waypoint x="1620.0" y="198.0"/>
+        <omgdi:waypoint x="1620.0" y="340.0"/>
+        <omgdi:waypoint x="1190.0" y="340.0"/>
       </bpmndi:BPMNEdge>
 
+      <!-- updateCustody(right=1790,178) → updateLocation(left=1840,178) -->
       <bpmndi:BPMNEdge bpmnElement="flow9" id="BPMNEdge_flow9">
-        <omgdi:waypoint x="1630.0" y="178.0"/>
-        <omgdi:waypoint x="1680.0" y="178.0"/>
+        <omgdi:waypoint x="1790.0" y="178.0"/>
+        <omgdi:waypoint x="1840.0" y="178.0"/>
       </bpmndi:BPMNEdge>
 
+      <!-- updateLocation(right=1940,178) → createTransferRecord(left=1990,178) -->
       <bpmndi:BPMNEdge bpmnElement="flow10" id="BPMNEdge_flow10">
-        <omgdi:waypoint x="1780.0" y="178.0"/>
-        <omgdi:waypoint x="1830.0" y="178.0"/>
+        <omgdi:waypoint x="1940.0" y="178.0"/>
+        <omgdi:waypoint x="1990.0" y="178.0"/>
       </bpmndi:BPMNEdge>
 
+      <!-- createTransferRecord(right=2090,178) → updateCompleted(left=2140,178) -->
       <bpmndi:BPMNEdge bpmnElement="flow11" id="BPMNEdge_flow11">
-        <omgdi:waypoint x="1930.0" y="178.0"/>
-        <omgdi:waypoint x="1980.0" y="178.0"/>
+        <omgdi:waypoint x="2090.0" y="178.0"/>
+        <omgdi:waypoint x="2140.0" y="178.0"/>
       </bpmndi:BPMNEdge>
 
+      <!-- updateCompleted(right=2240,178) → sendCompletionNotification(left=2290,178) -->
       <bpmndi:BPMNEdge bpmnElement="flow12" id="BPMNEdge_flow12">
-        <omgdi:waypoint x="2080.0" y="178.0"/>
-        <omgdi:waypoint x="2130.0" y="178.0"/>
+        <omgdi:waypoint x="2240.0" y="178.0"/>
+        <omgdi:waypoint x="2290.0" y="178.0"/>
       </bpmndi:BPMNEdge>
 
+      <!-- sendCompletionNotification(right=2390,178) → endEventCompleted(left=2440,178) -->
       <bpmndi:BPMNEdge bpmnElement="flow13" id="BPMNEdge_flow13">
-        <omgdi:waypoint x="2230.0" y="178.0"/>
-        <omgdi:waypoint x="2280.0" y="178.0"/>
+        <omgdi:waypoint x="2390.0" y="178.0"/>
+        <omgdi:waypoint x="2440.0" y="178.0"/>
       </bpmndi:BPMNEdge>
 
+      <!-- updateRejected(right=1190,340) → sendRejectionNotification(left=1240,340) -->
       <bpmndi:BPMNEdge bpmnElement="flow14" id="BPMNEdge_flow14">
-        <omgdi:waypoint x="1030.0" y="340.0"/>
-        <omgdi:waypoint x="1080.0" y="340.0"/>
+        <omgdi:waypoint x="1190.0" y="340.0"/>
+        <omgdi:waypoint x="1240.0" y="340.0"/>
       </bpmndi:BPMNEdge>
 
+      <!-- sendRejectionNotification(right=1340,340) → endEventRejected(left=1390,340) -->
       <bpmndi:BPMNEdge bpmnElement="flow15" id="BPMNEdge_flow15">
-        <omgdi:waypoint x="1180.0" y="340.0"/>
-        <omgdi:waypoint x="1230.0" y="340.0"/>
+        <omgdi:waypoint x="1340.0" y="340.0"/>
+        <omgdi:waypoint x="1390.0" y="340.0"/>
       </bpmndi:BPMNEdge>
 
     </bpmndi:BPMNPlane>

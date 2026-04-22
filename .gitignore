@@ -100,3 +100,6 @@ test-results/
 # Archives
 /archive/
 docs/archive/
+
+# Enterprise-only features — never commit to OSS repo
+/enterprise/

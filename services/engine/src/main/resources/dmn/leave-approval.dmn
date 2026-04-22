@@ -66,4 +66,12 @@ auto-approved; longer or special-category leave escalates to manager or HR.</des
     </decisionTable>
   </decision>
 
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="leave_approval">
+        <dc:Bounds height="80" width="180" x="160" y="100"/>
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+
 </definitions>

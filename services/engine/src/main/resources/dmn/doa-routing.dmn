@@ -61,4 +61,12 @@ Do not hardcode role names, department names, or organisation-specific values he
     </decisionTable>
   </decision>
 
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="doa_routing">
+        <dc:Bounds height="80" width="180" x="160" y="100"/>
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+
 </definitions>

@@ -82,6 +82,15 @@ COPY frontends/portal/package.json frontends/portal/package-lock.json* ./
 # Install ALL dependencies (including devDependencies for build)
 RUN npm install && npm cache clean --force
 
+# Copy dmn-js pre-built UMD bundle to public/vendor/ so it can be loaded
+# as a browser script at runtime. dmn-js references window at parse time
+# and cannot be bundled by webpack — the UMD is the only safe loading path.
+RUN mkdir -p public/vendor && \
+    cp node_modules/dmn-js/dist/dmn-modeler.production.min.js public/vendor/dmn-modeler.min.js && \
+    cp node_modules/dmn-js/dist/assets/dmn-js-shared.css public/vendor/dmn-js-shared.css && \
+    cp node_modules/dmn-js/dist/assets/dmn-js-drd.css public/vendor/dmn-js-drd.css && \
+    cp node_modules/dmn-js/dist/assets/dmn-js-decision-table.css public/vendor/dmn-js-decision-table.css
+
 # Copy configuration files first (tsconfig, next.config, etc.)
 COPY frontends/portal/tsconfig.json* ./
 COPY frontends/portal/next.config.mjs* ./

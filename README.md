@@ -128,6 +128,7 @@ In development, all emails are captured by [Mailpit](http://localhost:8025) — 
 
 - [Quick Start](./docs/QUICKSTART.md)
 - [Connector Guide](./docs/CONNECTOR-GUIDE.md)
+- [Connector Marketplace](./marketplace/README.md) — seed connectors + contribution guide
 - [Deployment Configuration](./docs/Deployment-Configuration-Guide.md)
 - [Keycloak Setup](./docs/Keycloak-Implementation-Guide.md)
 - [Architecture Decisions](./docs/Architecture/)

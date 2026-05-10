@@ -1,0 +1,169 @@
+{
+  "apiVersion": "werkflow.io/connector/v1",
+  "kind": "ConnectorDefinition",
+  "metadata": {
+    "key": "slack-web-api",
+    "displayName": "Slack",
+    "description": "Send messages and list channels via the Slack Web API. Requires a Slack Bot Token with chat:write and channels:read scopes.",
+    "version": "1.0.0",
+    "category": "notification",
+    "tags": ["slack", "messaging", "notification", "community"],
+    "vendor": "Slack Technologies",
+    "license": "Apache-2.0",
+    "documentationUrl": "https://api.slack.com/methods"
+  },
+  "spec": {
+    "transport": {
+      "type": "rest",
+      "config": {
+        "baseUrl": "https://slack.com",
+        "defaultHeaders": {
+          "Content-Type": "application/json; charset=utf-8"
+        },
+        "redirectPolicy": "never"
+      }
+    },
+    "auth": {
+      "profiles": [
+        {
+          "id": "bearer",
+          "displayName": "Slack Bot Token",
+          "type": "bearer",
+          "secretKey": "slack-bot-token"
+        }
+      ]
+    },
+    "operations": [
+      {
+        "id": "postMessage",
+        "displayName": "Post Message",
+        "description": "Posts a message to a Slack channel or direct message. Supports Block Kit blocks for rich formatting.",
+        "category": "publish",
+        "input": {
+          "type": "object",
+          "required": ["channel", "text"],
+          "properties": {
+            "channel": {
+              "type": "string",
+              "description": "Channel ID (e.g. C012AB3CD) or channel name (e.g. #general)."
+            },
+            "text": {
+              "type": "string",
+              "description": "Plain text message. Used as fallback when blocks are provided."
+            },
+            "username": {
+              "type": "string",
+              "description": "Override bot display name for this message."
+            },
+            "iconEmoji": {
+              "type": "string",
+              "description": "Override bot icon with an emoji, e.g. :robot_face:"
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "ok": { "type": "boolean" },
+            "ts": { "type": "string", "description": "Message timestamp — uniquely identifies the message in the channel." },
+            "channel": { "type": "string" }
+          }
+        },
+        "errors": [
+          {
+            "code": "AUTH_FAILED",
+            "match": { "httpStatus": 401 }
+          },
+          {
+            "code": "CHANNEL_NOT_FOUND",
+            "match": { "httpStatus": 404 }
+          },
+          {
+            "code": "RATE_LIMITED",
+            "match": { "httpStatus": 429 },
+            "retry": { "enabled": true, "maxAttempts": 3, "backoff": "exponential", "initialDelaySeconds": 2.0 }
+          }
+        ],
+        "transportSpecific": {
+          "method": "POST",
+          "path": "/api/chat.postMessage",
+          "body": {
+            "contentType": "application/json",
+            "template": "{\"channel\": \"${channel}\", \"text\": \"${text}\"}"
+          }
+        }
+      },
+      {
+        "id": "listChannels",
+        "displayName": "List Channels",
+        "description": "Returns a list of public channels in the workspace.",
+        "category": "list",
+        "input": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "default": 100,
+              "description": "Maximum number of channels to return (max 1000)."
+            },
+            "cursor": {
+              "type": "string",
+              "description": "Pagination cursor from a previous response's next_cursor."
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "ok": { "type": "boolean" },
+            "channels": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "name": { "type": "string" },
+                  "is_private": { "type": "boolean" },
+                  "num_members": { "type": "integer" }
+                }
+              }
+            },
+            "response_metadata": {
+              "type": "object",
+              "properties": {
+                "next_cursor": { "type": "string" }
+              }
+            }
+          }
+        },
+        "pagination": {
+          "strategy": "cursor",
+          "defaults": { "pageSize": 100 },
+          "mode": "first-page-only"
+        },
+        "transportSpecific": {
+          "method": "GET",
+          "path": "/api/conversations.list",
+          "queryParameters": [
+            { "name": "limit", "required": false },
+            { "name": "cursor", "required": false }
+          ],
+          "x-werkflow-pagination": {
+            "type": "cursor",
+            "cursorParameter": "cursor",
+            "cursorPath": "$.response_metadata.next_cursor",
+            "itemsPath": "$.channels"
+          }
+        }
+      }
+    ],
+    "constraints": {
+      "defaultTimeoutSeconds": 15,
+      "maxResponseBytes": 102400,
+      "rateLimit": {
+        "requestsPerSecond": 1.0,
+        "burst": 3
+      }
+    }
+  }
+}

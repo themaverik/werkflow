@@ -66,10 +66,22 @@ werkflow/
 │   └── admin/        # Org and service registry management (8083)
 ├── frontends/
 │   └── portal/       # Next.js portal (4000)
+├── marketplace/      # Seed connectors + contribution guide
 ├── infrastructure/
 │   └── docker/       # Docker Compose and Dockerfiles
 └── docs/             # Architecture decisions, guides, ADRs
 ```
+
+## Example Processes
+
+Four example processes auto-deploy on startup from `services/engine/src/main/resources/processes/examples/`. All at version 1.
+
+| Process | Description |
+|---------|-------------|
+| Leave Request | Employee leave application with manager approval |
+| Event Ticket Request | Event attendance request workflow |
+| General Approval | Generic DOA-routed approval (amount-gated director sign-off) |
+| Onboarding Checklist | New hire onboarding task list |
 
 ## Running Services Individually
 
@@ -128,6 +140,7 @@ In development, all emails are captured by [Mailpit](http://localhost:8025) — 
 
 - [Quick Start](./docs/QUICKSTART.md)
 - [Connector Guide](./docs/CONNECTOR-GUIDE.md)
+- [Connector Marketplace](./marketplace/README.md) — seed connectors + contribution guide
 - [Deployment Configuration](./docs/Deployment-Configuration-Guide.md)
 - [Keycloak Setup](./docs/Keycloak-Implementation-Guide.md)
 - [Architecture Decisions](./docs/Architecture/)

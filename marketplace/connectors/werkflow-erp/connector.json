@@ -1,0 +1,304 @@
+{
+  "apiVersion": "werkflow.io/connector/v1",
+  "kind": "ConnectorDefinition",
+  "metadata": {
+    "key": "werkflow-erp",
+    "displayName": "Werkflow ERP",
+    "description": "Official connector for the Werkflow ERP system. Provides access to HR, Procurement, Inventory, and Finance endpoints. Maintained by the Werkflow core team.",
+    "version": "1.0.0",
+    "category": "data-source",
+    "tags": ["erp", "hr", "procurement", "inventory", "finance", "official"],
+    "vendor": "Werkflow",
+    "license": "Apache-2.0",
+    "documentationUrl": "https://github.com/werkflow-platform/werkflow-public/tree/main/marketplace/connectors/werkflow-erp"
+  },
+  "spec": {
+    "transport": {
+      "type": "rest",
+      "config": {
+        "baseUrl": "http://localhost:8084",
+        "defaultHeaders": {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "redirectPolicy": "never"
+      }
+    },
+    "auth": {
+      "profiles": [
+        {
+          "id": "api-key",
+          "displayName": "API Key (X-API-Key header)",
+          "type": "api-key",
+          "secretKey": "werkflow-erp-api-key",
+          "config": {
+            "headerName": "X-API-Key"
+          }
+        }
+      ]
+    },
+    "operations": [
+      {
+        "id": "listEmployees",
+        "displayName": "List Employees",
+        "description": "Returns a paginated list of employees for the tenant.",
+        "category": "list",
+        "input": {
+          "type": "object",
+          "properties": {
+            "departmentCode": {
+              "type": "string",
+              "description": "Filter by department code. Optional."
+            },
+            "page": { "type": "integer", "default": 0 },
+            "size": { "type": "integer", "default": 20 }
+          }
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "array",
+              "items": { "$ref": "#/spec/components/schemas/Employee" }
+            },
+            "totalElements": { "type": "integer" },
+            "totalPages": { "type": "integer" }
+          }
+        },
+        "transportSpecific": {
+          "method": "GET",
+          "path": "/api/v1/hr/employees",
+          "queryParameters": [
+            { "name": "departmentCode", "required": false },
+            { "name": "page", "required": false },
+            { "name": "size", "required": false }
+          ]
+        }
+      },
+      {
+        "id": "getEmployee",
+        "displayName": "Get Employee",
+        "description": "Returns details of a single employee by ID.",
+        "category": "read",
+        "input": {
+          "type": "object",
+          "required": ["employeeId"],
+          "properties": {
+            "employeeId": { "type": "string", "description": "Employee UUID." }
+          }
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "firstName": { "type": "string" },
+            "lastName": { "type": "string" },
+            "email": { "type": "string" },
+            "departmentCode": { "type": "string" },
+            "jobTitle": { "type": "string" }
+          }
+        },
+        "transportSpecific": {
+          "method": "GET",
+          "path": "/api/v1/hr/employees/{employeeId}"
+        }
+      },
+      {
+        "id": "listPurchaseOrders",
+        "displayName": "List Purchase Orders",
+        "description": "Returns purchase orders, optionally filtered by status.",
+        "category": "list",
+        "input": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["DRAFT", "PENDING_APPROVAL", "APPROVED", "REJECTED", "RECEIVED"],
+              "description": "Filter by order status."
+            },
+            "page": { "type": "integer", "default": 0 },
+            "size": { "type": "integer", "default": 20 }
+          }
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "array",
+              "items": { "$ref": "#/spec/components/schemas/PurchaseOrder" }
+            },
+            "totalElements": { "type": "integer" }
+          }
+        },
+        "transportSpecific": {
+          "method": "GET",
+          "path": "/api/v1/procurement/purchase-orders",
+          "queryParameters": [
+            { "name": "status", "required": false },
+            { "name": "page", "required": false },
+            { "name": "size", "required": false }
+          ]
+        }
+      },
+      {
+        "id": "getPurchaseOrder",
+        "displayName": "Get Purchase Order",
+        "description": "Returns details of a specific purchase order.",
+        "category": "read",
+        "input": {
+          "type": "object",
+          "required": ["orderId"],
+          "properties": {
+            "orderId": { "type": "string" }
+          }
+        },
+        "output": {
+          "type": "object",
+          "$ref": "#/spec/components/schemas/PurchaseOrder"
+        },
+        "transportSpecific": {
+          "method": "GET",
+          "path": "/api/v1/procurement/purchase-orders/{orderId}"
+        }
+      },
+      {
+        "id": "approvePurchaseOrder",
+        "displayName": "Approve Purchase Order",
+        "description": "Approves a purchase order. Typically called from a service task after a human approval step.",
+        "category": "action",
+        "input": {
+          "type": "object",
+          "required": ["orderId"],
+          "properties": {
+            "orderId": { "type": "string" },
+            "approverComment": { "type": "string" }
+          }
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "status": { "type": "string" },
+            "approvedAt": { "type": "string", "format": "date-time" }
+          }
+        },
+        "transportSpecific": {
+          "method": "POST",
+          "path": "/api/v1/procurement/purchase-orders/{orderId}/approve",
+          "body": {
+            "contentType": "application/json",
+            "template": "{\"approverComment\": \"${approverComment}\"}"
+          }
+        }
+      },
+      {
+        "id": "listInventoryItems",
+        "displayName": "List Inventory Items",
+        "description": "Returns inventory items, optionally filtered by category.",
+        "category": "list",
+        "input": {
+          "type": "object",
+          "properties": {
+            "categoryCode": { "type": "string" },
+            "lowStockOnly": { "type": "boolean", "default": false },
+            "page": { "type": "integer", "default": 0 },
+            "size": { "type": "integer", "default": 20 }
+          }
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "array",
+              "items": { "$ref": "#/spec/components/schemas/InventoryItem" }
+            },
+            "totalElements": { "type": "integer" }
+          }
+        },
+        "transportSpecific": {
+          "method": "GET",
+          "path": "/api/v1/inventory/items",
+          "queryParameters": [
+            { "name": "categoryCode", "required": false },
+            { "name": "lowStockOnly", "required": false },
+            { "name": "page", "required": false },
+            { "name": "size", "required": false }
+          ]
+        }
+      },
+      {
+        "id": "getFinanceSummary",
+        "displayName": "Get Finance Summary",
+        "description": "Returns a summary of financial metrics for the current period.",
+        "category": "read",
+        "input": {
+          "type": "object",
+          "properties": {
+            "period": {
+              "type": "string",
+              "description": "ISO 8601 year-month, e.g. 2026-05. Defaults to current month."
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "totalExpenses": { "type": "number" },
+            "totalRevenue": { "type": "number" },
+            "pendingApprovals": { "type": "integer" },
+            "period": { "type": "string" }
+          }
+        },
+        "transportSpecific": {
+          "method": "GET",
+          "path": "/api/v1/finance/summary",
+          "queryParameters": [
+            { "name": "period", "required": false }
+          ]
+        }
+      }
+    ],
+    "components": {
+      "schemas": {
+        "Employee": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "firstName": { "type": "string" },
+            "lastName": { "type": "string" },
+            "email": { "type": "string" },
+            "departmentCode": { "type": "string" },
+            "jobTitle": { "type": "string" },
+            "employmentStatus": { "type": "string" }
+          }
+        },
+        "PurchaseOrder": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "referenceNumber": { "type": "string" },
+            "vendorName": { "type": "string" },
+            "totalAmount": { "type": "number" },
+            "currency": { "type": "string" },
+            "status": { "type": "string" },
+            "createdAt": { "type": "string", "format": "date-time" }
+          }
+        },
+        "InventoryItem": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "sku": { "type": "string" },
+            "name": { "type": "string" },
+            "quantityOnHand": { "type": "integer" },
+            "reorderPoint": { "type": "integer" },
+            "unitCost": { "type": "number" }
+          }
+        }
+      }
+    },
+    "constraints": {
+      "defaultTimeoutSeconds": 30,
+      "maxResponseBytes": 524288
+    }
+  }
+}

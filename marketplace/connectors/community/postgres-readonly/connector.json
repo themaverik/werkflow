@@ -1,0 +1,170 @@
+{
+  "apiVersion": "werkflow.io/connector/v1",
+  "kind": "ConnectorDefinition",
+  "metadata": {
+    "key": "postgres-readonly",
+    "displayName": "PostgreSQL (Read-Only)",
+    "description": "Read-only access to a PostgreSQL database via named, parameterized queries. All queries are registered at connector-definition time — no dynamic SQL is permitted. The engine enforces read-only mode at the JDBC connection level and rejects any DML keywords at registration.",
+    "version": "1.0.0",
+    "category": "data-source",
+    "tags": ["postgresql", "database", "sql", "read-only", "community"],
+    "vendor": "Community",
+    "license": "Apache-2.0",
+    "documentationUrl": "https://github.com/werkflow-platform/werkflow-public/tree/main/marketplace/connectors/community/postgres-readonly"
+  },
+  "spec": {
+    "transport": {
+      "type": "database",
+      "config": {
+        "datasourceRef": "postgres-main",
+        "dialect": "postgresql",
+        "readOnly": true,
+        "pool": {
+          "minSize": 1,
+          "maxSize": 5,
+          "connectionTimeoutSeconds": 5,
+          "idleTimeoutSeconds": 600
+        },
+        "circuitBreaker": {
+          "enabled": true,
+          "failureThreshold": 5,
+          "resetTimeoutSeconds": 30
+        },
+        "queries": [
+          {
+            "id": "findUserById",
+            "sql": "SELECT id, email, display_name, status, created_at FROM app_users WHERE id = :userId AND tenant_id = :tenantId",
+            "resultMode": "object",
+            "parameters": [
+              { "name": "userId", "type": "uuid", "required": true },
+              { "name": "tenantId", "type": "string", "required": true }
+            ],
+            "rowLimit": 1,
+            "queryTimeoutSeconds": 5
+          },
+          {
+            "id": "listUsersByStatus",
+            "sql": "SELECT id, email, display_name, status FROM app_users WHERE status = :status AND tenant_id = :tenantId ORDER BY created_at DESC LIMIT :pageSize OFFSET :offset",
+            "resultMode": "array",
+            "parameters": [
+              { "name": "status", "type": "string", "required": true, "maxLength": 50 },
+              { "name": "tenantId", "type": "string", "required": true },
+              { "name": "pageSize", "type": "integer", "required": false, "default": 20 },
+              { "name": "offset", "type": "integer", "required": false, "default": 0 }
+            ],
+            "rowLimit": 1000,
+            "queryTimeoutSeconds": 10
+          },
+          {
+            "id": "countByStatus",
+            "sql": "SELECT COUNT(*) AS total FROM app_users WHERE status = :status AND tenant_id = :tenantId",
+            "resultMode": "scalar",
+            "parameters": [
+              { "name": "status", "type": "string", "required": true },
+              { "name": "tenantId", "type": "string", "required": true }
+            ],
+            "rowLimit": 1,
+            "queryTimeoutSeconds": 5
+          }
+        ],
+        "schemaAllowlist": ["public"]
+      }
+    },
+    "auth": {
+      "profiles": [
+        {
+          "id": "none",
+          "displayName": "Datasource Credentials (managed by platform)",
+          "type": "none"
+        }
+      ]
+    },
+    "operations": [
+      {
+        "id": "findUserById",
+        "displayName": "Find User by ID",
+        "description": "Returns a single user record by UUID. Returns null if no match is found.",
+        "category": "read",
+        "input": {
+          "type": "object",
+          "required": ["userId", "tenantId"],
+          "properties": {
+            "userId": { "type": "string", "format": "uuid" },
+            "tenantId": { "type": "string" }
+          }
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "email": { "type": "string" },
+            "displayName": { "type": "string" },
+            "status": { "type": "string" },
+            "createdAt": { "type": "string", "format": "date-time" }
+          }
+        },
+        "transportSpecific": {
+          "queryRef": "findUserById"
+        }
+      },
+      {
+        "id": "listUsersByStatus",
+        "displayName": "List Users by Status",
+        "description": "Returns a paginated list of users filtered by status.",
+        "category": "list",
+        "input": {
+          "type": "object",
+          "required": ["status", "tenantId"],
+          "properties": {
+            "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "SUSPENDED"] },
+            "tenantId": { "type": "string" },
+            "pageSize": { "type": "integer", "default": 20 },
+            "offset": { "type": "integer", "default": 0 }
+          }
+        },
+        "output": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "email": { "type": "string" },
+              "displayName": { "type": "string" },
+              "status": { "type": "string" }
+            }
+          }
+        },
+        "transportSpecific": {
+          "queryRef": "listUsersByStatus"
+        }
+      },
+      {
+        "id": "countByStatus",
+        "displayName": "Count Users by Status",
+        "description": "Returns the total count of users with the given status.",
+        "category": "read",
+        "input": {
+          "type": "object",
+          "required": ["status", "tenantId"],
+          "properties": {
+            "status": { "type": "string" },
+            "tenantId": { "type": "string" }
+          }
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "total": { "type": "integer" }
+          }
+        },
+        "transportSpecific": {
+          "queryRef": "countByStatus"
+        }
+      }
+    ],
+    "constraints": {
+      "defaultTimeoutSeconds": 10,
+      "maxResponseBytes": 524288
+    }
+  }
+}

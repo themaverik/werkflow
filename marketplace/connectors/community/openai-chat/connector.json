@@ -1,0 +1,152 @@
+{
+  "apiVersion": "werkflow.io/connector/v1",
+  "kind": "ConnectorDefinition",
+  "metadata": {
+    "key": "openai-chat",
+    "displayName": "OpenAI Chat Completions",
+    "description": "Generate text with OpenAI's Chat Completions API (GPT-4o, GPT-4, GPT-3.5-turbo). Use in workflow service tasks for classification, summarization, drafting, and extraction. Requires an OpenAI API key.",
+    "version": "1.0.0",
+    "category": "ai",
+    "tags": ["openai", "gpt", "ai", "llm", "nlp", "community"],
+    "vendor": "OpenAI",
+    "license": "Apache-2.0",
+    "documentationUrl": "https://platform.openai.com/docs/api-reference/chat"
+  },
+  "spec": {
+    "transport": {
+      "type": "rest",
+      "config": {
+        "baseUrl": "https://api.openai.com",
+        "defaultHeaders": {
+          "Content-Type": "application/json"
+        },
+        "redirectPolicy": "never"
+      }
+    },
+    "auth": {
+      "profiles": [
+        {
+          "id": "bearer",
+          "displayName": "OpenAI API Key",
+          "type": "bearer",
+          "secretKey": "openai-api-key"
+        }
+      ]
+    },
+    "operations": [
+      {
+        "id": "chatCompletions",
+        "displayName": "Chat Completions",
+        "description": "Sends a list of messages to the Chat Completions API and returns the assistant's reply. Suitable for classification, summarization, structured extraction, and text generation use cases within workflows.",
+        "category": "action",
+        "input": {
+          "type": "object",
+          "required": ["model", "systemPrompt", "userMessage"],
+          "properties": {
+            "model": {
+              "type": "string",
+              "description": "Model ID to use.",
+              "enum": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"],
+              "default": "gpt-4o-mini"
+            },
+            "systemPrompt": {
+              "type": "string",
+              "description": "System-level instructions that set the assistant's behavior and constraints for this call."
+            },
+            "userMessage": {
+              "type": "string",
+              "description": "The user-turn message. May include process variable values via BPMN EL expression interpolation before the connector call."
+            },
+            "maxTokens": {
+              "type": "integer",
+              "default": 512,
+              "description": "Maximum tokens in the completion. Keep low for classification tasks, higher for generation."
+            },
+            "temperature": {
+              "type": "number",
+              "default": 0.2,
+              "description": "Sampling temperature (0-2). Lower values produce more deterministic outputs. For extraction/classification, use 0 or 0.1."
+            },
+            "responseFormat": {
+              "type": "string",
+              "enum": ["text", "json_object"],
+              "default": "text",
+              "description": "Set to json_object to request a valid JSON response. The system prompt must instruct the model to output JSON when this is set."
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "description": "The assistant's response text (or JSON string if responseFormat=json_object)."
+            },
+            "model": { "type": "string" },
+            "promptTokens": { "type": "integer" },
+            "completionTokens": { "type": "integer" },
+            "totalTokens": { "type": "integer" },
+            "finishReason": {
+              "type": "string",
+              "enum": ["stop", "length", "content_filter", "tool_calls"]
+            }
+          }
+        },
+        "errors": [
+          {
+            "code": "AUTH_FAILED",
+            "match": { "httpStatus": 401 }
+          },
+          {
+            "code": "RATE_LIMITED",
+            "match": { "httpStatus": 429 },
+            "retry": { "enabled": true, "maxAttempts": 3, "backoff": "exponential", "initialDelaySeconds": 5.0 }
+          },
+          {
+            "code": "TIMEOUT",
+            "match": { "httpStatus": 504 },
+            "retry": { "enabled": true, "maxAttempts": 2, "backoff": "linear", "initialDelaySeconds": 3.0 }
+          }
+        ],
+        "examples": [
+          {
+            "name": "Classify approval sentiment",
+            "description": "Classify a comment as APPROVE, REJECT, or NEUTRAL.",
+            "input": {
+              "model": "gpt-4o-mini",
+              "systemPrompt": "You are a classifier. Respond with only one word: APPROVE, REJECT, or NEUTRAL.",
+              "userMessage": "The vendor pricing looks reasonable and delivery timeline is acceptable.",
+              "maxTokens": 10,
+              "temperature": 0
+            },
+            "output": {
+              "content": "APPROVE",
+              "finishReason": "stop",
+              "totalTokens": 45
+            }
+          }
+        ],
+        "transportSpecific": {
+          "method": "POST",
+          "path": "/v1/chat/completions",
+          "body": {
+            "contentType": "application/json",
+            "template": "{\"model\": \"${model}\", \"messages\": [{\"role\": \"system\", \"content\": \"${systemPrompt}\"}, {\"role\": \"user\", \"content\": \"${userMessage}\"}], \"max_tokens\": ${maxTokens}, \"temperature\": ${temperature}}"
+          },
+          "response": {
+            "successStatusCodes": [200],
+            "extractRoot": "$.choices[0].message"
+          }
+        }
+      }
+    ],
+    "constraints": {
+      "defaultTimeoutSeconds": 60,
+      "maxResponseBytes": 204800,
+      "rateLimit": {
+        "requestsPerSecond": 2.0,
+        "burst": 5
+      }
+    }
+  }
+}

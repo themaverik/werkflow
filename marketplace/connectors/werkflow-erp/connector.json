@@ -7,7 +7,14 @@
     "description": "Official connector for the Werkflow ERP system. Provides access to HR, Procurement, Inventory, and Finance endpoints. Maintained by the Werkflow core team.",
     "version": "1.0.0",
     "category": "data-source",
-    "tags": ["erp", "hr", "procurement", "inventory", "finance", "official"],
+    "tags": [
+      "erp",
+      "hr",
+      "procurement",
+      "inventory",
+      "finance",
+      "official"
+    ],
     "vendor": "Werkflow",
     "license": "Apache-2.0",
     "documentationUrl": "https://github.com/werkflow-platform/werkflow-public/tree/main/marketplace/connectors/werkflow-erp"
@@ -30,7 +37,6 @@
           "id": "api-key",
           "displayName": "API Key (X-API-Key header)",
           "type": "api-key",
-          "secretKey": "werkflow-erp-api-key",
           "config": {
             "headerName": "X-API-Key"
           }
@@ -50,8 +56,14 @@
               "type": "string",
               "description": "Filter by department code. Optional."
             },
-            "page": { "type": "integer", "default": 0 },
-            "size": { "type": "integer", "default": 20 }
+            "page": {
+              "type": "integer",
+              "default": 0
+            },
+            "size": {
+              "type": "integer",
+              "default": 20
+            }
           }
         },
         "output": {
@@ -59,19 +71,34 @@
           "properties": {
             "content": {
               "type": "array",
-              "items": { "$ref": "#/spec/components/schemas/Employee" }
+              "items": {
+                "$ref": "#/spec/components/schemas/Employee"
+              }
             },
-            "totalElements": { "type": "integer" },
-            "totalPages": { "type": "integer" }
+            "totalElements": {
+              "type": "integer"
+            },
+            "totalPages": {
+              "type": "integer"
+            }
           }
         },
         "transportSpecific": {
           "method": "GET",
           "path": "/api/v1/hr/employees",
           "queryParameters": [
-            { "name": "departmentCode", "required": false },
-            { "name": "page", "required": false },
-            { "name": "size", "required": false }
+            {
+              "name": "departmentCode",
+              "required": false
+            },
+            {
+              "name": "page",
+              "required": false
+            },
+            {
+              "name": "size",
+              "required": false
+            }
           ]
         }
       },
@@ -82,20 +109,37 @@
         "category": "read",
         "input": {
           "type": "object",
-          "required": ["employeeId"],
+          "required": [
+            "employeeId"
+          ],
           "properties": {
-            "employeeId": { "type": "string", "description": "Employee UUID." }
+            "employeeId": {
+              "type": "string",
+              "description": "Employee UUID."
+            }
           }
         },
         "output": {
           "type": "object",
           "properties": {
-            "id": { "type": "string" },
-            "firstName": { "type": "string" },
-            "lastName": { "type": "string" },
-            "email": { "type": "string" },
-            "departmentCode": { "type": "string" },
-            "jobTitle": { "type": "string" }
+            "id": {
+              "type": "string"
+            },
+            "firstName": {
+              "type": "string"
+            },
+            "lastName": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "departmentCode": {
+              "type": "string"
+            },
+            "jobTitle": {
+              "type": "string"
+            }
           }
         },
         "transportSpecific": {
@@ -113,11 +157,23 @@
           "properties": {
             "status": {
               "type": "string",
-              "enum": ["DRAFT", "PENDING_APPROVAL", "APPROVED", "REJECTED", "RECEIVED"],
+              "enum": [
+                "DRAFT",
+                "PENDING_APPROVAL",
+                "APPROVED",
+                "REJECTED",
+                "RECEIVED"
+              ],
               "description": "Filter by order status."
             },
-            "page": { "type": "integer", "default": 0 },
-            "size": { "type": "integer", "default": 20 }
+            "page": {
+              "type": "integer",
+              "default": 0
+            },
+            "size": {
+              "type": "integer",
+              "default": 20
+            }
           }
         },
         "output": {
@@ -125,18 +181,31 @@
           "properties": {
             "content": {
               "type": "array",
-              "items": { "$ref": "#/spec/components/schemas/PurchaseOrder" }
+              "items": {
+                "$ref": "#/spec/components/schemas/PurchaseOrder"
+              }
             },
-            "totalElements": { "type": "integer" }
+            "totalElements": {
+              "type": "integer"
+            }
           }
         },
         "transportSpecific": {
           "method": "GET",
           "path": "/api/v1/procurement/purchase-orders",
           "queryParameters": [
-            { "name": "status", "required": false },
-            { "name": "page", "required": false },
-            { "name": "size", "required": false }
+            {
+              "name": "status",
+              "required": false
+            },
+            {
+              "name": "page",
+              "required": false
+            },
+            {
+              "name": "size",
+              "required": false
+            }
           ]
         }
       },
@@ -147,9 +216,13 @@
         "category": "read",
         "input": {
           "type": "object",
-          "required": ["orderId"],
+          "required": [
+            "orderId"
+          ],
           "properties": {
-            "orderId": { "type": "string" }
+            "orderId": {
+              "type": "string"
+            }
           }
         },
         "output": {
@@ -168,17 +241,28 @@
         "category": "action",
         "input": {
           "type": "object",
-          "required": ["orderId"],
+          "required": [
+            "orderId"
+          ],
           "properties": {
-            "orderId": { "type": "string" },
-            "approverComment": { "type": "string" }
+            "orderId": {
+              "type": "string"
+            },
+            "approverComment": {
+              "type": "string"
+            }
           }
         },
         "output": {
           "type": "object",
           "properties": {
-            "status": { "type": "string" },
-            "approvedAt": { "type": "string", "format": "date-time" }
+            "status": {
+              "type": "string"
+            },
+            "approvedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
           }
         },
         "transportSpecific": {
@@ -198,10 +282,21 @@
         "input": {
           "type": "object",
           "properties": {
-            "categoryCode": { "type": "string" },
-            "lowStockOnly": { "type": "boolean", "default": false },
-            "page": { "type": "integer", "default": 0 },
-            "size": { "type": "integer", "default": 20 }
+            "categoryCode": {
+              "type": "string"
+            },
+            "lowStockOnly": {
+              "type": "boolean",
+              "default": false
+            },
+            "page": {
+              "type": "integer",
+              "default": 0
+            },
+            "size": {
+              "type": "integer",
+              "default": 20
+            }
           }
         },
         "output": {
@@ -209,19 +304,35 @@
           "properties": {
             "content": {
               "type": "array",
-              "items": { "$ref": "#/spec/components/schemas/InventoryItem" }
+              "items": {
+                "$ref": "#/spec/components/schemas/InventoryItem"
+              }
             },
-            "totalElements": { "type": "integer" }
+            "totalElements": {
+              "type": "integer"
+            }
           }
         },
         "transportSpecific": {
           "method": "GET",
           "path": "/api/v1/inventory/items",
           "queryParameters": [
-            { "name": "categoryCode", "required": false },
-            { "name": "lowStockOnly", "required": false },
-            { "name": "page", "required": false },
-            { "name": "size", "required": false }
+            {
+              "name": "categoryCode",
+              "required": false
+            },
+            {
+              "name": "lowStockOnly",
+              "required": false
+            },
+            {
+              "name": "page",
+              "required": false
+            },
+            {
+              "name": "size",
+              "required": false
+            }
           ]
         }
       },
@@ -242,17 +353,28 @@
         "output": {
           "type": "object",
           "properties": {
-            "totalExpenses": { "type": "number" },
-            "totalRevenue": { "type": "number" },
-            "pendingApprovals": { "type": "integer" },
-            "period": { "type": "string" }
+            "totalExpenses": {
+              "type": "number"
+            },
+            "totalRevenue": {
+              "type": "number"
+            },
+            "pendingApprovals": {
+              "type": "integer"
+            },
+            "period": {
+              "type": "string"
+            }
           }
         },
         "transportSpecific": {
           "method": "GET",
           "path": "/api/v1/finance/summary",
           "queryParameters": [
-            { "name": "period", "required": false }
+            {
+              "name": "period",
+              "required": false
+            }
           ]
         }
       }
@@ -262,36 +384,77 @@
         "Employee": {
           "type": "object",
           "properties": {
-            "id": { "type": "string" },
-            "firstName": { "type": "string" },
-            "lastName": { "type": "string" },
-            "email": { "type": "string" },
-            "departmentCode": { "type": "string" },
-            "jobTitle": { "type": "string" },
-            "employmentStatus": { "type": "string" }
+            "id": {
+              "type": "string"
+            },
+            "firstName": {
+              "type": "string"
+            },
+            "lastName": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "departmentCode": {
+              "type": "string"
+            },
+            "jobTitle": {
+              "type": "string"
+            },
+            "employmentStatus": {
+              "type": "string"
+            }
           }
         },
         "PurchaseOrder": {
           "type": "object",
           "properties": {
-            "id": { "type": "string" },
-            "referenceNumber": { "type": "string" },
-            "vendorName": { "type": "string" },
-            "totalAmount": { "type": "number" },
-            "currency": { "type": "string" },
-            "status": { "type": "string" },
-            "createdAt": { "type": "string", "format": "date-time" }
+            "id": {
+              "type": "string"
+            },
+            "referenceNumber": {
+              "type": "string"
+            },
+            "vendorName": {
+              "type": "string"
+            },
+            "totalAmount": {
+              "type": "number"
+            },
+            "currency": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            }
           }
         },
         "InventoryItem": {
           "type": "object",
           "properties": {
-            "id": { "type": "string" },
-            "sku": { "type": "string" },
-            "name": { "type": "string" },
-            "quantityOnHand": { "type": "integer" },
-            "reorderPoint": { "type": "integer" },
-            "unitCost": { "type": "number" }
+            "id": {
+              "type": "string"
+            },
+            "sku": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "quantityOnHand": {
+              "type": "integer"
+            },
+            "reorderPoint": {
+              "type": "integer"
+            },
+            "unitCost": {
+              "type": "number"
+            }
           }
         }
       }

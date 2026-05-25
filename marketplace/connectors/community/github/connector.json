@@ -7,7 +7,14 @@
     "description": "Interact with GitHub repositories via the GitHub REST API v3. Supports creating issues, listing repositories, and inspecting pull requests. Requires a Personal Access Token or GitHub App token.",
     "version": "1.0.0",
     "category": "custom",
-    "tags": ["github", "git", "issues", "pull-requests", "devops", "community"],
+    "tags": [
+      "github",
+      "git",
+      "issues",
+      "pull-requests",
+      "devops",
+      "community"
+    ],
     "vendor": "GitHub, Inc.",
     "license": "Apache-2.0",
     "documentationUrl": "https://docs.github.com/en/rest"
@@ -29,8 +36,7 @@
         {
           "id": "bearer",
           "displayName": "Personal Access Token",
-          "type": "bearer",
-          "secretKey": "github-pat"
+          "type": "bearer"
         }
       ]
     },
@@ -42,20 +48,40 @@
         "category": "write",
         "input": {
           "type": "object",
-          "required": ["owner", "repo", "title"],
+          "required": [
+            "owner",
+            "repo",
+            "title"
+          ],
           "properties": {
-            "owner": { "type": "string", "description": "Repository owner (user or organization)." },
-            "repo": { "type": "string", "description": "Repository name." },
-            "title": { "type": "string", "description": "Issue title." },
-            "body": { "type": "string", "description": "Issue body in Markdown." },
+            "owner": {
+              "type": "string",
+              "description": "Repository owner (user or organization)."
+            },
+            "repo": {
+              "type": "string",
+              "description": "Repository name."
+            },
+            "title": {
+              "type": "string",
+              "description": "Issue title."
+            },
+            "body": {
+              "type": "string",
+              "description": "Issue body in Markdown."
+            },
             "labels": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "description": "Label names to apply."
             },
             "assignees": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "description": "GitHub usernames to assign."
             }
           }
@@ -63,26 +89,48 @@
         "output": {
           "type": "object",
           "properties": {
-            "id": { "type": "integer" },
-            "number": { "type": "integer" },
-            "html_url": { "type": "string", "format": "uri" },
-            "state": { "type": "string" },
-            "title": { "type": "string" }
+            "id": {
+              "type": "integer"
+            },
+            "number": {
+              "type": "integer"
+            },
+            "html_url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "state": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
           }
         },
         "errors": [
           {
             "code": "AUTH_FAILED",
-            "match": { "httpStatus": 401 }
+            "match": {
+              "httpStatus": 401
+            }
           },
           {
             "code": "NOT_FOUND",
-            "match": { "httpStatus": 404 }
+            "match": {
+              "httpStatus": 404
+            }
           },
           {
             "code": "RATE_LIMITED",
-            "match": { "httpStatus": 403 },
-            "retry": { "enabled": true, "maxAttempts": 3, "backoff": "exponential", "initialDelaySeconds": 60.0 }
+            "match": {
+              "httpStatus": 403
+            },
+            "retry": {
+              "enabled": true,
+              "maxAttempts": 3,
+              "backoff": "exponential",
+              "initialDelaySeconds": 60.0
+            }
           }
         ],
         "transportSpecific": {
@@ -102,14 +150,31 @@
         "input": {
           "type": "object",
           "properties": {
-            "org": { "type": "string", "description": "Organization name. If omitted, lists repos for the authenticated user." },
+            "org": {
+              "type": "string",
+              "description": "Organization name. If omitted, lists repos for the authenticated user."
+            },
             "type": {
               "type": "string",
-              "enum": ["all", "public", "private", "forks", "sources", "member"],
+              "enum": [
+                "all",
+                "public",
+                "private",
+                "forks",
+                "sources",
+                "member"
+              ],
               "default": "all"
             },
-            "per_page": { "type": "integer", "default": 30, "description": "Results per page (max 100)." },
-            "page": { "type": "integer", "default": 1 }
+            "per_page": {
+              "type": "integer",
+              "default": 30,
+              "description": "Results per page (max 100)."
+            },
+            "page": {
+              "type": "integer",
+              "default": 1
+            }
           }
         },
         "output": {
@@ -117,28 +182,55 @@
           "items": {
             "type": "object",
             "properties": {
-              "id": { "type": "integer" },
-              "name": { "type": "string" },
-              "full_name": { "type": "string" },
-              "html_url": { "type": "string", "format": "uri" },
-              "description": { "type": "string" },
-              "private": { "type": "boolean" },
-              "stargazers_count": { "type": "integer" }
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "full_name": {
+                "type": "string"
+              },
+              "html_url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "description": {
+                "type": "string"
+              },
+              "private": {
+                "type": "boolean"
+              },
+              "stargazers_count": {
+                "type": "integer"
+              }
             }
           }
         },
         "pagination": {
           "strategy": "link-header",
-          "defaults": { "pageSize": 30, "maxPages": 100 },
+          "defaults": {
+            "pageSize": 30,
+            "maxPages": 100
+          },
           "mode": "first-page-only"
         },
         "transportSpecific": {
           "method": "GET",
           "path": "/user/repos",
           "queryParameters": [
-            { "name": "type", "required": false },
-            { "name": "per_page", "required": false },
-            { "name": "page", "required": false }
+            {
+              "name": "type",
+              "required": false
+            },
+            {
+              "name": "per_page",
+              "required": false
+            },
+            {
+              "name": "page",
+              "required": false
+            }
           ],
           "x-werkflow-pagination": {
             "type": "link-header",
@@ -153,25 +245,59 @@
         "category": "read",
         "input": {
           "type": "object",
-          "required": ["owner", "repo", "pullNumber"],
+          "required": [
+            "owner",
+            "repo",
+            "pullNumber"
+          ],
           "properties": {
-            "owner": { "type": "string" },
-            "repo": { "type": "string" },
-            "pullNumber": { "type": "integer", "description": "Pull request number." }
+            "owner": {
+              "type": "string"
+            },
+            "repo": {
+              "type": "string"
+            },
+            "pullNumber": {
+              "type": "integer",
+              "description": "Pull request number."
+            }
           }
         },
         "output": {
           "type": "object",
           "properties": {
-            "number": { "type": "integer" },
-            "title": { "type": "string" },
-            "state": { "type": "string", "enum": ["open", "closed"] },
-            "html_url": { "type": "string", "format": "uri" },
-            "merged": { "type": "boolean" },
-            "mergeable": { "type": "boolean" },
-            "additions": { "type": "integer" },
-            "deletions": { "type": "integer" },
-            "changed_files": { "type": "integer" }
+            "number": {
+              "type": "integer"
+            },
+            "title": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "open",
+                "closed"
+              ]
+            },
+            "html_url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "merged": {
+              "type": "boolean"
+            },
+            "mergeable": {
+              "type": "boolean"
+            },
+            "additions": {
+              "type": "integer"
+            },
+            "deletions": {
+              "type": "integer"
+            },
+            "changed_files": {
+              "type": "integer"
+            }
           }
         },
         "transportSpecific": {

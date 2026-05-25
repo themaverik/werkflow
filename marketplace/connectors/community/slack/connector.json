@@ -7,7 +7,12 @@
     "description": "Send messages and list channels via the Slack Web API. Requires a Slack Bot Token with chat:write and channels:read scopes.",
     "version": "1.0.0",
     "category": "notification",
-    "tags": ["slack", "messaging", "notification", "community"],
+    "tags": [
+      "slack",
+      "messaging",
+      "notification",
+      "community"
+    ],
     "vendor": "Slack Technologies",
     "license": "Apache-2.0",
     "documentationUrl": "https://api.slack.com/methods"
@@ -28,8 +33,7 @@
         {
           "id": "bearer",
           "displayName": "Slack Bot Token",
-          "type": "bearer",
-          "secretKey": "slack-bot-token"
+          "type": "bearer"
         }
       ]
     },
@@ -41,7 +45,10 @@
         "category": "publish",
         "input": {
           "type": "object",
-          "required": ["channel", "text"],
+          "required": [
+            "channel",
+            "text"
+          ],
           "properties": {
             "channel": {
               "type": "string",
@@ -64,24 +71,42 @@
         "output": {
           "type": "object",
           "properties": {
-            "ok": { "type": "boolean" },
-            "ts": { "type": "string", "description": "Message timestamp — uniquely identifies the message in the channel." },
-            "channel": { "type": "string" }
+            "ok": {
+              "type": "boolean"
+            },
+            "ts": {
+              "type": "string",
+              "description": "Message timestamp \u2014 uniquely identifies the message in the channel."
+            },
+            "channel": {
+              "type": "string"
+            }
           }
         },
         "errors": [
           {
             "code": "AUTH_FAILED",
-            "match": { "httpStatus": 401 }
+            "match": {
+              "httpStatus": 401
+            }
           },
           {
             "code": "CHANNEL_NOT_FOUND",
-            "match": { "httpStatus": 404 }
+            "match": {
+              "httpStatus": 404
+            }
           },
           {
             "code": "RATE_LIMITED",
-            "match": { "httpStatus": 429 },
-            "retry": { "enabled": true, "maxAttempts": 3, "backoff": "exponential", "initialDelaySeconds": 2.0 }
+            "match": {
+              "httpStatus": 429
+            },
+            "retry": {
+              "enabled": true,
+              "maxAttempts": 3,
+              "backoff": "exponential",
+              "initialDelaySeconds": 2.0
+            }
           }
         ],
         "transportSpecific": {
@@ -115,38 +140,58 @@
         "output": {
           "type": "object",
           "properties": {
-            "ok": { "type": "boolean" },
+            "ok": {
+              "type": "boolean"
+            },
             "channels": {
               "type": "array",
               "items": {
                 "type": "object",
                 "properties": {
-                  "id": { "type": "string" },
-                  "name": { "type": "string" },
-                  "is_private": { "type": "boolean" },
-                  "num_members": { "type": "integer" }
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "is_private": {
+                    "type": "boolean"
+                  },
+                  "num_members": {
+                    "type": "integer"
+                  }
                 }
               }
             },
             "response_metadata": {
               "type": "object",
               "properties": {
-                "next_cursor": { "type": "string" }
+                "next_cursor": {
+                  "type": "string"
+                }
               }
             }
           }
         },
         "pagination": {
           "strategy": "cursor",
-          "defaults": { "pageSize": 100 },
+          "defaults": {
+            "pageSize": 100
+          },
           "mode": "first-page-only"
         },
         "transportSpecific": {
           "method": "GET",
           "path": "/api/conversations.list",
           "queryParameters": [
-            { "name": "limit", "required": false },
-            { "name": "cursor", "required": false }
+            {
+              "name": "limit",
+              "required": false
+            },
+            {
+              "name": "cursor",
+              "required": false
+            }
           ],
           "x-werkflow-pagination": {
             "type": "cursor",

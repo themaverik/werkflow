@@ -7,7 +7,14 @@
     "description": "Generate text with OpenAI's Chat Completions API (GPT-4o, GPT-4, GPT-3.5-turbo). Use in workflow service tasks for classification, summarization, drafting, and extraction. Requires an OpenAI API key.",
     "version": "1.0.0",
     "category": "ai",
-    "tags": ["openai", "gpt", "ai", "llm", "nlp", "community"],
+    "tags": [
+      "openai",
+      "gpt",
+      "ai",
+      "llm",
+      "nlp",
+      "community"
+    ],
     "vendor": "OpenAI",
     "license": "Apache-2.0",
     "documentationUrl": "https://platform.openai.com/docs/api-reference/chat"
@@ -28,8 +35,7 @@
         {
           "id": "bearer",
           "displayName": "OpenAI API Key",
-          "type": "bearer",
-          "secretKey": "openai-api-key"
+          "type": "bearer"
         }
       ]
     },
@@ -41,12 +47,22 @@
         "category": "action",
         "input": {
           "type": "object",
-          "required": ["model", "systemPrompt", "userMessage"],
+          "required": [
+            "model",
+            "systemPrompt",
+            "userMessage"
+          ],
           "properties": {
             "model": {
               "type": "string",
               "description": "Model ID to use.",
-              "enum": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"],
+              "enum": [
+                "gpt-4o",
+                "gpt-4o-mini",
+                "gpt-4-turbo",
+                "gpt-4",
+                "gpt-3.5-turbo"
+              ],
               "default": "gpt-4o-mini"
             },
             "systemPrompt": {
@@ -69,7 +85,10 @@
             },
             "responseFormat": {
               "type": "string",
-              "enum": ["text", "json_object"],
+              "enum": [
+                "text",
+                "json_object"
+              ],
               "default": "text",
               "description": "Set to json_object to request a valid JSON response. The system prompt must instruct the model to output JSON when this is set."
             }
@@ -82,30 +101,59 @@
               "type": "string",
               "description": "The assistant's response text (or JSON string if responseFormat=json_object)."
             },
-            "model": { "type": "string" },
-            "promptTokens": { "type": "integer" },
-            "completionTokens": { "type": "integer" },
-            "totalTokens": { "type": "integer" },
+            "model": {
+              "type": "string"
+            },
+            "promptTokens": {
+              "type": "integer"
+            },
+            "completionTokens": {
+              "type": "integer"
+            },
+            "totalTokens": {
+              "type": "integer"
+            },
             "finishReason": {
               "type": "string",
-              "enum": ["stop", "length", "content_filter", "tool_calls"]
+              "enum": [
+                "stop",
+                "length",
+                "content_filter",
+                "tool_calls"
+              ]
             }
           }
         },
         "errors": [
           {
             "code": "AUTH_FAILED",
-            "match": { "httpStatus": 401 }
+            "match": {
+              "httpStatus": 401
+            }
           },
           {
             "code": "RATE_LIMITED",
-            "match": { "httpStatus": 429 },
-            "retry": { "enabled": true, "maxAttempts": 3, "backoff": "exponential", "initialDelaySeconds": 5.0 }
+            "match": {
+              "httpStatus": 429
+            },
+            "retry": {
+              "enabled": true,
+              "maxAttempts": 3,
+              "backoff": "exponential",
+              "initialDelaySeconds": 5.0
+            }
           },
           {
             "code": "TIMEOUT",
-            "match": { "httpStatus": 504 },
-            "retry": { "enabled": true, "maxAttempts": 2, "backoff": "linear", "initialDelaySeconds": 3.0 }
+            "match": {
+              "httpStatus": 504
+            },
+            "retry": {
+              "enabled": true,
+              "maxAttempts": 2,
+              "backoff": "linear",
+              "initialDelaySeconds": 3.0
+            }
           }
         ],
         "examples": [
@@ -134,7 +182,9 @@
             "template": "{\"model\": \"${model}\", \"messages\": [{\"role\": \"system\", \"content\": \"${systemPrompt}\"}, {\"role\": \"user\", \"content\": \"${userMessage}\"}], \"max_tokens\": ${maxTokens}, \"temperature\": ${temperature}}"
           },
           "response": {
-            "successStatusCodes": [200],
+            "successStatusCodes": [
+              200
+            ],
             "extractRoot": "$.choices[0].message"
           }
         }

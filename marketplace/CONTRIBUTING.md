@@ -77,8 +77,7 @@ Start from the template below and fill in your connector's details:
         {
           "id": "bearer",
           "displayName": "API Token",
-          "type": "bearer",
-          "secretKey": "my-service-token"
+          "type": "bearer"
         }
       ]
     },
@@ -140,7 +139,7 @@ Submit a pull request from your fork targeting the `main` branch of this reposit
 - `metadata.license` must be a valid SPDX expression (e.g. `Apache-2.0`, `MIT`)
 - `metadata.key` must be globally unique in the marketplace — check existing connectors
 - All operations must have `id`, `displayName`, and `transportSpecific`
-- Auth credentials must use `secretKey` references — never embed actual keys or passwords in the connector definition
+- `auth.profiles[].type` declares only the **supported scheme** (`none`/`basic`/`bearer`/`api-key`) — never embed keys, passwords, tokens, or secret references in the connector definition. The actual credential is bound per-tenant at registration and stored in the secret manager (OpenBao)
 
 **Strongly recommended:**
 - Include `metadata.documentationUrl` pointing to the external API reference
@@ -159,13 +158,16 @@ Submit a pull request from your fork targeting the `main` branch of this reposit
 
 ## Auth Types Reference
 
-| Type | Use case | Required fields |
-|---|---|---|
-| `none` | Public APIs or datasource-managed credentials | — |
-| `bearer` | OAuth tokens, PATs, JWT | `secretKey` |
-| `api-key` | API key in a header | `secretKey`, `config.headerName` |
-| `basic` | HTTP Basic Auth | `secretKey` (base64 encoded `user:pass`) |
-| `oauth2-client-credentials` | Machine-to-machine OAuth2 | `secretKey`, `config.tokenUrl` |
+The `type` declares the **supported scheme** only — no secret material lives in the definition. The credential VALUE is bound per-tenant at registration and stored in OpenBao under the tenant's `credentialRef`, then resolved server-side at call time.
+
+| Type | Use case | Definition declares | Credential fields (in OpenBao, per tenant) |
+|---|---|---|---|
+| `none` | Public APIs, or datasource-managed credentials (DB connectors) | — | — |
+| `basic` | HTTP Basic Auth | `type` only | `username`, `password` |
+| `bearer` | OAuth tokens, PATs, JWT | `type` only | `token` |
+| `api-key` | API key in a header | `type`, `config.headerName` | `headerName`, `headerValue` |
+
+> Removed 2026-05-25: `secret-ref` and `oauth2-client-credentials` (never functional) and `mtls` (unbuilt — needs a per-tenant client keystore). They are no longer valid `type` values.
 
 ---
 

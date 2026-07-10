@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://werkflow.io/schemas/connector/v1/connector-definition.schema.json",
+  "$id": "urn:werkflow:schemas:connector:v1",
   "title": "Werkflow ConnectorDefinition",
   "description": "Universal, transport-agnostic envelope for all Werkflow connectors. The `spec.transport.type` discriminator selects the adapter (rest, database, graphql, webhook, mcp, messaging, ...). Each adapter provides its own subschema for `spec.transport.config` and `spec.operations[].transportSpecific`. This envelope is stable across transports — it is what the BPMN designer reads to build operation pickers, schema-driven dropdowns, and validation.",
   "type": "object",
@@ -9,7 +9,7 @@
   "properties": {
     "apiVersion": {
       "type": "string",
-      "const": "werkflow.io/connector/v1",
+      "const": "werkflow/connector/v1",
       "description": "Schema version. Bumped on breaking changes to this envelope."
     },
     "kind": {

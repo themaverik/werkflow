@@ -25,7 +25,7 @@ The Werkflow Marketplace is the official catalog of connector definitions for th
 
 ## How Connectors Work
 
-A connector definition is a `connector.json` file that follows the `ConnectorDefinition` envelope schema (`apiVersion: werkflow.io/connector/v1`). The file describes:
+A connector definition is a `connector.json` file that follows the `ConnectorDefinition` envelope schema (`apiVersion: werkflow/connector/v1`). The file describes:
 
 - **Transport** — how to reach the external system (REST, database, GraphQL, ...)
 - **Auth** — which auth profiles are supported (API key, bearer token, OAuth2, ...)
@@ -57,7 +57,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for a step-by-step guide to submitting a 
 
 ## Schema
 
-The canonical schema is at [`marketplace/schema/connector-definition.schema.json`](schema/connector-definition.schema.json). It is JSON Schema 2020-12 and is kept in sync with the platform's runtime validator.
+The schema is at [`marketplace/schema/connector-definition.schema.json`](schema/connector-definition.schema.json) — JSON Schema 2020-12. It is **generated** and kept in sync with the platform's runtime validator (see [`schema/README.md`](schema/README.md)); do not edit it here — propose changes via issue/PR.
 
 ---
 

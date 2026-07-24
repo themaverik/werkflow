@@ -23,19 +23,18 @@ docker-compose -f docker-compose.dev.yml up -d
 # Verify
 docker-compose -f docker-compose.dev.yml ps
 
-# Run HR service locally
-cd ../../services/hr
+# Run a backend service locally (engine or admin)
+cd ../../services/engine
 mvn spring-boot:run
 
-# Run admin-portal locally
-cd ../../frontends/admin-portal
+# Run the portal locally
+cd ../../frontends/portal
 npm run dev
 ```
 
 **Access:**
 - PostgreSQL: localhost:5433
 - Keycloak: http://localhost:8090
-- pgAdmin: http://localhost:5050
 
 ### Full Docker Mode
 
@@ -50,16 +49,18 @@ docker-compose up -d --build
 docker-compose ps
 
 # View logs
-docker-compose logs -f hr-service
-docker-compose logs -f admin-portal
+docker-compose logs -f engine-service
+docker-compose logs -f admin-service
+docker-compose logs -f portal
 ```
 
 **Access:**
-- HR Service: http://localhost:8082
-- Admin Portal: http://localhost:4000
-- PostgreSQL: localhost:5433
+- Engine: http://localhost:8081
+- Admin: http://localhost:8083
+- Portal: http://localhost:4000
 - Keycloak: http://localhost:8090
-- pgAdmin: http://localhost:5050
+- Mailpit (email sandbox): http://localhost:8025
+- PostgreSQL: localhost:5433
 
 ## Services
 
@@ -69,22 +70,20 @@ docker-compose logs -f admin-portal
 |---------|------|----------------|-------------|
 | PostgreSQL | 5433 | werkflow-postgres | Main database |
 | Keycloak | 8090 | werkflow-keycloak | OAuth2/JWT auth |
-| pgAdmin | 5050 | werkflow-pgadmin | DB management UI |
+| Mailpit | 8025 | werkflow-mailpit | Email sandbox (dev only) |
 
 ### Backend Services
 
-| Service | Port | Container Name | Status | Phase |
-|---------|------|----------------|--------|-------|
-| Engine | 8081 | werkflow-engine | TODO | Phase 1 |
-| HR | 8082 | werkflow-hr | ✅ Ready | Current |
-| Admin | 8083 | werkflow-admin | TODO | Phase 1 |
+| Service | Port | Container Name | Status |
+|---------|------|----------------|--------|
+| Engine | 8081 | werkflow-engine | Ready |
+| Admin | 8083 | werkflow-admin | Ready |
 
 ### Frontend Services
 
-| Service | Port | Container Name | Status | Phase |
-|---------|------|----------------|--------|-------|
-| Admin Portal | 4000 | werkflow-admin-portal | ✅ Ready | Current |
-| HR Portal | 4001 | werkflow-hr-portal | TODO | Phase 2 |
+| Service | Port | Container Name | Status |
+|---------|------|----------------|--------|
+| Portal | 4000 | werkflow-portal | Ready |
 
 ## Database Schemas
 
@@ -107,12 +106,11 @@ Create these files from examples:
 ```bash
 # Backend services
 cp ../../config/env/.env.shared.example ../../config/env/.env.shared
-cp ../../config/env/.env.hr.example ../../config/env/.env.hr
 cp ../../config/env/.env.engine.example ../../config/env/.env.engine
 cp ../../config/env/.env.admin.example ../../config/env/.env.admin
 
-# Frontend services
-cp ../../frontends/admin-portal/.env.local.example ../../frontends/admin-portal/.env.local
+# Frontend (unified portal)
+cp ../../frontends/portal/.env.local.example ../../frontends/portal/.env.local
 ```
 
 ### Key Variables
@@ -157,14 +155,14 @@ docker-compose up -d --build
 docker-compose down
 
 # Rebuild specific service
-docker-compose build hr-service
-docker-compose up -d hr-service
+docker-compose build engine-service
+docker-compose up -d engine-service
 
 # View logs for specific service
-docker-compose logs -f hr-service
+docker-compose logs -f engine-service
 
 # Access service shell
-docker-compose exec hr-service sh
+docker-compose exec engine-service sh
 
 # Reset everything (including volumes)
 docker-compose down -v
@@ -194,7 +192,7 @@ docker-compose ps
 
 # View health check logs
 docker inspect --format='{{json .State.Health}}' werkflow-postgres
-docker inspect --format='{{json .State.Health}}' werkflow-hr
+docker inspect --format='{{json .State.Health}}' werkflow-engine
 ```
 
 ## Volumes
@@ -202,14 +200,13 @@ docker inspect --format='{{json .State.Health}}' werkflow-hr
 ### Development Mode
 - `postgres_data_dev` - PostgreSQL data
 - `keycloak_postgres_data_dev` - Keycloak database
-- `pgadmin_data_dev` - pgAdmin settings
 
 ### Full Docker Mode
 - `postgres_data` - PostgreSQL data
 - `keycloak_postgres_data` - Keycloak database
-- `pgadmin_data` - pgAdmin settings
-- `hr_documents` - HR document uploads
-- `hr_logs` - HR service logs
+- `engine_data` - Engine BPMN process-definition storage
+- `engine_logs` - Engine service logs
+- `admin_logs` - Admin service logs
 
 ## Network
 
@@ -217,7 +214,7 @@ All services communicate via `werkflow-network` bridge network.
 
 **Internal DNS:**
 - Services resolve by container name
-- Example: HR service connects to `postgres:5432` internally
+- Example: the engine connects to `postgres:5432` internally
 
 **External Access:**
 - Services exposed via port mapping
@@ -242,10 +239,10 @@ docker-compose exec postgres psql -U werkflow_admin -d werkflow -c "SELECT 1;"
 
 ```bash
 # Check build logs
-docker-compose build hr-service
+docker-compose build engine-service
 
 # Check runtime logs
-docker-compose logs hr-service
+docker-compose logs engine-service
 
 # Check environment variables
 docker-compose config

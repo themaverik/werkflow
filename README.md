@@ -153,7 +153,7 @@ Three levels of testing are available and none substitutes for the others:
 - **Wiring test.** Does the process actually supply what the operation needs? Static,
   no network.
 
-See the [Connector Guide](./docs/CONNECTOR-GUIDE.md) to build one, and the
+See the [Connector Guide](./docs/Connector-Guide.md) to build one, and the
 [Marketplace](./marketplace/README.md) for seed connectors and the contribution path.
 
 ### Reference integrations
@@ -167,7 +167,7 @@ the only thing between them. Neither system knows anything about the other's
 internals. ERPNext is GPL-3.0; the connector calls its HTTP API and links nothing, so
 it remains Apache 2.0. -->
 
-**[werkflow-erp-sandbox](https://github.com/themaverik/werkflow-erp)** is a first-party
+**[werkflow-erp-sandbox](https://github.com/themaverik/werkflow-erp-sandbox)** is a first-party
 fake ERP with a real API, used as a deterministic fixture for connector conformance
 tests. It is a test target, not an ERP.
 
@@ -202,8 +202,8 @@ your processes remain portable.
 
 ## Documentation
 
-- [Quick Start](./docs/QUICKSTART.md)
-- [Connector Guide](./docs/CONNECTOR-GUIDE.md)
+- [Quick Start](./docs/Quick-Start.md)
+- [Connector Guide](./docs/Connector-Guide.md)
 - [Connector Marketplace](./marketplace/README.md), including the contribution guide
 - [Deployment Configuration](./docs/Deployment-Configuration-Guide.md)
 - [Keycloak Setup](./docs/Keycloak-Implementation-Guide.md)

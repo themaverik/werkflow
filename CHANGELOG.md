@@ -21,7 +21,11 @@ Format: `[Unreleased]` for in-progress work. Releases follow [Semantic Versionin
 
 ### S20 — Business Service Decoupling
 - Removed business-service from platform Dockerfile and docker-compose.yml
-- Created `docker-compose.business.yml` overlay for optional business module deployment
+- Left `services/business/` in the tree, excluded from the build
+  > **Correction.** This entry previously said a `docker-compose.business.yml` overlay was
+  > created for optional deployment. No such file exists, here or upstream, and no commit in
+  > either repository ever added one. There is no supported way to run the business module;
+  > it is scheduled for removal.
 
 ### S19 — Business-Agnostic Delegate Layer
 - Replaced all domain-specific Java delegates with a single `ExternalApiCallDelegate`

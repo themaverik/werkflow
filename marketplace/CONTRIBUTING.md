@@ -17,7 +17,7 @@ The schema is versioned at `marketplace/schema/connector-definition.schema.json`
 ```
 marketplace/
   connectors/
-    werkflow-erp/          ← official connectors (core team only)
+    erp-sandbox/           ← sandbox/demo fixture, not a production ERP
       connector.json
     community/             ← community contributions
       your-connector/
@@ -185,4 +185,4 @@ The `type` declares the **supported scheme** only — no secret material lives i
 
 ## Getting Help
 
-Open a [GitHub Discussion](https://github.com/werkflow-platform/werkflow-public/discussions) if you have questions about the connector format or need guidance on authoring a specific integration.
+Open a [GitHub Issue](https://github.com/themaverik/werkflow/issues) if you have questions about the connector format or need guidance on authoring a specific integration.

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Werkflow is an enterprise workflow automation platform built on Flowable BPMN. It uses a centralized engine for workflow orchestration, an admin service for connector and configuration management, and a unified portal frontend. External business data (HR, finance, procurement, inventory) is served by an independent ERP backing service (werkflow-erp) that is accessed through the connector abstraction — never via direct in-platform clients.
+Werkflow is an enterprise workflow automation platform built on Flowable BPMN. It uses a centralized engine for workflow orchestration, an admin service for connector and configuration management, and a unified portal frontend. External business data (HR, finance, procurement, inventory) stays in your existing systems of record and is reached through the connector abstraction — never via direct in-platform clients. Werkflow does not own a business data layer of its own.
 
 ---
 
@@ -15,7 +15,7 @@ Werkflow is an enterprise workflow automation platform built on Flowable BPMN. I
 | Portal | 4000 | Unified Next.js frontend — BPMN designer, form builder, task inbox, admin UI |
 | Keycloak | 8090 | OAuth2/OIDC identity provider |
 | PostgreSQL | 5432 | Shared database (engine + admin schemas) |
-| ERP (external) | — | werkflow-erp: business domain data (HR, finance, procurement, inventory); accessed via registered connector, never via a direct in-platform client |
+| ERP (external) | — | Your system of record for business domain data (HR, finance, procurement, inventory); accessed via a registered connector, never via a direct in-platform client |
 
 ### Architecture Diagram
 
@@ -41,7 +41,7 @@ Werkflow is an enterprise workflow automation platform built on Flowable BPMN. I
                          v
               +----------+----------+
               |   External ERP      |
-              |  (werkflow-erp)     |
+              |  (system of record) |
               |  + other APIs       |
               +---------------------+
 
@@ -67,13 +67,15 @@ Additionally, processes can be deployed at runtime via the Portal's Process Desi
 
 | Category | Examples | Integration Path |
 |----------|----------|-----------------|
-| HR | Leave Approval, Onboarding, Performance Review | connector → werkflow-erp |
-| Finance | CapEx Approval, Budget Check | connector → werkflow-erp |
-| Procurement | Purchase Requisition | connector → werkflow-erp |
-| Inventory | Stock Requisition | connector → werkflow-erp |
-| Cross-Domain | Asset Transfer (HR + Inventory) | connector → werkflow-erp |
+| HR | Leave Approval, Onboarding, Performance Review | connector → system of record |
+| Finance | CapEx Approval, Budget Check | connector → system of record |
+| Procurement | Purchase Requisition | connector → system of record |
+| Inventory | Stock Requisition | connector → system of record |
+| Cross-Domain | Asset Transfer (HR + Inventory) | connector → system of record |
 
 External data access routes through the connector abstraction. The engine calls registered connectors via `${externalApiCallDelegate}` (ADR-023); the admin service reads ERP design-time metadata (department lists, custody mappings) via `ErpMetadataReader` on the same connector path. No direct ERP clients exist in the platform services.
+
+The examples and tests in this repository run against a sandbox ERP service. It is a stand-in system of record for exercising connectors — provided for demonstration and testing, not a production ERP, and not a component the platform ships.
 
 ---
 
@@ -183,7 +185,7 @@ werkflow_db
   +-- admin schema (connector registry, credential refs, route config, permissions)
 ```
 
-Process definitions are visible to the Flowable engine regardless of which service deployed them. Business domain data (HR records, finance entries, procurement orders, inventory) lives in werkflow-erp's own database, which the platform reaches only through registered connectors.
+Process definitions are visible to the Flowable engine regardless of which service deployed them. Business domain data (HR records, finance entries, procurement orders, inventory) lives in that external system's own database, which the platform reaches only through registered connectors.
 
 ---
 
@@ -227,7 +229,7 @@ All route groups share the same app-shell layout (sidebar + header).
 - **Admin**: Stateless configuration service; scale horizontally
 - **Database**: Read replicas for query scaling; connection pooling via HikariCP
 - **Portal**: Static export + CDN, or multiple Next.js instances behind LB
-- **ERP (external)**: werkflow-erp scales independently of the platform; the connector abstraction decouples its availability from engine uptime
+- **ERP (external)**: the system of record scales independently of the platform; the connector abstraction decouples its availability from engine uptime
 
 ---
 
@@ -237,5 +239,4 @@ All route groups share the same app-shell layout (sidebar + header).
 - ADR-019: Service Adapter Layer for Connector Operations (werkflow-platform `docs/adr/`)
 - ADR-023: All External Access via Connector Abstraction (werkflow-platform `docs/adr/`)
 - ADR-024: Connector-Mode Credentials Resolved Server-Side (werkflow-platform `docs/adr/`)
-- [API Path Structure](../API-Path-Structure.md)
 - [Deployment Configuration Guide](../Deployment-Configuration-Guide.md)

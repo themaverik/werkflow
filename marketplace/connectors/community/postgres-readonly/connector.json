@@ -1,5 +1,5 @@
 {
-  "apiVersion": "werkflow.io/connector/v1",
+  "apiVersion": "werkflow/connector/v1",
   "kind": "ConnectorDefinition",
   "metadata": {
     "key": "postgres-readonly",
@@ -10,7 +10,7 @@
     "tags": ["postgresql", "database", "sql", "read-only", "community"],
     "vendor": "Community",
     "license": "Apache-2.0",
-    "documentationUrl": "https://github.com/werkflow-platform/werkflow-public/tree/main/marketplace/connectors/community/postgres-readonly"
+    "documentationUrl": "https://github.com/themaverik/werkflow/tree/main/marketplace/connectors/community/postgres-readonly"
   },
   "spec": {
     "transport": {

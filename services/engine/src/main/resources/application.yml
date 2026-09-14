@@ -232,8 +232,9 @@ admin:
   url: ${APP_URL:http://localhost:3000}
 
 werkflow:
-  # Set to true to load business-module components (AssetRequestGuard, etc.)
-  # Leave false for open-source deployments without the business module.
+  # Set to true to load AssetRequestGuard, which authorizes asset-request approvals
+  # by calling out to an external system of record (e.g. an ERP/inventory service)
+  # for approval context. Leave false if no such external system is configured.
   business:
     enabled: ${WERKFLOW_BUSINESS_ENABLED:false}
 

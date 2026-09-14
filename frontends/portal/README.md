@@ -214,7 +214,7 @@ const { data, isLoading, error } = useQuery({
 
 ## 🛣️ Roadmap
 
-See [ROADMAP.md](../ROADMAP.md) for detailed implementation plan.
+See [ROADMAP.md](../../ROADMAP.md) for detailed implementation plan.
 
 ### Phase 1: Foundation ✅ (Current)
 - [x] Next.js 14 setup with TypeScript

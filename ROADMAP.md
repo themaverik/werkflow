@@ -50,7 +50,7 @@ S27 — Community Launch
 - Added JWT propagation and finance workflow endpoints
 
 ### S3 — Service Consolidation
-- Merged HR, Finance, Procurement, Inventory into single `business-service` (port 8084)
+- Merged HR, Finance, Procurement, Inventory into single `business-service` (port 8084) — decoupled from the build in S20 and later removed from this repository
 - Consolidated two portals into one Next.js app
 
 ### S4 — Frontend Completion
@@ -189,7 +189,7 @@ Internal Demo Edition — first sprint of the enterprise capability phase.
 - `NextIntlClientProvider` in root layout; `createNextIntlPlugin` in `next.config.mjs`
 - All portal pages and components instrumented: sidebar, user menu, dashboard, tasks, requests, processes, forms, services, all admin pages, BPMN designer, expression builder, service task panel, form builder/viewer, login page, confirm dialog, error display, coming-soon page
 - Disabled language switcher stub added to header with `TODO(i18n)` comment
-- `docs/TRANSLATION-GUIDE.md` — step-by-step guide for adding a new language
+- `docs/Translation-Guide.md` — step-by-step guide for adding a new language
 - `CONTRIBUTING.md` — created with Contributing Translations section
 
 ### S22 — Engine Isolation, Permissions & Portal Cleanup

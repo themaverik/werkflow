@@ -44,4 +44,4 @@ Out of scope:
 - Rotate all secrets in `.env.*.example` files before production use
 - Never expose the Flowable engine REST API (`8081`) or admin service (`8083`) publicly
 - Run Keycloak behind a reverse proxy with TLS
-- Enable `WERKFLOW_BUSINESS_ENABLED=false` unless you are deploying the optional business module
+- Keep `WERKFLOW_BUSINESS_ENABLED=false` unless you have an external ERP/inventory system of record configured for `AssetRequestGuard` approval checks

@@ -1,6 +1,6 @@
 # Contributing Connectors to the Werkflow Marketplace
 
-The Werkflow Marketplace is the community-maintained catalog of connector definitions that extend Werkflow's integration surface. Anyone can contribute a connector by submitting a pull request.
+The Werkflow Marketplace is the connector catalog for the Werkflow platform. The Werkflow project maintains the catalog and reviews every submission. Anyone can contribute a connector by opening a pull request.
 
 ---
 
@@ -52,7 +52,7 @@ Start from the template below and fill in your connector's details:
 
 ```json
 {
-  "apiVersion": "werkflow.io/connector/v1",
+  "apiVersion": "werkflow/connector/v1",
   "kind": "ConnectorDefinition",
   "metadata": {
     "key": "my-connector",

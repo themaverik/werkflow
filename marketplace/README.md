@@ -1,6 +1,6 @@
 # Werkflow Marketplace
 
-The Werkflow Marketplace is the official catalog of connector definitions for the Werkflow platform. Connectors describe how Werkflow workflows connect to external systems — REST APIs, databases, messaging systems, and more.
+The Werkflow Marketplace is the connector catalog for the Werkflow platform. The Werkflow project maintains the catalog and reviews every submission. The connectors in it come from both the project and the community, and each one declares its own maintainer and license. Connectors describe how Werkflow workflows connect to external systems — REST APIs, databases, messaging systems, and more.
 
 ---
 

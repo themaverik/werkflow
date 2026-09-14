@@ -68,14 +68,12 @@ time, through an SSRF guard.
 Business domain data belongs to your systems of record, reached through registered connectors.
 The deployed platform holds process state and nothing else.
 
-The repository still contains `services/business/` — an HR, finance, inventory and procurement
-module with its own Flyway migrations. It is **not** built into the Docker image, **not** present in
-`docker-compose.yml` and **not** built by CI. It was decoupled in S20, has not changed since, and
-there is no supported way to run it.
+This repository once carried `services/business/` — an HR, finance, inventory and procurement
+module. It was decoupled from the build in S20 and removed outright afterwards, because shipping an
+ERP under `services/` contradicted the rule above.
 
-**It is scheduled for removal.** The module was superseded by the sandbox ERP, which carries the
-same four domains with an identical entity set plus tenant scoping, API keys, identity and custody
-mappings on top. Nothing in the platform depends on it. Do not build on it.
+Its four domains live on in the sandbox ERP, which carries the same entity set plus tenant scoping,
+API keys, identity and custody mappings on top. Nothing in the platform depended on it.
 
 The same applies to the sandbox ERP used by the examples and tests: a stand-in system of record for
 demonstration and testing, not a production ERP.

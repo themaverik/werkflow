@@ -17,7 +17,7 @@ The schema is versioned at `marketplace/schema/connector-definition.schema.json`
 ```
 marketplace/
   connectors/
-    sandbox-erp/           ← sandbox/demo fixture, not a production ERP
+    erp-sandbox/           ← sandbox/demo fixture, not a production ERP
       connector.json
     community/             ← community contributions
       your-connector/

@@ -90,7 +90,7 @@ All services start together. The portal is available at http://localhost:4000.
 | `KEYCLOAK_ISSUER` | — | Keycloak realm URL |
 | `ADMIN_SERVICE_URL` | `http://localhost:8083` | Admin service base URL |
 | `SMTP_HOST` | `mailpit` | SMTP server (Mailpit in dev) |
-| `WERKFLOW_BUSINESS_ENABLED` | `false` | Enable business module integration |
+| `WERKFLOW_BUSINESS_ENABLED` | `false` | Enable `AssetRequestGuard`, which authorizes asset-request approvals via an external ERP/inventory system of record |
 | `WERKFLOW_DEPLOY_EXAMPLES` | `false` | Auto-deploy example BPMN processes on startup |
 
 ### Admin (`config/env/.env.admin`)

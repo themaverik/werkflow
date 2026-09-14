@@ -49,4 +49,4 @@ Out of scope:
 - Tenant isolation is enforced at the Flowable engine query layer (`tenantId` scoping)
 - SSRF is mitigated via `SsrfGuard` on all outbound connector calls
 - Secrets in BPMN expressions are resolved via `SecretsResolver` and never logged
-- Business-specific guards (`AssetRequestGuard`, `HubManagerGuard`) are disabled by default and require explicit opt-in via `werkflow.business.enabled=true`
+- `AssetRequestGuard` and `HubManagerGuard` authorize domain-specific actions; `AssetRequestGuard` is disabled by default and requires explicit opt-in via `werkflow.business.enabled=true`, which calls an external system of record (e.g. an ERP/inventory service) for approval context

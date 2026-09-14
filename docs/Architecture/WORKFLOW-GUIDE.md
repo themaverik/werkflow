@@ -399,9 +399,11 @@ This section explains how to add new workflows to the Werkflow platform with **m
 The Werkflow platform follows a **connector-first integration architecture** where:
 
 1. **Workflows are orchestrated by the Engine Service** using BPMN processes
-2. **External data comes from an independent ERP backing service** (werkflow-erp) and other registered external systems — accessed through the connector abstraction, never via bespoke in-platform service clients
+2. **External data comes from your existing systems of record** — ERP, HRIS, finance and other registered external systems — accessed through the connector abstraction, never via bespoke in-platform service clients
 3. **All external integration flows through the connector framework** — registered connectors supply base URLs and credentials; the engine resolves transport and auth server-side at runtime (ADR-023, ADR-024)
 4. **No code changes required** to add new workflows — processes are authored in the BPMN designer, forms in the Form Builder, and deployed at runtime
+
+The examples in this guide call a sandbox ERP service — a stand-in system of record for exercising connectors, provided for demonstration and testing rather than production use. Point the same connectors at your own ERP and nothing in the process definitions changes.
 
 **Key Benefits:**
 - 90%+ no-code workflow creation
@@ -723,7 +725,7 @@ Let's look at how Phase 3 workflows were implemented:
    { id: 'capex', label: 'CapEx' }
    ```
 
-**ERP Changes:** **ZERO** — werkflow-erp is not modified; the capex workflow calls it via a registered connector
+**ERP Changes:** **ZERO** — the ERP is not modified; the capex workflow calls it via a registered connector
 
 **Total Code Changes:**
 - 1 BPMN XML file (configuration)
@@ -746,7 +748,7 @@ Let's look at how Phase 3 workflows were implemented:
    'asset-transfer-request': { /* form definition */ }
    ```
 
-**ERP Changes:** **ZERO** — werkflow-erp is not modified; asset transfer calls it via a registered connector
+**ERP Changes:** **ZERO** — the ERP is not modified; asset transfer calls it via a registered connector
 
 **Delegates Used:** `${externalApiCallDelegate}` (connector operation), `${notificationDelegate}` (notifications)
 
@@ -758,7 +760,7 @@ Let's look at how Phase 3 workflows were implemented:
 
 #### Pattern 1: Connector Operation (Recommended for all external calls)
 
-Use for REST calls to werkflow-erp or any third-party API. Author in the BPMN designer by setting the Action Block to `CONNECTOR_OPERATION`. The designer writes `${externalApiCallDelegate}` and the `connector` field; the engine resolves base URL and credentials from the connector registry at runtime.
+Use for REST calls to an ERP or any third-party API. Author in the BPMN designer by setting the Action Block to `CONNECTOR_OPERATION`. The designer writes `${externalApiCallDelegate}` and the `connector` field; the engine resolves base URL and credentials from the connector registry at runtime.
 
 ```xml
 <serviceTask id="callErpApi" name="Fetch Approval Data"

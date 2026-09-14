@@ -21,12 +21,11 @@
    - [Layer 7 — Startup BPMN Validator](#layer-7--startup-bpmn-validator)
 5. [Resolution Examples](#resolution-examples)
 6. [BPMN Migration Mapping](#bpmn-migration-mapping)
-7. [Developer Guide: Adding a New Role with Approval Authority](#developer-guide-adding-a-new-role-with-approval-authority)
-8. [Developer Guide: Adding a New Department](#developer-guide-adding-a-new-department)
-9. [What is Removed](#what-is-removed)
-10. [Coupling Analysis](#coupling-analysis)
-11. [Consequences](#consequences)
-12. [Implementation Checklist](#implementation-checklist)
+7. [Applying the Model](#applying-the-model)
+8. [What is Removed](#what-is-removed)
+9. [Coupling Analysis](#coupling-analysis)
+10. [Consequences](#consequences)
+11. [Implementation Checklist](#implementation-checklist)
 
 ---
 
@@ -280,40 +279,12 @@ The following table records the mapping from legacy hardcoded group identifiers 
 
 ---
 
-## Developer Guide: Adding a New Role with Approval Authority
+## Applying the Model
 
-Follow these steps when a new Keycloak role needs to carry workflow approval authority.
+Two task guides cover the routine extensions to this model:
 
-1. **Define the role in Keycloak.** Add the role to `werkflow-realm.json` with a description that records its intended authority level and approval scope.
-
-2. **Determine the DOA level.** Based on the approval limits the role should carry, identify which `DOA_LN` level it corresponds to. Consult the `doa_threshold` table for the relevant tenant to understand what amounts each level covers.
-
-3. **Add the mapping to application.yml.** Under `app.flowable.role-mappings`, add an entry for the new role name. Include all DOA levels up to and including the level the role carries, preserving the inheritance pattern.
-
-   Example for a new `doa_approver_level2_alt` role that maps to L2 authority:
-   ```yaml
-   doa_approver_level2_alt: [DOA_L1, DOA_L2]
-   ```
-
-4. **Assign the role and `doa_level` attribute to users in Keycloak.** The `doa_level` attribute is used for display and reporting; the role is what drives group resolution.
-
-5. **Configure amount thresholds for the tenant.** If the new role introduces a new DOA level, insert the corresponding threshold row(s) via the admin UI. If it maps to an existing level, no threshold change is needed.
-
-6. **No BPMN changes required.** Any task that specifies `candidateGroups="DOA_L2"` will automatically become visible to users carrying this new role. Routing is driven by group membership, not by role name.
-
----
-
-## Developer Guide: Adding a New Department
-
-Follow these steps when a new organisational department needs to participate in workflow routing.
-
-1. **Provision users in Keycloak.** Set the `department` attribute on user accounts (or their Keycloak group) to the department code string (e.g. `Legal`).
-
-2. **Set `custodianDeptCode` on domain records.** When creating `InventoryCategory` or other records that drive department-scoped task routing, set `custodianDeptCode` to the same department code string.
-
-3. **Done.** No code changes, no configuration changes, no BPMN changes are required. The department code flows through `FlowableGroupResolver` automatically and matches the process variable set at process start.
-
-The only action required is ensuring the department code string is consistent between Keycloak user attributes and domain record fields. These values should originate from the same source (e.g. an HR system or a department reference table) to prevent drift.
+- [Add a Role with Approval Authority](../how-to/Add-Approval-Authority-Role.md)
+- [Add a Department to Workflow Routing](../how-to/Add-Workflow-Routing-Department.md)
 
 ---
 

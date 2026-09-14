@@ -54,7 +54,7 @@ Navigate to the `werkflow-platform` realm and verify:
 
 #### Option A: Manually via Admin Console
 
-Follow the steps in `/docs/Security/Keycloak-Operations-Guide.md` under "Adding a New Employee".
+Follow the steps in `/docs/how-to/Keycloak-Implementation-Guide.md` under "Operations Quick Reference -> Adding New User".
 
 #### Option B: Using Sample Users File
 
@@ -345,7 +345,7 @@ Update in Keycloak Admin Console:
 
 ### Backend (Spring Boot)
 
-See `/docs/Security/Keycloak-Implementation-Guide.md` for:
+See `/docs/how-to/Keycloak-Implementation-Guide.md` for:
 - Spring Security configuration
 - JWT token validation
 - Role extraction and authorization
@@ -353,17 +353,17 @@ See `/docs/Security/Keycloak-Implementation-Guide.md` for:
 
 ### Frontend (Next.js)
 
-See `/docs/Security/Keycloak-Implementation-Guide.md` for:
+See `/docs/how-to/Keycloak-Implementation-Guide.md` for:
 - NextAuth.js configuration
 - Client-side role checks
 - Protected routes and components
 
 ## References
 
-- Keycloak RBAC Design: `/docs/Security/Keycloak-RBAC-Design.md`
-- Operations Guide: `/docs/Security/Keycloak-Operations-Guide.md`
-- Implementation Guide: `/docs/Security/Keycloak-Implementation-Guide.md`
-- Database Schema: `/services/engine/src/main/resources/db/migration/V3__create_rbac_tables.sql`
+- Authentication Flow: `/docs/explanation/Keycloak-Authentication-Flow.md`
+- Implementation Guide: `/docs/how-to/Keycloak-Implementation-Guide.md`
+- Realm Setup: `REALM_SETUP.md`
+- Database Schema: `/services/engine/src/main/resources/db/migration/V1__baseline.sql`
 
 ## Support
 

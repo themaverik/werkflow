@@ -4,7 +4,7 @@ Build and complete your first approval workflow in about 30 minutes using the Ge
 
 ## Prerequisites
 
-- Werkflow running locally. See [QUICKSTART.md](QUICKSTART.md) if you haven't started it yet.
+- Werkflow running locally. See [Quick-Start.md](Quick-Start.md) if you haven't started it yet.
 - Three browser tabs or incognito windows — you will log in as three different users.
 
 ## Sample Users

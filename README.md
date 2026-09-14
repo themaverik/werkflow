@@ -153,7 +153,7 @@ Three levels of testing are available and none substitutes for the others:
 - **Wiring test.** Does the process actually supply what the operation needs? Static,
   no network.
 
-See the [Connector Guide](./docs/CONNECTOR-GUIDE.md) to build one, and the
+See the [Connector Guide](./docs/Connector-Guide.md) to build one, and the
 [Marketplace](./marketplace/README.md) for seed connectors and the contribution path.
 
 ### Reference integrations
@@ -202,8 +202,8 @@ your processes remain portable.
 
 ## Documentation
 
-- [Quick Start](./docs/QUICKSTART.md)
-- [Connector Guide](./docs/CONNECTOR-GUIDE.md)
+- [Quick Start](./docs/Quick-Start.md)
+- [Connector Guide](./docs/Connector-Guide.md)
 - [Connector Marketplace](./marketplace/README.md), including the contribution guide
 - [Deployment Configuration](./docs/Deployment-Configuration-Guide.md)
 - [Keycloak Setup](./docs/Keycloak-Implementation-Guide.md)

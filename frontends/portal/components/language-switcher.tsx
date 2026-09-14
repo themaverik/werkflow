@@ -9,7 +9,7 @@ import { Globe } from 'lucide-react'
  * To add a new language:
  * 1. Copy `messages/en.json` and translate all values
  * 2. Add the locale to `next.config.mjs` and `i18n/request.ts`
- * 3. Replace this stub with a locale selector (see docs/TRANSLATION-GUIDE.md)
+ * 3. Replace this stub with a locale selector (see docs/Translation-Guide.md)
  */
 export function LanguageSwitcher() {
   return (

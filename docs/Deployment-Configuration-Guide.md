@@ -168,6 +168,6 @@ In development, all emails are captured by Mailpit (http://localhost:8025). For 
 
 ## Related Documentation
 
-- [Quick Start](QUICKSTART.md)
-- [Connector Guide](CONNECTOR-GUIDE.md)
+- [Quick Start](Quick-Start.md)
+- [Connector Guide](Connector-Guide.md)
 - [Keycloak Implementation Guide](Keycloak-Implementation-Guide.md)

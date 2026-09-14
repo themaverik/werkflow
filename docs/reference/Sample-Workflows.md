@@ -126,4 +126,4 @@ HR: Submit Onboarding
 4. Click **Save** to store as a draft, then **Deploy** to make the process available to users.
 5. Register any external APIs needed in **Admin > Connectors** before wiring service tasks.
 
-See [Connector-Guide.md](Connector-Guide.md) for wiring external APIs into service tasks.
+See [Connector-Guide.md](../how-to/Connector-Guide.md) for wiring external APIs into service tasks.

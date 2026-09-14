@@ -612,7 +612,7 @@ public Keycloak keycloak() {
 ## Related Documentation
 
 - **Authentication 404 Fix:** `/docs/Troubleshooting/Authentication-404-Callback-Fix.md`
-- **RBAC Implementation:** `/docs/Keycloak-Implementation-Guide.md`
+- **RBAC Implementation:** `/docs/how-to/Keycloak-Implementation-Guide.md`
 - **Docker Configuration:** `/docs/OAuth2-Docker-Configuration.md`
 
 ---

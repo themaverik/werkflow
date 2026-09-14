@@ -106,6 +106,6 @@ Submit a second request with a high amount to trigger the Director approval step
 
 ## Next Steps
 
-- Try the **Document Review** and **Onboarding Checklist** sample workflows — see [Sample-Workflows.md](Sample-Workflows.md) for what each demonstrates.
+- Try the **Document Review** and **Onboarding Checklist** sample workflows — see [Sample-Workflows.md](../reference/Sample-Workflows.md) for what each demonstrates.
 - Build your own workflow: click **New Process** in the BPMN Designer, drag shapes from the palette, and deploy.
 - Register an external API connector in **Admin > Connectors** and wire it to a service task.

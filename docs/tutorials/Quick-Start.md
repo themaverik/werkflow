@@ -110,9 +110,9 @@ Default credentials (set in Keycloak):
 
 | Topic | Where to go |
 |---|---|
-| Build a connector to an external API | [Connector Guide](Connector-Guide.md) |
-| Configure for staging or production | [Deployment Configuration](Deployment-Configuration-Guide.md) |
-| Keycloak realm setup details | [Keycloak Implementation Guide](Keycloak-Implementation-Guide.md) |
+| Build a connector to an external API | [Connector Guide](../how-to/Connector-Guide.md) |
+| Configure for staging or production | [Deployment Configuration](../how-to/Deployment-Configuration-Guide.md) |
+| Keycloak realm setup details | [Keycloak Implementation Guide](../how-to/Keycloak-Implementation-Guide.md) |
 
 ---
 

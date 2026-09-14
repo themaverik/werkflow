@@ -1,4 +1,4 @@
-# ADR: Flowable Candidate Group Resolution via DOA Levels and Department Passthrough
+# Flowable Candidate Group Resolution via DOA Levels and Department Passthrough
 
 **Date:** 2026-03-13
 **Status:** Accepted

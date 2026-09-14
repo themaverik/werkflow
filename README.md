@@ -127,7 +127,7 @@ table, and the process reference each other.
 > **Development sandbox only.** These values ship in `.env.example` so that a
 > clone starts on the first try. They are public, they are not secrets, and they
 > must be replaced before any deployment reachable by anyone other than you. See
-> [Deployment Configuration](./docs/Deployment-Configuration-Guide.md) for
+> [Deployment Configuration](./docs/how-to/Deployment-Configuration-Guide.md) for
 > generating real credentials.
 
 | Service        | URL                   | Username           |
@@ -153,7 +153,7 @@ Three levels of testing are available and none substitutes for the others:
 - **Wiring test.** Does the process actually supply what the operation needs? Static,
   no network.
 
-See the [Connector Guide](./docs/Connector-Guide.md) to build one, and the
+See the [Connector Guide](./docs/how-to/Connector-Guide.md) to build one, and the
 [Marketplace](./marketplace/README.md) for seed connectors and the contribution path.
 
 ### Reference integrations
@@ -202,12 +202,12 @@ your processes remain portable.
 
 ## Documentation
 
-- [Quick Start](./docs/Quick-Start.md)
-- [Connector Guide](./docs/Connector-Guide.md)
+- [Quick Start](./docs/tutorials/Quick-Start.md)
+- [Connector Guide](./docs/how-to/Connector-Guide.md)
 - [Connector Marketplace](./marketplace/README.md), including the contribution guide
-- [Deployment Configuration](./docs/Deployment-Configuration-Guide.md)
-- [Keycloak Setup](./docs/Keycloak-Implementation-Guide.md)
-- [Architecture Decisions](./docs/Architecture/)
+- [Deployment Configuration](./docs/how-to/Deployment-Configuration-Guide.md)
+- [Keycloak Setup](./docs/how-to/Keycloak-Implementation-Guide.md)
+- [Architecture & Design](./docs/explanation/)
 
 ## Contributing
 

@@ -2,7 +2,7 @@
 
 What Werkflow runs today, how processes reach external systems, and which HTTP surfaces are
 current. For authoring your first process end to end, start with
-[First-Workflow-Tutorial.md](../First-Workflow-Tutorial.md).
+[First-Workflow-Tutorial.md](../tutorials/First-Workflow-Tutorial.md).
 
 ## Status
 
@@ -154,8 +154,8 @@ All require a bearer token from Keycloak.
 
 ## Related
 
-- [First-Workflow-Tutorial.md](../First-Workflow-Tutorial.md) — author and run a process
-- [Connector-Guide.md](../Connector-Guide.md) — register and use connectors
-- [Workflow-Architecture-Design.md](Workflow-Architecture-Design.md) — component and data-flow view
-- [BPMN-Quick-Reference-Guide.md](../BPMN-Quick-Reference-Guide.md) — element reference
-- [Deployment-Configuration-Guide.md](../Deployment-Configuration-Guide.md) — environment and config
+- [First-Workflow-Tutorial.md](../tutorials/First-Workflow-Tutorial.md) — author and run a process
+- [Connector-Guide.md](../how-to/Connector-Guide.md) — register and use connectors
+- [Workflow-Architecture-Design.md](../explanation/Workflow-Architecture-Design.md) — component and data-flow view
+- [BPMN-Quick-Reference-Guide.md](BPMN-Quick-Reference-Guide.md) — element reference
+- [Deployment-Configuration-Guide.md](../how-to/Deployment-Configuration-Guide.md) — environment and config

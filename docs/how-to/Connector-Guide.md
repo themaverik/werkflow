@@ -142,4 +142,4 @@ All connector URLs are validated against the SSRF guard before execution. Reques
 ## Related Documentation
 
 - [Deployment Configuration](Deployment-Configuration-Guide.md)
-- [BPMN Quick Reference](BPMN-Quick-Reference-Guide.md)
+- [BPMN Quick Reference](../reference/BPMN-Quick-Reference-Guide.md)

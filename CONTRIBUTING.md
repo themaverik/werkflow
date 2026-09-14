@@ -5,7 +5,7 @@ Thank you for your interest in contributing to Werkflow!
 ## Getting Started
 
 1. Fork the repository and clone it locally.
-2. Follow the setup steps in [Quick-Start.md](docs/Quick-Start.md).
+2. Follow the setup steps in [Quick-Start.md](docs/tutorials/Quick-Start.md).
 3. Create a feature branch: `git checkout -b feature/your-feature-name`.
 4. Make your changes, commit, and open a pull request.
 
@@ -26,7 +26,7 @@ Thank you for your interest in contributing to Werkflow!
 
 Werkflow ships with English (`en`) and welcomes community translations.
 
-To add a new language, see **[docs/Translation-Guide.md](docs/Translation-Guide.md)**.
+To add a new language, see **[docs/Translation-Guide.md](docs/how-to/Translation-Guide.md)**.
 
 The short version:
 

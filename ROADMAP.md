@@ -50,7 +50,7 @@ S27 — Community Launch
 - Added JWT propagation and finance workflow endpoints
 
 ### S3 — Service Consolidation
-- Merged HR, Finance, Procurement, Inventory into single `business-service` (port 8084)
+- Merged HR, Finance, Procurement, Inventory into single `business-service` (port 8084) — decoupled from the build in S20 and later removed from this repository
 - Consolidated two portals into one Next.js app
 
 ### S4 — Frontend Completion

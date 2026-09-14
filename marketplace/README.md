@@ -6,11 +6,11 @@ The Werkflow Marketplace is the official catalog of connector definitions for th
 
 ## Catalog
 
-### Official Connectors (Core Team)
+### Sandbox Connectors (Testing & Demos)
 
 | Connector | Transport | Auth | Description |
 |---|---|---|---|
-| [werkflow-erp](connectors/werkflow-erp/connector.json) | REST | API Key | Werkflow ERP — HR, Procurement, Inventory, Finance |
+| [sandbox-erp](connectors/sandbox-erp/connector.json) | REST | API Key | Sandbox ERP fixture for testing and demos — not a production ERP |
 
 ### Community Connectors
 
@@ -63,4 +63,4 @@ The schema is at [`marketplace/schema/connector-definition.schema.json`](schema/
 
 ## License
 
-All official connectors are licensed under Apache-2.0. Community connectors declare their own `metadata.license` (SPDX expression). See individual `connector.json` files.
+Connectors maintained by the Werkflow project (including `sandbox-erp`) are licensed under Apache-2.0. Community connectors declare their own `metadata.license` (SPDX expression). See individual `connector.json` files.

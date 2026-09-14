@@ -2,9 +2,9 @@
   "apiVersion": "werkflow.io/connector/v1",
   "kind": "ConnectorDefinition",
   "metadata": {
-    "key": "werkflow-erp",
-    "displayName": "Werkflow ERP",
-    "description": "Official connector for the Werkflow ERP system. Provides access to HR, Procurement, Inventory, and Finance endpoints. Maintained by the Werkflow core team.",
+    "key": "sandbox-erp",
+    "displayName": "Sandbox ERP (Demo)",
+    "description": "Sandbox connector for a demo ERP-style REST API. Ships example HR, Procurement, Inventory, and Finance endpoints for building and testing BPMN service tasks against a realistic data shape. This is a testing/demo fixture, not a production ERP integration — point it at a fixture or mock service, never a system of record.",
     "version": "1.0.0",
     "category": "data-source",
     "tags": [
@@ -13,11 +13,12 @@
       "procurement",
       "inventory",
       "finance",
-      "official"
+      "sandbox",
+      "demo"
     ],
     "vendor": "Werkflow",
     "license": "Apache-2.0",
-    "documentationUrl": "https://github.com/werkflow-platform/werkflow-public/tree/main/marketplace/connectors/werkflow-erp"
+    "documentationUrl": "https://github.com/themaverik/werkflow/tree/main/marketplace/connectors/sandbox-erp"
   },
   "spec": {
     "transport": {

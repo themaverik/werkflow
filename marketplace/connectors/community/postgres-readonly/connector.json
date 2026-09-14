@@ -1,5 +1,5 @@
 {
-  "apiVersion": "werkflow.io/connector/v1",
+  "apiVersion": "werkflow/connector/v1",
   "kind": "ConnectorDefinition",
   "metadata": {
     "key": "postgres-readonly",

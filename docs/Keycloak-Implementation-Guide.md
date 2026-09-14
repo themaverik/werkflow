@@ -718,5 +718,4 @@ Set on user's Attributes tab:
 
 ## References
 
-- Keycloak RBAC Role Matrix: [Keycloak-RBAC-Role-Matrix-Design.md](./Keycloak-RBAC-Role-Matrix-Design.md)
 - Realm Configuration: `/infrastructure/keycloak/werkflow-realm.json`

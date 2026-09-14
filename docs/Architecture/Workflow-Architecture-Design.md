@@ -239,5 +239,4 @@ All route groups share the same app-shell layout (sidebar + header).
 - ADR-019: Service Adapter Layer for Connector Operations (werkflow-platform `docs/adr/`)
 - ADR-023: All External Access via Connector Abstraction (werkflow-platform `docs/adr/`)
 - ADR-024: Connector-Mode Credentials Resolved Server-Side (werkflow-platform `docs/adr/`)
-- [API Path Structure](../API-Path-Structure.md)
 - [Deployment Configuration Guide](../Deployment-Configuration-Guide.md)
